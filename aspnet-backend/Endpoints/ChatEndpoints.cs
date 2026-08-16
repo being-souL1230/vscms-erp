@@ -2,6 +2,7 @@ using System.Data;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Npgsql;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
@@ -10,7 +11,7 @@ namespace VscmsErp.Api.Endpoints;
 
 /// <summary>
 /// CMSbot AI Assistant Endpoint powered by Groq API (llama-3.3-70b-versatile).
-/// Features Dynamic Intent SQL Extractor with robust type conversion for PostgreSQL/SQLite.
+/// Features Full Database Roster Access & Targeted Roll Number Search.
 /// </summary>
 public static class ChatEndpoints
 {
@@ -60,10 +61,10 @@ public static class ChatEndpoints
             ? AdminCustomApiKey
             : Environment.GetEnvironmentVariable("GROQ_API_KEY");
 
-        // 1. DYNAMICALLY FETCH REAL DATABASE ROWS BASED ON USER QUERY INTENT
+        // 1. FETCH FULL DATABASE ROSTER & TARGETED ROLL NUMBER MATCHES
         var dbContextSummary = FetchLiveDatabaseContext(user, role, body.Message);
 
-        // 2. Build Role-based System Prompt with Exact Live Database Context
+        // 2. Build Role-based System Prompt with Full Database Context
         var systemPrompt = BuildSystemPrompt(role, userName, dbContextSummary);
 
         if (!string.IsNullOrWhiteSpace(apiKey))
@@ -82,7 +83,7 @@ public static class ChatEndpoints
             }
         }
 
-        // 3. Smart Offline Mode using REAL Live Database Facts
+        // 3. Smart Offline Mode using Full Database Facts
         var fallbackReply = BuildOfflineFallback(body.Message, role, userName, dbContextSummary);
         return Results.Json(new { reply = fallbackReply, mode = "offline" });
     }
@@ -102,36 +103,65 @@ public static class ChatEndpoints
                 sb.AppendLine($"LOGGED-IN USER PROFILE: Name: {user.Name}, Role: {user.Role}, Roll/Emp ID: {user.RollNoOrEmpId}, Department: {user.Department}, Semester: {user.Semester ?? 0}, GPA: {user.Gpa ?? "N/A"}");
             }
 
-            // DYNAMIC INTENT SQL QUERIES BASED ON USER QUESTION
+            // TARGETED ROLL NUMBER & STUDENT NAME LOOKUP
+            var numMatches = Regex.Matches(userQuery, @"\b\d{2,6}\b");
+            if (numMatches.Count > 0)
+            {
+                foreach (Match m in numMatches)
+                {
+                    try
+                    {
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "SELECT id, name, roll_no_or_emp_id, department, semester, gpa, phone, email, status FROM users WHERE roll_no_or_emp_id LIKE @roll AND role = 'student'";
+                        cmd.Parameters.AddWithValue("@roll", $"%{m.Value}%");
+                        using var reader = cmd.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            var sid = Convert.ToInt64(reader.GetValue(0));
+                            var sname = reader.GetString(1);
+                            var sroll = reader.GetString(2);
+                            var sdept = reader.GetString(3);
+                            var sem = reader.IsDBNull(4) ? "N/A" : reader.GetValue(4).ToString();
+                            var gpa = reader.IsDBNull(5) ? "N/A" : reader.GetString(5);
+                            var email = reader.IsDBNull(7) ? "" : reader.GetString(7);
+                            sb.AppendLine($"TARGETED MATCH FOR ROLL NO '{m.Value}': ID {sid}, Name: {sname}, Roll: {sroll}, Dept: {sdept}, Sem: {sem}, GPA: {gpa}, Email: {email}");
+                        }
+                    }
+                    catch (Exception ex) { Console.WriteLine($"[cmsbot] Roll lookup error: {ex.Message}"); }
+                }
+            }
 
-            // A. Student List / Search Intent
-            if (q.Contains("student") || q.Contains("scholar") || q.Contains("who") || q.Contains("list") || q.Contains("show") || q.Contains("find") || q.Contains("search") || role == "admin")
+            // FULL STUDENT DIRECTORY (ALL REGISTERED STUDENTS)
+            if (q.Contains("student") || q.Contains("scholar") || q.Contains("who") || q.Contains("list") || q.Contains("show") || q.Contains("find") || q.Contains("search") || q.Contains("roll") || role == "admin")
             {
                 try
                 {
                     using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT name, roll_no_or_emp_id, department, semester, gpa, status FROM users WHERE role = 'student' ORDER BY name LIMIT 15";
+                    cmd.CommandText = "SELECT name, roll_no_or_emp_id, department, semester, gpa, status FROM users WHERE role = 'student' ORDER BY roll_no_or_emp_id ASC";
                     using var reader = cmd.ExecuteReader();
                     var students = new List<string>();
                     while (reader.Read())
                     {
+                        var name = reader.GetString(0);
+                        var roll = reader.GetString(1);
+                        var dept = reader.GetString(2);
                         var sem = reader.IsDBNull(3) ? "N/A" : reader.GetValue(3).ToString();
                         var gpa = reader.IsDBNull(4) ? "N/A" : reader.GetString(4);
-                        students.Add($"{reader.GetString(0)} (Roll: {reader.GetString(1)}, Dept: {reader.GetString(2)}, Sem {sem}, GPA: {gpa})");
+                        students.Add($"Roll {roll}: {name} ({dept}, Sem {sem}, GPA: {gpa})");
                     }
                     if (students.Count > 0)
-                        sb.AppendLine($"STUDENT DIRECTORY ({students.Count} sample records):\n- " + string.Join("\n- ", students));
+                        sb.AppendLine($"COMPLETE STUDENT DATABASE DIRECTORY ({students.Count} total registered students):\n- " + string.Join("\n- ", students));
                 }
-                catch (Exception ex) { Console.WriteLine($"[cmsbot] Students SQL error: {ex.Message}"); }
+                catch (Exception ex) { Console.WriteLine($"[cmsbot] Full Students SQL error: {ex.Message}"); }
             }
 
-            // B. Faculty & Departments Intent
+            // FACULTY & DEPARTMENTS ROSTER
             if (q.Contains("faculty") || q.Contains("teacher") || q.Contains("professor") || q.Contains("hod") || q.Contains("department") || role == "admin")
             {
                 try
                 {
                     using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT name, department, designation, email FROM users WHERE role = 'faculty' ORDER BY name LIMIT 10";
+                    cmd.CommandText = "SELECT name, department, designation, email FROM users WHERE role = 'faculty' ORDER BY name";
                     using var reader = cmd.ExecuteReader();
                     var faculty = new List<string>();
                     while (reader.Read())
@@ -161,8 +191,8 @@ public static class ChatEndpoints
                 catch (Exception ex) { Console.WriteLine($"[cmsbot] Depts SQL error: {ex.Message}"); }
             }
 
-            // C. Fees & Billing Intent
-            if (q.Contains("fee") || q.Contains("due") || q.Contains("paid") || q.Contains("payment") || q.Contains("money") || q.Contains("revenue") || q.Contains("invoice"))
+            // FULL FEE RECORDS DATABASE
+            if (q.Contains("fee") || q.Contains("due") || q.Contains("paid") || q.Contains("payment") || q.Contains("money") || q.Contains("revenue") || q.Contains("invoice") || role == "admin")
             {
                 try
                 {
@@ -174,7 +204,7 @@ public static class ChatEndpoints
                     }
                     else
                     {
-                        cmd.CommandText = "SELECT student_name, roll_no, fee_type, amount, paid_amount, status FROM fee_records ORDER BY id DESC LIMIT 15";
+                        cmd.CommandText = "SELECT student_name, roll_no, fee_type, amount, paid_amount, status FROM fee_records ORDER BY id DESC";
                     }
                     using var reader = cmd.ExecuteReader();
                     var fees = new List<string>();
@@ -197,19 +227,19 @@ public static class ChatEndpoints
                             var roll = reader.IsDBNull(1) ? "N/A" : reader.GetString(1);
                             var ftype = reader.IsDBNull(2) ? "Fee" : reader.GetString(2);
                             var fstat = reader.IsDBNull(5) ? "pending" : reader.GetString(5);
-                            fees.Add($"{sname} ({roll}): {ftype} - Invoiced ₹{amt:N0}, Paid ₹{paid:N0}, Balance Due ₹{(amt - paid):N0} [{fstat}]");
+                            fees.Add($"{sname} (Roll {roll}): {ftype} - Invoiced ₹{amt:N0}, Paid ₹{paid:N0}, Balance Due ₹{(amt - paid):N0} [{fstat}]");
                         }
                     }
                     if (fees.Count > 0)
                     {
-                        sb.AppendLine($"FEE RECORDS (Total Invoiced: ₹{grandTotal:N0}, Total Collected: ₹{grandPaid:N0}, Total Dues: ₹{(grandTotal - grandPaid):N0}):\n- " + string.Join("\n- ", fees));
+                        sb.AppendLine($"COMPLETE FEE DATABASE (Total Invoiced: ₹{grandTotal:N0}, Total Collected: ₹{grandPaid:N0}, Total Dues: ₹{(grandTotal - grandPaid):N0}):\n- " + string.Join("\n- ", fees));
                     }
                 }
                 catch (Exception ex) { Console.WriteLine($"[cmsbot] Fee SQL error: {ex.Message}"); }
             }
 
-            // D. Attendance Intent
-            if (q.Contains("attendance") || q.Contains("absent") || q.Contains("present") || q.Contains("class"))
+            // ATTENDANCE DATA
+            if (q.Contains("attendance") || q.Contains("absent") || q.Contains("present") || q.Contains("class") || role == "admin")
             {
                 try
                 {
@@ -247,78 +277,32 @@ public static class ChatEndpoints
                 catch (Exception ex) { Console.WriteLine($"[cmsbot] Attendance SQL error: {ex.Message}"); }
             }
 
-            // E. Leaves Intent
-            if (q.Contains("leave") || q.Contains("vacation") || q.Contains("request") || q.Contains("approval"))
-            {
-                try
-                {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT student_name, department, from_date, to_date, reason, status FROM leave_requests ORDER BY id DESC LIMIT 10";
-                    using var reader = cmd.ExecuteReader();
-                    var leaves = new List<string>();
-                    while (reader.Read())
-                    {
-                        var sname = reader.IsDBNull(0) ? "Student" : reader.GetString(0);
-                        var dept = reader.IsDBNull(1) ? "Dept" : reader.GetString(1);
-                        var fdate = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                        var tdate = reader.IsDBNull(3) ? "" : reader.GetString(3);
-                        var rsn = reader.IsDBNull(4) ? "" : reader.GetString(4);
-                        var st = reader.IsDBNull(5) ? "Pending" : reader.GetString(5);
-                        leaves.Add($"{sname} ({dept}): {fdate} to {tdate} - Reason: '{rsn}' [Status: {st}]");
-                    }
-                    if (leaves.Count > 0)
-                        sb.AppendLine($"LEAVE REQUESTS SNAPSHOT:\n- " + string.Join("\n- ", leaves));
-                }
-                catch (Exception ex) { Console.WriteLine($"[cmsbot] Leaves SQL error: {ex.Message}"); }
-            }
-
-            // F. Courses & Timetable Intent
-            if (q.Contains("course") || q.Contains("subject") || q.Contains("timetable") || q.Contains("schedule") || q.Contains("exam") || q.Contains("room"))
-            {
-                try
-                {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT code, name, department, credits, semester, faculty_name, room FROM courses LIMIT 10";
-                    using var reader = cmd.ExecuteReader();
-                    var courses = new List<string>();
-                    while (reader.Read())
-                    {
-                        var fac = reader.IsDBNull(5) ? "Unassigned" : reader.GetString(5);
-                        var rm = reader.IsDBNull(6) ? "TBD" : reader.GetString(6);
-                        courses.Add($"{reader.GetString(0)} ({reader.GetString(1)}): Dept {reader.GetString(2)}, {reader.GetValue(3)} Credits, Sem {reader.GetValue(4)}, Faculty: {fac}, Room: {rm}");
-                    }
-                    if (courses.Count > 0)
-                        sb.AppendLine($"ACTIVE COURSE CATALOG:\n- " + string.Join("\n- ", courses));
-                }
-                catch (Exception ex) { Console.WriteLine($"[cmsbot] Courses SQL error: {ex.Message}"); }
-
-                try
-                {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT course_code, course_name, day_of_week, start_time, room, faculty_name FROM timetable LIMIT 10";
-                    using var reader = cmd.ExecuteReader();
-                    var slots = new List<string>();
-                    while (reader.Read())
-                    {
-                        var ccode = reader.IsDBNull(0) ? "" : reader.GetString(0);
-                        var cname = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                        var day = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                        var stime = reader.IsDBNull(3) ? "" : reader.GetString(3);
-                        var rm = reader.IsDBNull(4) ? "" : reader.GetString(4);
-                        var fac = reader.IsDBNull(5) ? "" : reader.GetString(5);
-                        slots.Add($"{day} {stime} - {ccode} ({cname}) in {rm} by {fac}");
-                    }
-                    if (slots.Count > 0)
-                        sb.AppendLine($"TIMETABLE SLOTS:\n- " + string.Join("\n- ", slots));
-                }
-                catch (Exception ex) { Console.WriteLine($"[cmsbot] Timetable SQL error: {ex.Message}"); }
-            }
-
-            // G. Active Campus Notices
+            // LEAVES & NOTICES
             try
             {
                 using var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT title, category, priority, date, content FROM notices ORDER BY id DESC LIMIT 5";
+                cmd.CommandText = "SELECT student_name, department, from_date, to_date, reason, status FROM leave_requests ORDER BY id DESC";
+                using var reader = cmd.ExecuteReader();
+                var leaves = new List<string>();
+                while (reader.Read())
+                {
+                    var sname = reader.IsDBNull(0) ? "Student" : reader.GetString(0);
+                    var dept = reader.IsDBNull(1) ? "Dept" : reader.GetString(1);
+                    var fdate = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                    var tdate = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                    var rsn = reader.IsDBNull(4) ? "" : reader.GetString(4);
+                    var st = reader.IsDBNull(5) ? "Pending" : reader.GetString(5);
+                    leaves.Add($"{sname} ({dept}): {fdate} to {tdate} - Reason: '{rsn}' [Status: {st}]");
+                }
+                if (leaves.Count > 0)
+                    sb.AppendLine($"LEAVE REQUESTS REGISTER:\n- " + string.Join("\n- ", leaves));
+            }
+            catch (Exception ex) { Console.WriteLine($"[cmsbot] Leaves SQL error: {ex.Message}"); }
+
+            try
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT title, category, priority, published_date, content FROM notices ORDER BY id DESC LIMIT 5";
                 using var reader = cmd.ExecuteReader();
                 var notices = new List<string>();
                 while (reader.Read())
@@ -347,12 +331,12 @@ public static class ChatEndpoints
     {
         var roleContext = role switch
         {
-            "admin" => "You are CMSbot, the Executive AI Assistant for Apex University ERP Director & Admin Office. You have real-time live database access to all student records, faculty rosters, fee collections, grade sheets, and campus operations.",
+            "admin" => "You are CMSbot, the Executive AI Assistant for Apex University ERP Director & Admin Office. You have 100% full access to the complete student database, roll numbers, faculty rosters, fee collections, grade sheets, and campus operations.",
             "faculty" => $"You are CMSbot, the Faculty AI Assistant for {userName}. You assist with class attendance registers, internal exam marks entry, coursework assignments, timetable schedules, and leave reviews.",
             _ => $"You are CMSbot, the Student AI Assistant for {userName}. You provide friendly, concise help regarding student attendance, GPA, fee dues, exam timetable, course schedules, and campus notices."
         };
 
-        return $"{roleContext}\n\nREAL-TIME DATABASE FACTS:\n{dbContextSummary}\n\nGUIDELINES:\n- Answer strictly based on the real-time database facts provided above.\n- Provide exact names, numbers, roll numbers, and currency amounts (₹) from the database context.\n- Be concise, accurate, and professional.\n- Use bullet points for lists.";
+        return $"{roleContext}\n\nCOMPLETE REAL-TIME DATABASE FACTS:\n{dbContextSummary}\n\nGUIDELINES:\n- Answer strictly based on the real-time database facts provided above.\n- Provide exact names, roll numbers, department names, and currency amounts (₹) from the database context.\n- If asked for a student by roll number, locate them in the directory and provide their exact details.\n- Be concise, accurate, and professional.";
     }
 
     private static async Task<string?> CallGroqApi(string apiKey, string systemPrompt, string userMessage)
@@ -366,7 +350,7 @@ public static class ChatEndpoints
                 new { role = "user", content = userMessage }
             },
             temperature = 0.3,
-            max_tokens = 800
+            max_tokens = 1000
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
@@ -396,12 +380,18 @@ public static class ChatEndpoints
     {
         var q = query.ToLowerInvariant();
 
-        if (q.Contains("student") || q.Contains("scholar") || q.Contains("list") || q.Contains("who"))
+        if (dbContextSummary.Contains("TARGETED MATCH FOR ROLL"))
         {
-            if (dbContextSummary.Contains("STUDENT DIRECTORY"))
+            var section = ExtractSection(dbContextSummary, "TARGETED MATCH FOR ROLL");
+            return $"**Real-time Student Record Found in Database**:\n\n{section}";
+        }
+
+        if (q.Contains("student") || q.Contains("scholar") || q.Contains("list") || q.Contains("who") || q.Contains("roll"))
+        {
+            if (dbContextSummary.Contains("COMPLETE STUDENT DATABASE DIRECTORY"))
             {
-                var section = ExtractSection(dbContextSummary, "STUDENT DIRECTORY");
-                return $"**Real-time Student Directory from Database**:\n\n{section}";
+                var section = ExtractSection(dbContextSummary, "COMPLETE STUDENT DATABASE DIRECTORY");
+                return $"**Complete Student Directory from Database**:\n\n{section}";
             }
         }
 
@@ -417,46 +407,14 @@ public static class ChatEndpoints
 
         if (q.Contains("fee") || q.Contains("due") || q.Contains("paid") || q.Contains("payment") || q.Contains("money"))
         {
-            if (dbContextSummary.Contains("FEE RECORDS"))
+            if (dbContextSummary.Contains("COMPLETE FEE DATABASE"))
             {
-                var feeSection = ExtractSection(dbContextSummary, "FEE RECORDS");
-                return $"**Real-time Fee Records from Database**:\n\n{feeSection}\n\nYou can process payments under the **Fees** tab.";
+                var feeSection = ExtractSection(dbContextSummary, "COMPLETE FEE DATABASE");
+                return $"**Complete Fee Records from Database**:\n\n{feeSection}\n\nYou can process payments under the **Fees** tab.";
             }
         }
 
-        if (q.Contains("attendance") || q.Contains("absent") || q.Contains("present"))
-        {
-            if (dbContextSummary.Contains("STUDENT ATTENDANCE BREAKDOWN"))
-            {
-                var section = ExtractSection(dbContextSummary, "STUDENT ATTENDANCE BREAKDOWN");
-                return $"**Real-time Attendance Data**:\n\n{section}";
-            }
-            if (dbContextSummary.Contains("UNIVERSITY ATTENDANCE SUMMARY"))
-            {
-                var section = ExtractSection(dbContextSummary, "UNIVERSITY ATTENDANCE SUMMARY");
-                return $"**University Attendance Summary**:\n\n{section}";
-            }
-        }
-
-        if (q.Contains("leave") || q.Contains("request"))
-        {
-            if (dbContextSummary.Contains("LEAVE REQUESTS SNAPSHOT"))
-            {
-                var section = ExtractSection(dbContextSummary, "LEAVE REQUESTS SNAPSHOT");
-                return $"**Leave Requests Register**:\n\n{section}";
-            }
-        }
-
-        if (q.Contains("notice") || q.Contains("announcement"))
-        {
-            if (dbContextSummary.Contains("ACTIVE CAMPUS NOTICES"))
-            {
-                var section = ExtractSection(dbContextSummary, "ACTIVE CAMPUS NOTICES");
-                return $"**Active Campus Notices**:\n\n{section}";
-            }
-        }
-
-        return $"Hello **{userName}**! Here are the real-time database facts retrieved for your query:\n\n{dbContextSummary}";
+        return $"Hello **{userName}**! Here are the full real-time database facts retrieved for your query:\n\n{dbContextSummary}";
     }
 
     private static string ExtractSection(string fullText, string headerTitle)
