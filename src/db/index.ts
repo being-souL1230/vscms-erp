@@ -59,7 +59,7 @@ function openDatabase(): Sqlite {
     migrateLegacyDatabase(databasePath);
     const instance = new Database(databasePath);
     // If the file is corrupt (e.g. a bad OneDrive sync), move it aside and
-    // start fresh — the app self-heals by re-creating the schema + seeding.
+    // start fresh the app self-heals by re-creating the schema + seeding.
     try {
       const check = instance.pragma("quick_check", { simple: true }) as string;
       if (check !== "ok") throw new Error(`Database integrity check failed: ${check}`);
@@ -100,7 +100,7 @@ for (const [pragma, label] of PRAGMAS) {
     sqlite.pragma(pragma);
   } catch (err) {
     // Another process (e.g. an older dev server) may still hold the DB in WAL
-    // mode; don't crash the app — the mode will be applied on the next clean start.
+    // mode; don't crash the app the mode will be applied on the next clean start.
     console.error(`[db] Could not apply ${label} (will retry on next start):`, err);
   }
 }

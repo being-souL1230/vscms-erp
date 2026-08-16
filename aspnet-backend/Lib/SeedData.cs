@@ -52,21 +52,21 @@ public static class SeedData
     public static readonly SeedCourse[] InitialCourses =
     [
         new("BCA101", "Introduction to Programming", "BCA (CSJM)", 4, 1, "Prof. Elena Rostova", "Lab 1 · LT-101",
-            "Mon · Wed · Fri  09:00 – 10:30", "Basics of programming with Python. Variables, loops, functions and simple projects."),
+            "Mon · Wed · Fri  09:00 10:30", "Basics of programming with Python. Variables, loops, functions and simple projects."),
         new("BCA201", "Data Structures & Algorithms", "BCA (CSJM)", 4, 2, "Prof. Elena Rostova", "Lab 2 · LT-202",
-            "Tue · Thu  09:00 – 10:30", "Arrays, linked lists, stacks, queues, trees and sorting algorithms."),
+            "Tue · Thu  09:00 10:30", "Arrays, linked lists, stacks, queues, trees and sorting algorithms."),
         new("BCA301", "Database Management Systems", "BCA (CSJM)", 3, 3, "Prof. Aisha Okonkwo", "Lab 1 · LT-101",
-            "Mon · Wed  11:00 – 12:30", "SQL, relational databases, normalization and basic database design."),
+            "Mon · Wed  11:00 12:30", "SQL, relational databases, normalization and basic database design."),
         new("MBA101", "Principles of Management", "MBA", 3, 1, "Dr. Marcus Lindqvist", "Hall 1 · MH-101",
-            "Tue · Thu  11:00 – 12:30", "Introduction to management concepts, planning, organizing, leading and controlling."),
+            "Tue · Thu  11:00 12:30", "Introduction to management concepts, planning, organizing, leading and controlling."),
         new("MBA201", "Marketing Management", "MBA", 3, 2, "Dr. Marcus Lindqvist", "Hall 2 · MH-202",
-            "Mon · Wed  14:00 – 15:30", "Market research, consumer behaviour, branding and digital marketing basics."),
+            "Mon · Wed  14:00 15:30", "Market research, consumer behaviour, branding and digital marketing basics."),
         new("BBA101", "Business Communication", "BBA", 3, 1, "Prof. Nina Sharma", "Hall 1 · MH-101",
-            "Tue · Thu  09:00 – 10:30", "Business writing, presentations, email etiquette and professional communication skills."),
+            "Tue · Thu  09:00 10:30", "Business writing, presentations, email etiquette and professional communication skills."),
         new("BBA201", "Financial Accounting", "BBA", 3, 2, "Prof. Nina Sharma", "Hall 2 · MH-202",
-            "Mon · Wed  11:00 – 12:30", "Basic accounting principles, ledger entries, balance sheets and profit & loss statements."),
+            "Mon · Wed  11:00 12:30", "Basic accounting principles, ledger entries, balance sheets and profit & loss statements."),
         new("BCA401", "Web Development", "BCA (CSJM)", 3, 4, "Prof. Aisha Okonkwo", "Lab 2 · LT-202",
-            "Fri  11:00 – 14:00", "HTML, CSS, JavaScript basics and building simple web pages."),
+            "Fri  11:00 14:00", "HTML, CSS, JavaScript basics and building simple web pages."),
     ];
 
     public sealed record SeedNotice(string Title, string Content, string Category, string Priority, string Author, string PublishedDate);

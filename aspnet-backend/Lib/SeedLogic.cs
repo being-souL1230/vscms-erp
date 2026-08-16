@@ -51,7 +51,7 @@ public static class SeedLogic
 
         if (existingCount > 0 && !force)
         {
-            // Database already has users — backfill the newer modules
+            // Database already has users backfill the newer modules
             // (documents, exams, permissions, …) that may postdate the DB.
             var permCount = ScalarLong(conn, "SELECT COUNT(*) FROM permissions");
             var examDefCount = ScalarLong(conn, "SELECT COUNT(*) FROM exams");
@@ -89,7 +89,7 @@ public static class SeedLogic
             }
             else
             {
-                // Permissions already exist from an older seed — backfill the
+                // Permissions already exist from an older seed backfill the
                 // safer defaults so server-side enforcement behaves the same.
                 SyncPermissionDefaults(conn);
                 if (examDefCount == 0 && marksCount == 0)
@@ -373,7 +373,7 @@ public static class SeedLogic
         return new SeedResult(true, "Database seeded successfully");
     }
 
-    // ---------- exam module demo data (idempotent — only fills empty tables) ----------
+    // ---------- exam module demo data (idempotent only fills empty tables) ----------
 
     private static void SeedExamModule(NpgsqlConnection conn, List<StudentRow> students, List<(long id, string code, string name)> insertedCourses)
     {
@@ -435,7 +435,7 @@ public static class SeedLogic
             ("@total", Grading.Num(r.Total)), ("@maxTotal", Grading.Num(r.MaxTotal)),
             ("@passMarks", Grading.Num(r.PassMarks)), ("@grade", r.GradeLetter), ("@result", r.Result),
             ("@status", status),
-            ("@remarks", r.Result == "fail" ? "Backlog — to be cleared in next attempt" : ""));
+            ("@remarks", r.Result == "fail" ? "Backlog to be cleared in next attempt" : ""));
     }
 
     // ---------- new-module demo data: admissions, documents, enrollments,
@@ -603,7 +603,7 @@ public static class SeedLogic
                 ("@module", mod), ("@view", isUsersModule ? 0L : 1L),
                 ("@create", facultyCreate), ("@edit", facultyEdit), ("@delete", facultyDelete));
 
-            // Students: self-service only — upload/delete their own documents and
+            // Students: self-service only upload/delete their own documents and
             // pay their own fees. The users module is admin-only for them too.
             Database.Exec(conn, """
                 INSERT INTO permissions (role, module, can_view, can_create, can_edit, can_delete)
@@ -680,7 +680,7 @@ public static class SeedLogic
             Database.Exec(conn, "UPDATE permissions SET can_create = 1, can_edit = 1, can_delete = 1 WHERE id = @id",
                 ("@id", tt.Id));
 
-        // attendance / assignments / leaves were added to the matrix later —
+        // attendance / assignments / leaves were added to the matrix later 
         // insert default rows for older DBs that predate them.
         foreach (var mod in new[] { "attendance", "assignments", "leaves" })
         {

@@ -63,7 +63,7 @@ public static class AuthService
         Database.Exec(conn, "DELETE FROM sessions WHERE token = @token", ("@token", token));
     }
 
-    /// <summary>Fetches a user row by id (includes password hash — never serialize this).</summary>
+    /// <summary>Fetches a user row by id (includes password hash never serialize this).</summary>
     public static UserRow? GetUserRow(NpgsqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();

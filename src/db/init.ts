@@ -43,7 +43,7 @@ async function doEnsure(): Promise<EnsureResult> {
   }
 
   // Migration: course-wise fees. Older databases created before the fee
-  // upgrade are backfilled — records get course/semester linkage, a paid
+  // upgrade are backfilled records get course/semester linkage, a paid
   // running total (so partial payments work) and are re-marked as paid when
   // their paid total already covers the full amount.
   try {
@@ -100,7 +100,7 @@ let initPromise: Promise<EnsureResult> | null = null;
 /**
  * Single-flight wrapper: concurrent callers (e.g. two simultaneous login
  * requests on an empty database) share one seeding run instead of both
- * inserting — which would trip the UNIQUE constraint on users.email and
+ * inserting which would trip the UNIQUE constraint on users.email and
  * surface as a login error.
  */
 export function ensureDatabase(): Promise<EnsureResult> {

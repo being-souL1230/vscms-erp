@@ -172,7 +172,7 @@ export default function VscmsErpApp() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const toast = (type: ToastMessage["type"], title: string, message: string) => {
-    // Unique id only for list keys/timeout bookkeeping — randomness is fine here.
+    // Unique id only for list keys/timeout bookkeeping randomness is fine here.
     // eslint-disable-next-line react-hooks/purity
     const id = Math.random().toString(36).slice(2, 9);
     setToasts((p) => [...p, { id, type, title, message }]);
@@ -424,7 +424,7 @@ export default function VscmsErpApp() {
     }
     const u = await r.json();
     setSubmissions((p) => p.map((x) => (x.id === u.id ? { ...x, ...u } : x)));
-    toast("success", "Submission graded", `Marks ${marks || "—"} recorded.`);
+    toast("success", "Submission graded", `Marks ${marks || ""} recorded.`);
   };
 
   const addTimetable = async (d: Partial<TimetableSlot>) => {

@@ -30,7 +30,7 @@ export async function generateFeeInvoices(): Promise<number> {
     for (const s of structures) {
       if (s.courseCode !== en.courseCode || s.semester !== en.semester) continue;
       // Never duplicate a fee type that already exists for this student's
-      // course + semester — whether paid, partially paid or still pending.
+      // course + semester whether paid, partially paid or still pending.
       const hasInvoice = existing.some(
         (f) =>
           f.studentId === en.studentId &&

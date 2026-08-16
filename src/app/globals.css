@@ -231,7 +231,7 @@ textarea {
 }
 
 /* ============================================================
-   PRINT — only the selected element prints (see printElement)
+   PRINT only the selected element prints (see printElement)
    ============================================================ */
 #print-host {
   display: none;

@@ -21,7 +21,7 @@ var app = builder.Build();
 
 app.UseCors();
 
-// Request log — makes it obvious in the console that the Next.js proxy is
+// Request log makes it obvious in the console that the Next.js proxy is
 // forwarding /api/* calls here (ASP.NET doesn't log every request by default).
 app.Use(async (ctx, next) =>
 {

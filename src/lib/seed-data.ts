@@ -161,7 +161,7 @@ export const initialCourses = [
     semester: 1,
     facultyName: "Prof. Elena Rostova",
     room: "Lab 1 · LT-101",
-    schedule: "Mon · Wed · Fri  09:00 – 10:30",
+    schedule: "Mon · Wed · Fri  09:00 10:30",
     description:
       "Basics of programming with Python. Variables, loops, functions and simple projects.",
   },
@@ -173,7 +173,7 @@ export const initialCourses = [
     semester: 2,
     facultyName: "Prof. Elena Rostova",
     room: "Lab 2 · LT-202",
-    schedule: "Tue · Thu  09:00 – 10:30",
+    schedule: "Tue · Thu  09:00 10:30",
     description:
       "Arrays, linked lists, stacks, queues, trees and sorting algorithms.",
   },
@@ -185,7 +185,7 @@ export const initialCourses = [
     semester: 3,
     facultyName: "Prof. Aisha Okonkwo",
     room: "Lab 1 · LT-101",
-    schedule: "Mon · Wed  11:00 – 12:30",
+    schedule: "Mon · Wed  11:00 12:30",
     description:
       "SQL, relational databases, normalization and basic database design.",
   },
@@ -197,7 +197,7 @@ export const initialCourses = [
     semester: 1,
     facultyName: "Dr. Marcus Lindqvist",
     room: "Hall 1 · MH-101",
-    schedule: "Tue · Thu  11:00 – 12:30",
+    schedule: "Tue · Thu  11:00 12:30",
     description:
       "Introduction to management concepts, planning, organizing, leading and controlling.",
   },
@@ -209,7 +209,7 @@ export const initialCourses = [
     semester: 2,
     facultyName: "Dr. Marcus Lindqvist",
     room: "Hall 2 · MH-202",
-    schedule: "Mon · Wed  14:00 – 15:30",
+    schedule: "Mon · Wed  14:00 15:30",
     description:
       "Market research, consumer behaviour, branding and digital marketing basics.",
   },
@@ -221,7 +221,7 @@ export const initialCourses = [
     semester: 1,
     facultyName: "Prof. Nina Sharma",
     room: "Hall 1 · MH-101",
-    schedule: "Tue · Thu  09:00 – 10:30",
+    schedule: "Tue · Thu  09:00 10:30",
     description:
       "Business writing, presentations, email etiquette and professional communication skills.",
   },
@@ -233,7 +233,7 @@ export const initialCourses = [
     semester: 2,
     facultyName: "Prof. Nina Sharma",
     room: "Hall 2 · MH-202",
-    schedule: "Mon · Wed  11:00 – 12:30",
+    schedule: "Mon · Wed  11:00 12:30",
     description:
       "Basic accounting principles, ledger entries, balance sheets and profit & loss statements.",
   },
@@ -245,7 +245,7 @@ export const initialCourses = [
     semester: 4,
     facultyName: "Prof. Aisha Okonkwo",
     room: "Lab 2 · LT-202",
-    schedule: "Fri  11:00 – 14:00",
+    schedule: "Fri  11:00 14:00",
     description:
       "HTML, CSS, JavaScript basics and building simple web pages.",
   },

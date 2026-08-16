@@ -256,7 +256,7 @@ public static class InternalMarkEndpoints
 
         var remarks = J.GetString(body, "remarks");
         if (string.IsNullOrEmpty(remarks))
-            remarks = r.Result == "fail" ? "Backlog — to be cleared in next attempt" : "";
+            remarks = r.Result == "fail" ? "Backlog to be cleared in next attempt" : "";
 
         var studentName = J.GetString(body, "studentName") ?? "";
         var courseCode = J.GetString(body, "courseCode") ?? "";

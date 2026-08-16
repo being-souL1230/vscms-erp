@@ -1,7 +1,7 @@
 /**
  * Runs once when the Next.js server starts (nodejs runtime).
  * Ensures the SQLite database has its schema and demo data, so the app
- * always boots into a working state — even after the DB file was deleted,
+ * always boots into a working state even after the DB file was deleted,
  * corrupted, or evicted by a cloud-sync service.
  */
 export async function register() {

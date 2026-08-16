@@ -51,7 +51,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
   const existingCount = userCountResult[0]?.value || 0;
 
   if (existingCount > 0 && !force) {
-    // Database already has users — but make sure the newer modules
+    // Database already has users but make sure the newer modules
     // (documents, exams, permissions, …) still get their demo data if
     // they were added after this database was first created.
     const permCount = (await db.select({ value: count() }).from(permissions))[0]?.value || 0;
@@ -79,7 +79,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     if (permCount === 0) {
       await seedExtras(existingStudents, existingCourses);
     } else {
-      // Permissions already exist from an older seed — backfill the safer
+      // Permissions already exist from an older seed backfill the safer
       // defaults so server-side enforcement behaves the same on old DBs.
       await syncPermissionDefaults();
       if (examDefCount === 0 && marksCount === 0) {
@@ -448,7 +448,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     ]);
   }
 
-  /* ---------- exam module demo data (idempotent — only fills empty tables) ---------- */
+  /* ---------- exam module demo data (idempotent only fills empty tables) ---------- */
   async function seedExamModule(
     studentsList: (typeof users.$inferSelect)[],
     insertedCourses: (typeof courses.$inferSelect)[],
@@ -523,7 +523,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
           gradeLetter: r.gradeLetter,
           result: r.result,
           status,
-          remarks: r.result === "fail" ? "Backlog — to be cleared in next attempt" : "",
+          remarks: r.result === "fail" ? "Backlog to be cleared in next attempt" : "",
         };
       };
       const s0 = studentsList[0];
@@ -730,7 +730,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
           ? { canCreate: 1, canEdit: 1, canDelete: 0 }
           : { canCreate: 0, canEdit: 0, canDelete: 0 };
     permRows.push({ role: "faculty", module: mod, canView: isUsersModule ? 0 : 1, ...facultyWrite });
-    // Students: self-service only — upload/delete their own documents and pay
+    // Students: self-service only upload/delete their own documents and pay
     // their own fees. The users module is admin-only for them too.
     permRows.push({
       role: "student",
@@ -815,7 +815,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
         .set({ canCreate: 1, canEdit: 1, canDelete: 1 })
         .where(eq(permissions.id, tt.id));
     }
-    // attendance / assignments / leaves were added to the matrix later — insert
+    // attendance / assignments / leaves were added to the matrix later insert
     // default rows for older DBs that predate them.
     for (const mod of ["attendance", "assignments", "leaves"] as const) {
       for (const role of ["admin", "faculty", "student"] as const) {

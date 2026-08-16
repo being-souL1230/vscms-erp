@@ -6,7 +6,7 @@ namespace VscmsErp.Api.Endpoints;
 
 /// <summary>
 /// Fee endpoints ported from src/app/api/fees/route.ts, fee-payments/route.ts
-/// and fees/generate/route.ts — invoices, partial/full payments with an
+/// and fees/generate/route.ts invoices, partial/full payments with an
 /// audit trail, and batch invoice generation from the fee structure.
 /// </summary>
 public static class FeeEndpoints
@@ -108,7 +108,7 @@ public static class FeeEndpoints
             return Results.Json(new { error = "Payment amount must be a positive number" }, statusCode: 400);
         var payAmount = Math.Min(remaining, requested);
         if (payAmount <= 0)
-            return Results.Json(new { error = "Nothing to pay — this invoice is already settled" }, statusCode: 400);
+            return Results.Json(new { error = "Nothing to pay this invoice is already settled" }, statusCode: 400);
 
         var newPaid = Math.Min(total, alreadyPaid + payAmount);
         var fullyPaid = newPaid >= total;

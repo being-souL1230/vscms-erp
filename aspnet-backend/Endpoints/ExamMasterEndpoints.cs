@@ -6,7 +6,7 @@ namespace VscmsErp.Api.Endpoints;
 
 /// <summary>
 /// Exam master CRUD ported from src/app/api/exam-master/route.ts
-/// (the exams definition table — distinct from exam_schedules).
+/// (the exams definition table distinct from exam_schedules).
 /// </summary>
 public static class ExamMasterEndpoints
 {

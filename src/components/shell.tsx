@@ -78,7 +78,7 @@ export const INPUT =
   "w-full bg-paper-3 border-2 border-ink px-3 py-2 font-mono text-sm text-ink placeholder:text-muted/70 focus:outline-none focus:border-blood focus:shadow-[3px_3px_0_0_var(--color-blood)] transition-shadow rounded-none";
 
 /* ============================================================
-   PRINT HELPER — print only one element (not the whole page)
+   PRINT HELPER print only one element (not the whole page)
    ============================================================ */
 export function printElement(id: string) {
   const target = document.getElementById(id);
@@ -830,7 +830,7 @@ export function LoginPage({
               <span className="text-blood">VSCMS</span>
             </h1>
             <p className="mt-5 font-serif italic text-paper/80 text-base leading-relaxed max-w-sm">
-              College of Management Studies — manage attendance, courses, fees and campus notices in
+              College of Management Studies manage attendance, courses, fees and campus notices in
               one simple system.
             </p>
 

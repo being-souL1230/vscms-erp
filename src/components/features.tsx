@@ -193,7 +193,7 @@ export function AdminSetupTab({
                   <td className={TD}><span className="font-mono text-[11px] font-bold">{s.code}</span> · <span className="font-serif text-xs">{s.name}</span></td>
                   <td className={TD}><span className="font-mono text-[11px]">{s.department}</span></td>
                   <td className={TD}><span className="font-mono text-[11px]">Sem {s.semester}</span></td>
-                  <td className={TD}><span className="font-mono text-[11px]">{s.room || "—"}</span></td>
+                  <td className={TD}><span className="font-mono text-[11px]">{s.room || ""}</span></td>
                   <td className={TD + " text-center"}><button onClick={() => { setSecEdit(s.id); setSecF({ code: s.code, name: s.name, department: s.department, semester: s.semester, room: s.room || "" }); }} className="border-2 border-ink p-1 hover:bg-ink hover:text-paper press"><Edit2 className="w-3 h-3" /></button></td>
                   <td className={TD + " text-center"}><button onClick={() => onDeleteSection(s.id)} className="border-2 border-ink p-1 hover:bg-blood hover:border-blood press"><Trash2 className="w-3 h-3" /></button></td>
                 </tr>
@@ -511,7 +511,7 @@ const PERM_META: Record<PermKey, { label: string; hint: string }> = {
   canDelete: { label: "Delete", hint: "can remove records" },
 };
 const ROLE_META: Record<string, { label: string; desc: string }> = {
-  admin: { label: "Admin", desc: "Full access — always" },
+  admin: { label: "Admin", desc: "Full access always" },
   faculty: { label: "Teacher", desc: "Faculty & staff" },
   student: { label: "Scholar", desc: "Students" },
 };
@@ -578,7 +578,7 @@ export function AdminPermissionsTab({
         <p className="font-serif text-sm text-ink/80 min-w-0 flex-1">
           <strong className="text-ink">This matrix controls what each role can do in every module.</strong>{" "}
           Four actions per module: <b>View</b> (see data), <b>Create</b> (add records), <b>Edit</b> (modify
-          records) and <b>Delete</b> (remove records). Click a toggle to allow or deny it for that role — changes
+          records) and <b>Delete</b> (remove records). Click a toggle to allow or deny it for that role changes
           are applied only when you press <b>Save Changes</b>.
         </p>
       </div>
@@ -635,7 +635,7 @@ export function AdminPermissionsTab({
                                 key={k}
                                 disabled={locked}
                                 onClick={() => toggle(r, m, k)}
-                                title={locked ? "Admin is always allowed" : on ? `Allowed — ${meta.hint}` : `Denied — cannot ${meta.label.toLowerCase()}`}
+                                title={locked ? "Admin is always allowed" : on ? `Allowed ${meta.hint}` : `Denied cannot ${meta.label.toLowerCase()}`}
                                 className={`flex items-center gap-1 border-2 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wide press disabled:opacity-100 ${
                                   on
                                     ? "bg-ink border-ink text-paper"
@@ -649,7 +649,7 @@ export function AdminPermissionsTab({
                           })}
                         </div>
                       ) : (
-                        <span className="font-mono text-[10px] text-muted">—</span>
+                        <span className="font-mono text-[10px] text-muted"></span>
                       )}
                     </td>
                   );
@@ -663,8 +663,8 @@ export function AdminPermissionsTab({
         </table>
       </div>
       <p className="font-mono text-[10px] text-muted flex items-center gap-3">
-        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-ink border border-ink" /> Allowed — role can do this</span>
-        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-paper border-2 border-ink/30" /> Denied — role cannot do this</span>
+        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-ink border border-ink" /> Allowed role can do this</span>
+        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-paper border-2 border-ink/30" /> Denied role cannot do this</span>
         <span className="ml-auto">Admin (locked) is always fully allowed.</span>
       </p>
     </div>
@@ -952,7 +952,7 @@ export function FacultyPerformanceTab({
                       <span className="font-mono text-[11px]">{r.avg.toFixed(1)}%</span>
                     </div>
                   ) : (
-                    <span className="font-mono text-[10px] text-muted">—</span>
+                    <span className="font-mono text-[10px] text-muted"></span>
                   )}
                 </td>
                 <td className={TD}><span className="font-mono text-[11px] text-blood">{r.gpa.toFixed(2)}</span></td>
@@ -1001,7 +1001,7 @@ export function FacultyLeaveTab({
         kicker="Staff Leave"
         title="My"
         accent="Leave"
-        sub="Apply for personal leave — approved by the Director's office."
+        sub="Apply for personal leave approved by the Director's office."
       />
       <form onSubmit={submit} className="border-2 border-ink bg-paper-3 p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Field label="From"><input type="date" className={INPUT} value={from} onChange={(e) => setFrom(e.target.value)} required /></Field>
@@ -1151,7 +1151,7 @@ export function StudentIdCardTab({
         kicker="Identity"
         title="Student"
         accent="ID Card"
-        sub="Your official institute identity — valid for session 2025-26."
+        sub="Your official institute identity valid for session 2025-26."
         right={<BrutalButton tone="ink" onClick={() => printElement("student-id-card")}><Printer className="w-4 h-4" /> Print</BrutalButton>}
       />
       <div id="student-id-card" className="max-w-md mx-auto border-2 border-ink hard overflow-hidden">
@@ -1177,21 +1177,21 @@ export function StudentIdCardTab({
             <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[10px]">
               <span className="text-muted">Course</span><span className="text-ink font-bold">{u.department}</span>
               <span className="text-muted">Semester</span><span className="text-ink font-bold">{u.semester || 1}</span>
-              <span className="text-muted">Blood</span><span className="text-ink font-bold">{a?.bloodGroup || "—"}</span>
+              <span className="text-muted">Blood</span><span className="text-ink font-bold">{a?.bloodGroup || ""}</span>
               <span className="text-muted">Category</span><span className="text-ink font-bold">{a?.category || "General"}</span>
             </div>
           </div>
         </div>
         <div className="border-t-2 border-ink px-5 py-3 bg-paper-2">
           <div className="flex items-center justify-between font-mono text-[9px] text-muted">
-            <span>Admission · {a?.admissionNumber || "—"}</span>
-            <span>Guardian · {a?.guardianPhone || "—"}</span>
+            <span>Admission · {a?.admissionNumber || ""}</span>
+            <span>Guardian · {a?.guardianPhone || ""}</span>
           </div>
         </div>
         <div className="hazard h-2" />
       </div>
       <p className="font-mono text-[10px] text-muted text-center">
-        Print this card and laminate it — carry it for library, lab and exam entry.
+        Print this card and laminate it carry it for library, lab and exam entry.
       </p>
     </div>
   );
@@ -1259,7 +1259,7 @@ export function StudentExamsTab({
               </div>
               <div className="text-right">
                 <Tag tone="ink">{x.examType}</Tag>
-                <p className="font-mono text-[10px] text-muted mt-1">{x.startTime} – {x.endTime}</p>
+                <p className="font-mono text-[10px] text-muted mt-1">{x.startTime} {x.endTime}</p>
                 <p className="font-mono text-[10px] text-muted">{x.room}</p>
               </div>
             </div>
@@ -1343,7 +1343,7 @@ export function StudentProfileTab({
             </Field>
             <Field label="Blood Group">
               <select className={INPUT} value={a.bloodGroup || ""} onChange={(e) => setA({ ...a, bloodGroup: e.target.value })}>
-                <option value="">—</option>
+                <option value=""></option>
                 {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </Field>
@@ -1430,7 +1430,7 @@ export function StudentHistoryTab({
                           <td className={TD}><span className="font-mono text-[10px]">{g.examType}</span></td>
                           <td className={TD}><span className="font-mono text-[11px]">{g.marksObtained} / {g.maxMarks}</span></td>
                           <td className={TD}><Tag tone={g.gradeLetter.startsWith("A") ? "ink" : "blood"}>{g.gradeLetter}</Tag></td>
-                          <td className={TD}><span className="font-serif italic text-xs text-muted">{g.remarks || "—"}</span></td>
+                          <td className={TD}><span className="font-serif italic text-xs text-muted">{g.remarks || ""}</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -1639,7 +1639,7 @@ export function AdminExamCellTab({
                   <td className={TD}><p className="font-mono text-[11px] text-blood">{x.courseCode}</p><p className="font-serif text-xs">{x.courseName}</p></td>
                   <td className={TD}><span className="font-mono text-[11px]">{x.department} · Sem {x.semester}</span></td>
                   <td className={TD}><span className="font-mono text-[11px]">{x.examDate}</span></td>
-                  <td className={TD}><span className="font-mono text-[11px]">{x.startTime} – {x.endTime}</span></td>
+                  <td className={TD}><span className="font-mono text-[11px]">{x.startTime} {x.endTime}</span></td>
                   <td className={TD}><span className="font-mono text-[11px]">{x.room}</span></td>
                   <td className={TD + " text-center"}><button onClick={() => { setEditId(x.id); setF({ examType: x.examType, courseCode: x.courseCode, courseName: x.courseName, department: x.department, semester: x.semester, examDate: x.examDate, startTime: x.startTime, endTime: x.endTime, room: x.room }); }} className="border-2 border-ink p-1.5 hover:bg-ink hover:text-paper press"><Edit2 className="w-3.5 h-3.5" /></button></td>
                   <td className={TD + " text-center"}><button onClick={() => onDeleteExam(x.id)} className="border-2 border-ink p-1.5 hover:bg-blood hover:border-blood press"><Trash2 className="w-3.5 h-3.5" /></button></td>
@@ -1687,7 +1687,7 @@ export function AdminExamCellTab({
                         {m.status === "submitted" && (
                           <>
                             <button onClick={() => onChangeMarkStatus(m.courseId, m.examType, "approved")} title="Approve & publish" className="border-2 border-ink p-1 hover:bg-ink hover:text-paper press"><BadgeCheck className="w-3 h-3" /></button>
-                            <button onClick={() => onChangeMarkStatus(m.courseId, m.examType, "draft")} title="Reject — back to faculty" className="border-2 border-ink p-1 hover:bg-blood hover:border-blood press"><X className="w-3 h-3" /></button>
+                            <button onClick={() => onChangeMarkStatus(m.courseId, m.examType, "draft")} title="Reject back to faculty" className="border-2 border-ink p-1 hover:bg-blood hover:border-blood press"><X className="w-3 h-3" /></button>
                           </>
                         )}
                         {m.status === "approved" && (
@@ -1858,8 +1858,8 @@ function MarksSheet({
                   <td className={TD}><input type="number" min={0} max={maxT} disabled={locked} className={`${INPUT} !w-20 disabled:opacity-50 disabled:bg-paper-2`} value={d.theory} onChange={(e) => set(en.studentId, "theory", e.target.value)} placeholder="0" /></td>
                   <td className={TD}><input type="number" min={0} max={maxP} disabled={locked} className={`${INPUT} !w-20 disabled:opacity-50 disabled:bg-paper-2`} value={d.practical} onChange={(e) => set(en.studentId, "practical", e.target.value)} placeholder="0" /></td>
                   <td className={TD}><span className="font-mono text-[11px] font-bold">{r.total}/{r.maxTotal}</span></td>
-                  <td className={TD}><span className="font-display text-blood border-2 border-ink px-1.5 py-0.5 bg-paper-3">{empty ? "—" : r.gradeLetter}</span></td>
-                  <td className={TD}>{empty ? <span className="font-mono text-[10px] text-muted">—</span> : <Tag tone={r.result === "pass" ? "ink" : "blood"}>{r.result}</Tag>}</td>
+                  <td className={TD}><span className="font-display text-blood border-2 border-ink px-1.5 py-0.5 bg-paper-3">{empty ? "" : r.gradeLetter}</span></td>
+                  <td className={TD}>{empty ? <span className="font-mono text-[10px] text-muted"></span> : <Tag tone={r.result === "pass" ? "ink" : "blood"}>{r.result}</Tag>}</td>
                 </tr>
               );
             })}
@@ -1936,7 +1936,7 @@ export function FacultyMarksEntryTab({
         kicker="Examination Cell"
         title="Exam"
         accent="Marks Entry"
-        sub="Enter internal theory + practical marks per subject — grades compute automatically."
+        sub="Enter internal theory + practical marks per subject grades compute automatically."
       />
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 border-2 border-ink bg-paper-3 p-3">
         <Field label="Exam Type">
@@ -1981,7 +1981,7 @@ export function FacultyMarksEntryTab({
         <Tag tone="blood">Awaiting Approval</Tag>
         <span className="font-mono text-[10px] text-muted">→</span>
         <Tag tone="ink">Approved · Published</Tag>
-        <span className="ml-auto font-mono text-[10px] text-muted">Sheets lock once submitted — the Examination Cell must approve them before students see results. Only your assigned courses appear here.</span>
+        <span className="ml-auto font-mono text-[10px] text-muted">Sheets lock once submitted the Examination Cell must approve them before students see results. Only your assigned courses appear here.</span>
       </div>
       )}
     </div>
@@ -2187,7 +2187,7 @@ export function StudentAdmitCardTab({
             <BrutalButton tone="blood" onClick={onGoToFees}><DollarSign className="w-4 h-4" /> Pay Online / View Fees</BrutalButton>
           </div>
           <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-            You can also settle offline at the college office — your admit card will be available for download as soon as your fees are cleared.
+            You can also settle offline at the college office your admit card will be available for download as soon as your fees are cleared.
           </p>
         </div>
     </div>
@@ -2201,7 +2201,7 @@ export function StudentAdmitCardTab({
         kicker="Examination Cell"
         title="Admit"
         accent="Card"
-        sub="Fee clearance verified — download and carry your admit card."
+        sub="Fee clearance verified download and carry your admit card."
         right={
           <div className="flex flex-wrap gap-2">
             <Tag tone="ink">Fees Cleared ✓</Tag>
@@ -2243,7 +2243,7 @@ export function StudentAdmitCardTab({
                   <td className={TD}><span className="font-mono text-[11px]">{x.examDate}</span></td>
                   <td className={TD}><span className="font-mono text-[10px] text-blood">{x.courseCode}</span><span className="block font-serif text-xs">{x.courseName}</span></td>
                   <td className={TD}><Tag tone="ink">{x.examType}</Tag></td>
-                  <td className={TD}><span className="font-mono text-[11px]">{x.startTime} – {x.endTime}</span></td>
+                  <td className={TD}><span className="font-mono text-[11px]">{x.startTime} {x.endTime}</span></td>
                   <td className={TD}><span className="font-mono text-[11px]">{x.room}</span></td>
                 </tr>
               ))}
@@ -2264,7 +2264,7 @@ export function StudentAdmitCardTab({
         <div className="hazard h-2" />
       </div>
       <p className="font-mono text-[10px] text-muted text-center">
-        Print this card and bring it to every exam — entry without admit card is not allowed.
+        Print this card and bring it to every exam entry without admit card is not allowed.
       </p>
     </div>
   );
@@ -2375,7 +2375,7 @@ export function AttendanceCalendar({
               className={`h-8 border-r-2 border-b-2 border-ink/15 last:border-r-0 flex flex-col items-center justify-center gap-px ${
                 isToday ? "bg-blue-100 ring-2 ring-inset ring-ink/70" : "bg-paper"
               }`}
-              title={s ? `${key} — P${s.present} A${s.absent} L${s.late}` : key}
+              title={s ? `${key} P${s.present} A${s.absent} L${s.late}` : key}
             >
               <span className={`font-mono text-[11px] font-bold leading-none ${s ? "text-ink" : "text-muted"}`}>{day}</span>
               {s ? (
@@ -2385,7 +2385,7 @@ export function AttendanceCalendar({
                   {s.absent > 0 && <span className="text-[8px] font-bold leading-none text-red-600">A</span>}
                 </span>
               ) : (
-                <span className="text-[8px] leading-none text-ink/15">–</span>
+                <span className="text-[8px] leading-none text-ink/15"></span>
               )}
             </div>
           );
@@ -2452,12 +2452,12 @@ export function FacultyMyAttendanceTab({
       </div>
       <Meter value={pct} />
 
-      {/* Calendar view — month grid with green/red cells */}
+      {/* Calendar view month grid with green/red cells */}
       <AttendanceCalendar
         records={mine}
         month={month === "all" ? (months[0] || new Date().toISOString().slice(0, 7)) : month}
         onMonthChange={(m) => setMonth(m)}
-        scopeNote={month === "all" ? "Showing the latest month with records — pick a month above or use the arrows to explore." : undefined}
+        scopeNote={month === "all" ? "Showing the latest month with records pick a month above or use the arrows to explore." : undefined}
       />
 
       <div className="border-2 border-ink overflow-x-auto">
@@ -2572,12 +2572,12 @@ export function AdminAttendanceTab({
         ))}
       </div>
 
-      {/* Calendar view — institution-wide daily pattern */}
+      {/* Calendar view institution-wide daily pattern */}
       <AttendanceCalendar
         records={attendance}
         month={month === "all" ? (months[0] || new Date().toISOString().slice(0, 7)) : month}
         onMonthChange={(m) => setMonth(m)}
-        scopeNote={month === "all" ? "Showing the latest month with records — pick a month above or use the arrows to explore." : undefined}
+        scopeNote={month === "all" ? "Showing the latest month with records pick a month above or use the arrows to explore." : undefined}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

@@ -902,15 +902,15 @@ export function AdminDashboard(props: {
               <div className="min-w-0 flex-1">
                 <p className="font-display uppercase text-sm text-blood">Fee Reminders · {overdueList.length} overdue</p>
                 <p className="font-serif text-xs text-ink/80 mt-0.5">
-                  {overdueList.slice(0, 3).map((f) => `${f.studentName} — ${f.feeType} (₹${feeRemaining(f).toFixed(2)})`).join(" · ")}
-                  {overdueList.length > 3 ? ` · +${overdueList.length - 3} more` : ""} — due date crossed, please follow up.
+                  {overdueList.slice(0, 3).map((f) => `${f.studentName} ${f.feeType} (₹${feeRemaining(f).toFixed(2)})`).join(" · ")}
+                  {overdueList.length > 3 ? ` · +${overdueList.length - 3} more` : ""} due date crossed, please follow up.
                 </p>
               </div>
               <Tag tone="blood">Overdue</Tag>
             </div>
           )}
 
-          {/* Fee structure — per course + semester */}
+          {/* Fee structure per course + semester */}
           <div className="border-2 border-ink">
             <div className="px-3 py-2 border-b-2 border-ink bg-paper-2 flex flex-wrap items-center justify-between gap-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] font-bold">Fee Structure · per course &amp; semester</span>
@@ -930,7 +930,7 @@ export function AdminDashboard(props: {
               </div>
             </div>
             {feeStructures.length === 0 ? (
-              <div className="p-4"><EmptyState label="No fee structures yet" hint="Add a structure — invoices auto-generate for enrolled students." /></div>
+              <div className="p-4"><EmptyState label="No fee structures yet" hint="Add a structure invoices auto-generate for enrolled students." /></div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1051,7 +1051,7 @@ export function AdminDashboard(props: {
           </div>
           )}
 
-          {/* Collections Log — audit trail of who collected what */}
+          {/* Collections Log audit trail of who collected what */}
           <div className="border-2 border-ink">
             <div className="px-3 py-2 border-b-2 border-ink bg-paper-2 flex flex-wrap items-center justify-between gap-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] font-bold">
@@ -1470,7 +1470,7 @@ function AdminTimetablePanel({
                 {t.courseName}
               </h4>
               <p className="font-mono text-xs text-ink mt-1">
-                {t.courseCode} · {t.startTime} – {t.endTime}
+                {t.courseCode} · {t.startTime} {t.endTime}
               </p>
               <p className="font-serif italic text-xs text-muted mt-1">{t.facultyName}</p>
             </div>
@@ -1589,7 +1589,7 @@ export function FacultyDashboard(props: {
     setTouched(t);
   };
   const saveRoll = () => {
-    // Only students the teacher actually marked get recorded — no accidental
+    // Only students the teacher actually marked get recorded no accidental
     // "present" defaults for students who were never touched.
     const rows = rollStudents
       .filter((s) => touched[s.id])
@@ -1718,7 +1718,7 @@ export function FacultyDashboard(props: {
                       <Stamp>{t.courseCode}</Stamp>
                       <span className="font-mono text-[10px] text-paper/60">{t.dayOfWeek}</span>
                     </div>
-                    <p className="font-serif text-xs text-paper/90 mt-1">{t.startTime} – {t.endTime} · {t.room}</p>
+                    <p className="font-serif text-xs text-paper/90 mt-1">{t.startTime} {t.endTime} · {t.room}</p>
                   </div>
                 ))}
               </div>
@@ -2092,7 +2092,7 @@ function TimetableGrid({ slots }: { slots: TimetableSlot[] }) {
               <span className="font-mono text-[10px] text-blood border border-blood px-1.5 py-0.5">{t.room}</span>
             </div>
             <h4 className="font-display uppercase text-sm text-ink leading-tight">{t.courseName}</h4>
-            <p className="font-mono text-xs text-ink mt-1">{t.startTime} – {t.endTime}</p>
+            <p className="font-mono text-xs text-ink mt-1">{t.startTime} {t.endTime}</p>
             <p className="font-serif italic text-xs text-muted mt-1">{t.facultyName}</p>
           </div>
         ))}
@@ -2320,7 +2320,7 @@ export function StudentDashboard(props: {
               <div className="min-w-0 flex-1">
                 <p className="font-display uppercase text-sm text-blood">Attendance Alert</p>
                 <p className="font-serif text-xs text-ink/80 mt-0.5">
-                  Your attendance is <strong>{pct}%</strong> — below the required 75%. The institute requires 75% attendance for exam eligibility. Please attend all remaining classes.
+                  Your attendance is <strong>{pct}%</strong> below the required 75%. The institute requires 75% attendance for exam eligibility. Please attend all remaining classes.
                 </p>
               </div>
               <Tag tone="blood">At Risk</Tag>
@@ -2334,12 +2334,12 @@ export function StudentDashboard(props: {
           </div>
           <Meter value={pct} />
 
-          {/* Calendar view — month grid with green/red cells */}
+          {/* Calendar view month grid with green/red cells */}
           <AttendanceCalendar
             records={mine}
             month={attMonth === "all" ? (months[0] || new Date().toISOString().slice(0, 7)) : attMonth}
             onMonthChange={(m) => setAttMonth(m)}
-            scopeNote={attMonth === "all" ? "Showing the latest month with records — pick a month above or use the arrows to explore." : undefined}
+            scopeNote={attMonth === "all" ? "Showing the latest month with records pick a month above or use the arrows to explore." : undefined}
           />
 
           {/* Subject-wise attendance */}
@@ -2394,20 +2394,20 @@ export function StudentDashboard(props: {
         </div>
       )}
 
-      {/* RESULTS (student) — internal exam result sheet */}
+      {/* RESULTS (student) internal exam result sheet */}
       {currentTab === "results" && (
         <StudentResultsTab marks={internalMarks} currentUser={currentUser} />
       )}
 
       {currentTab === "fees" && (
         <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 space-y-4">
-          <SectionTitle index="04" kicker="Bursar" title="Fees &" accent="Receipts" sub="Pay online — full or in installments — and get a receipt for every transaction." />
+          <SectionTitle index="04" kicker="Bursar" title="Fees &" accent="Receipts" sub="Pay online full or in installments and get a receipt for every transaction." />
 
           {overdueMine.length > 0 && (
             <div className="border-2 border-blood bg-paper-3 hard p-4 flex flex-wrap items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-blood shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="font-display uppercase text-sm text-blood">Fee Due — Action Needed</p>
+                <p className="font-display uppercase text-sm text-blood">Fee Due Action Needed</p>
                 <p className="font-serif text-xs text-ink/80 mt-0.5">
                   {overdueMine.length} invoice(s) crossed their due date. Pay soon to keep your admit card unlocked.
                 </p>
@@ -2548,7 +2548,7 @@ export function StudentDashboard(props: {
                 {(l.reviewedBy || l.remarks) && (
                   <p className="mt-2 pt-2 border-t-2 border-dashed border-ink/25 font-mono text-[10px] text-muted">
                     {l.reviewedBy && <>Reviewed by {l.reviewedBy}{l.reviewedAt ? ` on ${l.reviewedAt}` : ""}</>}
-                    {l.remarks && <span className="text-ink"> — “{l.remarks}”</span>}
+                    {l.remarks && <span className="text-ink"> “{l.remarks}”</span>}
                   </p>
                 )}
               </article>
@@ -2598,7 +2598,7 @@ export function StudentDashboard(props: {
         <StudentExamsTab exams={exams} enrollments={enrollments} currentUser={currentUser} />
       )}
 
-      {/* ADMIT CARD (student) — fee-gated */}
+      {/* ADMIT CARD (student) fee-gated */}
       {currentTab === "admitcard" && (
         <StudentAdmitCardTab
           currentUser={currentUser}

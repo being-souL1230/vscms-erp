@@ -1,6 +1,6 @@
 /**
  * Shared grading logic for the internal examination module.
- * Pure functions — safe to import on the server (seed / API) and client (UI).
+ * Pure functions safe to import on the server (seed / API) and client (UI).
  */
 
 export interface InternalResult {

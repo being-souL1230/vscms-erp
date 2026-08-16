@@ -108,12 +108,12 @@ export interface FeePayment {
   paymentMethod: string;
   receiptNumber: string;
   paidAt: string;
-  /** Who collected this payment (session actor — admin, bursar or faculty). */
+  /** Who collected this payment (session actor admin, bursar or faculty). */
   collectedBy?: string | null;
   collectedById?: number | null;
 }
 
-/** Outstanding amount (total − paid so far), never negative. */
+/** Outstanding amount (total  paid so far), never negative. */
 export function feeRemaining(f: Pick<FeeRecord, "amount" | "paidAmount">): number {
   return Math.max(0, Number(f.amount || 0) - Number(f.paidAmount || 0));
 }
