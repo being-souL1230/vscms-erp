@@ -71,39 +71,69 @@ type AppData = {
   facultyAttendance: FacultyAttendance[];
 };
 
-async function fetchAllData(force = false): Promise<AppData> {
-  await fetch("/api/seed", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(force ? { force: true } : {}),
-  });
-  const [s, f, c, a, g, fe, n, as, tt, dp, lv, ad, dc, se, sm, ss, ex, em, im, pm, us, en, fa, fst, fp] = await Promise.all([
-    fetch("/api/students").then((r) => r.json()),
-    fetch("/api/faculty").then((r) => r.json()),
-    fetch("/api/courses").then((r) => r.json()),
-    fetch("/api/attendance").then((r) => r.json()),
-    fetch("/api/grades").then((r) => r.json()),
-    fetch("/api/fees").then((r) => r.json()),
-    fetch("/api/notices").then((r) => r.json()),
-    fetch("/api/assignments").then((r) => r.json()),
-    fetch("/api/timetable").then((r) => r.json()),
-    fetch("/api/departments").then((r) => r.json()),
-    fetch("/api/leaves").then((r) => r.json()),
-    fetch("/api/admissions").then((r) => r.json()),
-    fetch("/api/documents").then((r) => r.json()),
-    fetch("/api/sections").then((r) => r.json()),
-    fetch("/api/semesters").then((r) => r.json()),
-    fetch("/api/sessions").then((r) => r.json()),
-    fetch("/api/exams").then((r) => r.json()),
-    fetch("/api/exam-master").then((r) => r.json()),
-    fetch("/api/internal-marks").then((r) => r.json()),
-    fetch("/api/permissions").then((r) => r.json()),
-    fetch("/api/users").then((r) => r.json()),
-    fetch("/api/enrollments").then((r) => r.json()),
-    fetch("/api/faculty-attendance").then((r) => r.json()),
-    fetch("/api/fee-structures").then((r) => r.json()),
-    fetch("/api/fee-payments").then((r) => r.json()),
-  ]);
+/**
+ * fetch with retry: retries network failures and 5xx responses. The backend
+ * can be briefly unavailable while it wakes up after Render's free-tier idle
+ * sleep or a local restart, and a couple of retries cover that window.
+ * 401/403/404/429 are treated as final and returned as-is (auth errors are
+ * not transient, and retrying a rate-limit would only make it worse).
+ */
+async function fetchJson(url: string, init?: RequestInit, attempts = 2): Promise<any> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init);
+      if (
+        res.ok ||
+        res.status === 401 ||
+        res.status === 403 ||
+        res.status === 404 ||
+        res.status === 429
+      )
+        return res.json().catch(() => null);
+      lastErr = new Error(`${url} returned ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+    }
+    await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
+  try {
+    await fetchJson("/api/seed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(force ? { force: true } : {}),
+    });
+    const [s, f, c, a, g, fe, n, as, tt, dp, lv, ad, dc, se, sm, ss, ex, em, im, pm, us, en, fa, fst, fp] = await Promise.all([
+      fetchJson("/api/students"),
+      fetchJson("/api/faculty"),
+      fetchJson("/api/courses"),
+      fetchJson("/api/attendance"),
+      fetchJson("/api/grades"),
+      fetchJson("/api/fees"),
+      fetchJson("/api/notices"),
+      fetchJson("/api/assignments"),
+      fetchJson("/api/timetable"),
+      fetchJson("/api/departments"),
+      fetchJson("/api/leaves"),
+      fetchJson("/api/admissions"),
+      fetchJson("/api/documents"),
+      fetchJson("/api/sections"),
+      fetchJson("/api/semesters"),
+      fetchJson("/api/sessions"),
+      fetchJson("/api/exams"),
+      fetchJson("/api/exam-master"),
+      fetchJson("/api/internal-marks"),
+      fetchJson("/api/permissions"),
+      fetchJson("/api/users"),
+      fetchJson("/api/enrollments"),
+      fetchJson("/api/faculty-attendance"),
+      fetchJson("/api/fee-structures"),
+      fetchJson("/api/fee-payments"),
+    ]);
   return {
     students: Array.isArray(s) ? s : [],
     faculty: Array.isArray(f) ? f : [],
@@ -131,7 +161,17 @@ async function fetchAllData(force = false): Promise<AppData> {
     allUsers: Array.isArray(us) ? us : [],
     enrollments: Array.isArray(en) ? en : [],
     facultyAttendance: Array.isArray(fa) ? fa : [],
-  };
+    };
+  } catch (e) {
+    // The backend may still be cold-starting (Render free tier sleeps when
+    // idle; a local `dotnet run` takes a few seconds to boot). Retry the whole
+    // load a couple of times instead of showing an empty page.
+    if (attempt < 2) {
+      await new Promise((r) => setTimeout(r, 6000 * (attempt + 1)));
+      return fetchAllData(force, attempt + 1);
+    }
+    throw e;
+  }
 }
 
 export default function VscmsErpApp() {

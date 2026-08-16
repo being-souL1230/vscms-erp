@@ -48,12 +48,15 @@ builder.Services.AddRateLimiter(options =>
         await ctx.HttpContext.Response.WriteAsJsonAsync(
             new { error = "Too many requests. Please try again later." });
     };
+    // 300 req/min per IP: the UI fans out ~25 parallel requests per page load
+    // (plus a couple of retries while the server wakes from idle), so keep the
+    // cap generous while still blocking abusive clients.
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
         ctx => RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: Security.ClientIp(ctx),
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 120,
+                PermitLimit = 300,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
