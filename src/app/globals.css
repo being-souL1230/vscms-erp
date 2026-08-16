@@ -23,12 +23,58 @@
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    cursor: default;
   }
 
   body {
     background: #f1f5f9;
     color: #0f172a;
     font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    cursor: default;
+  }
+
+  /* Default mouse cursor for standard text elements so clicks don't spawn typing carets */
+  h1, h2, h3, h4, h5, h6, p, span, div, td, th, label, summary, header, aside, main, section {
+    cursor: default;
+  }
+
+  /* Keep typing cursor strictly for text editable input fields */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  textarea,
+  [contenteditable="true"] {
+    cursor: text !important;
+  }
+
+  /* Interactive elements show pointer cursor */
+  button,
+  a,
+  select,
+  summary,
+  [role="button"],
+  .press,
+  .lift,
+  .cursor-pointer {
+    cursor: pointer !important;
+  }
+
+  /* Prevent text selection highlight artifacts when clicking buttons, tabs & badges */
+  button,
+  a,
+  select,
+  [role="button"],
+  .press,
+  .stamp,
+  .tag,
+  nav button {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   ::selection {
