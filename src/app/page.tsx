@@ -41,6 +41,7 @@ import {
   FacultyDashboard,
   StudentDashboard,
 } from "@/components/dashboards";
+import { CMSbot } from "@/components/cmsbot";
 
 type AppData = {
   students: User[];
@@ -102,11 +103,13 @@ async function fetchJson(url: string, init?: RequestInit, attempts = 2): Promise
 
 async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
   try {
-    await fetchJson("/api/seed", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(force ? { force: true } : {}),
-    });
+    if (force) {
+      await fetchJson("/api/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: true }),
+      });
+    }
     const [s, f, c, a, g, fe, n, as, tt, dp, lv, ad, dc, se, sm, ss, ex, em, im, pm, us, en, fa, fst, fp] = await Promise.all([
       fetchJson("/api/students"),
       fetchJson("/api/faculty"),
@@ -163,9 +166,6 @@ async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
     facultyAttendance: Array.isArray(fa) ? fa : [],
     };
   } catch (e) {
-    // The backend may still be cold-starting (Render free tier sleeps when
-    // idle; a local `dotnet run` takes a few seconds to boot). Retry the whole
-    // load a couple of times instead of showing an empty page.
     if (attempt < 2) {
       await new Promise((r) => setTimeout(r, 6000 * (attempt + 1)));
       return fetchAllData(force, attempt + 1);
@@ -280,20 +280,21 @@ export default function VscmsErpApp() {
     };
   }, []);
 
-  const switchRole = async (r: UserRole) => {
+  const switchRole = (r: UserRole) => {
     setTab("overview");
-    try {
-      const res = await fetch("/api/auth/demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: r }),
-      });
-      const body = await res.json();
-      setUser(res.ok && body.user ? body.user : PROFILES[r]);
-    } catch {
-      setUser(PROFILES[r]);
-    }
     setRole(r);
+    setUser(PROFILES[r]);
+    fetch("/api/auth/demo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: r }),
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        if (body?.user) setUser(body.user);
+      })
+      .catch(() => {});
+
     toast(
       "info",
       `Console - ${r}`,
@@ -945,6 +946,7 @@ export default function VscmsErpApp() {
       </footer>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      <CMSbot currentUser={user} activeRole={role} notices={notices} />
     </div>
   );
 }

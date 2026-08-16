@@ -163,6 +163,7 @@ app.MapGroup("/api/permissions").MapPermissionEndpoints();
 app.MapGroup("/api/profile").MapProfileEndpoints();
 app.MapGroup("/api/users").MapUserEndpoints();
 app.MapGroup("/api/seed").MapSeedEndpoints();
+app.MapGroup("/api/chat").MapChatEndpoints();
 
 app.Run();
 
