@@ -58,7 +58,7 @@ public static class AssignmentEndpoints
             cmd.Parameters.AddWithValue("@sid", user.Id);
             cmd.Parameters.AddWithValue("@sname", user.Name);
             cmd.Parameters.AddWithValue("@text", string.IsNullOrEmpty(body.SubmissionText) ? "Submitted through online student portal." : body.SubmissionText);
-            cmd.Parameters.AddWithValue("@fileUrl", string.IsNullOrEmpty(body.FileUrl) ? "https://apexuniversity.edu/drive/submission-doc.pdf" : body.FileUrl);
+            cmd.Parameters.AddWithValue("@fileUrl", string.IsNullOrEmpty(body.FileUrl) ? "https://vscms.edu/drive/submission-doc.pdf" : body.FileUrl);
             var id = (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
             return Results.Json(LoadSubmission(conn, id));
         }

@@ -11,7 +11,7 @@ namespace VscmsErp.Api.Endpoints;
 
 /// <summary>
 /// CMSbot AI Assistant Endpoint powered by Groq API (llama-3.3-70b-versatile).
-/// Features Token-Optimized Database Context, Targeted Roll Search, & Strict College Domain Guardrails.
+/// Features Token-Optimized Database Context, Targeted Roll Search, & Strict VSCMS Domain Guardrails.
 /// </summary>
 public static class ChatEndpoints
 {
@@ -64,7 +64,7 @@ public static class ChatEndpoints
         // 1. FETCH TOKEN-OPTIMIZED DATABASE CONTEXT
         var dbContextSummary = FetchLiveDatabaseContext(user, role, body.Message);
 
-        // 2. Build Role-based System Prompt with Strict College Domain Scope Rules
+        // 2. Build Role-based System Prompt with Strict VSCMS Domain Scope Rules
         var systemPrompt = BuildSystemPrompt(role, userName, dbContextSummary);
 
         if (!string.IsNullOrWhiteSpace(apiKey))
@@ -309,7 +309,7 @@ public static class ChatEndpoints
     {
         var roleContext = role switch
         {
-            "admin" => "You are CMSbot, the Executive AI Assistant for Apex University ERP Director & Admin Office. You have live database access to student records, roll numbers, faculty rosters, fee collections, grade sheets, and campus operations.",
+            "admin" => "You are CMSbot, the Executive AI Assistant for VSCMS ERP Director & Admin Office. You have live database access to student records, roll numbers, faculty rosters, fee collections, grade sheets, and campus operations.",
             "faculty" => $"You are CMSbot, the Faculty AI Assistant for {userName}. You assist with class attendance registers, internal exam marks entry, coursework assignments, timetable schedules, and leave reviews.",
             _ => $"You are CMSbot, the Student AI Assistant for {userName}. You provide friendly, concise help regarding student attendance, GPA, fee dues, exam timetable, course schedules, and campus notices."
         };
@@ -317,10 +317,10 @@ public static class ChatEndpoints
         return $@"{roleContext}
 
 STRICT DOMAIN BOUNDARY & SCOPE RULES:
-- You are strictly an AI assistant for Apex University ERP.
-- You MUST ONLY answer questions related to Apex University, its students, faculty, departments, courses, attendance, fees, grades, exams, timetable, campus notices, admissions, and university operations.
+- You are strictly an AI assistant for VSCMS ERP.
+- You MUST ONLY answer questions related to VSCMS, its students, faculty, departments, courses, attendance, fees, grades, exams, timetable, campus notices, admissions, and university operations.
 - If the user asks ANY question outside of college/university operations (e.g. general trivia, coding scripts, world news, cooking recipes, sports, pop culture, entertainment, or irrelevant general knowledge), YOU MUST STRICTLY REFUSE TO ANSWER.
-- Standard refusal response for irrelevant questions: ""I am CMSbot, the Apex University ERP Assistant. I am strictly configured to assist only with college-related queries such as student attendance, fee dues, grades, faculty rosters, course schedules, and campus notices. Please ask an ERP or campus-related question!""
+- Standard refusal response for irrelevant questions: ""I am CMSbot, the VSCMS ERP Assistant. I am strictly configured to assist only with college-related queries such as student attendance, fee dues, grades, faculty rosters, course schedules, and campus notices. Please ask an ERP or campus-related question!""
 
 REAL-TIME DATABASE FACTS:
 {dbContextSummary}
@@ -377,7 +377,7 @@ GUIDELINES:
             "faculty", "teacher", "professor", "hod", "department", "course", "subject", "timetable",
             "schedule", "exam", "notice", "announcement", "leave", "vacation", "admission", "document",
             "section", "semester", "session", "user", "college", "university", "campus", "erp", "cms",
-            "who", "list", "show", "find", "search", "hi", "hello", "hey", "help", "option", "detail"
+            "who", "list", "show", "find", "search", "hi", "hello", "hey", "help", "option", "detail", "vscms"
         };
 
         return keywords.Any(k => q.Contains(k));
@@ -389,7 +389,7 @@ GUIDELINES:
 
         if (!IsCollegeRelatedQuery(q))
         {
-            return "I am **CMSbot**, the Apex University ERP Assistant. I am strictly configured to assist only with college-related queries such as student attendance, fee dues, grades, faculty rosters, course schedules, and campus notices. Please ask an ERP or campus-related question!";
+            return "I am **CMSbot**, the VSCMS ERP Assistant. I am strictly configured to assist only with college-related queries such as student attendance, fee dues, grades, faculty rosters, course schedules, and campus notices. Please ask an ERP or campus-related question!";
         }
 
         if (dbContextSummary.Contains("TARGETED MATCH ROLL"))
