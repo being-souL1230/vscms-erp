@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ============================================================
-   VSCMS ERP - SIMPLE LIGHT COLLEGE ERP THEME
-   Clean white surfaces · soft slate borders · academic blue
+   APEX UNIVERSITY ERP - ULTRA-CLEAN MODERN SAAS THEME
+   Crisp white surfaces · hairline slate borders · executive blue
    ============================================================ */
 @theme {
   --color-paper: #ffffff;
@@ -14,9 +14,9 @@
   --color-blood-dark: #1d4ed8;
   --color-muted: #64748b;
 
-  --font-display: "Inter", "Segoe UI", Arial, sans-serif;
-  --font-mono: "Inter", "Segoe UI", Arial, sans-serif;
-  --font-serif: "Inter", "Segoe UI", Arial, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-mono: "Inter", sans-serif;
+  --font-serif: "Inter", sans-serif;
 }
 
 @layer base {
@@ -27,7 +27,7 @@
   }
 
   body {
-    background: #f1f5f9;
+    background: #f8fafc;
     color: #0f172a;
     font-family: "Inter", "Segoe UI", Arial, sans-serif;
     cursor: default;
@@ -49,6 +49,7 @@
     caret-color: auto !important;
   }
 
+  /* Keep typing cursor strictly for text editable input fields */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -62,6 +63,7 @@
     cursor: text !important;
   }
 
+  /* Interactive elements show pointer cursor */
   button,
   a,
   select,
@@ -73,6 +75,7 @@
     cursor: pointer !important;
   }
 
+  /* Prevent text selection highlight artifacts when clicking buttons, tabs & badges */
   button,
   a,
   select,
@@ -90,7 +93,6 @@
     color: #1e3a8a;
   }
 }
-
 
 .text-ink {
   color: #0f172a !important;
@@ -122,9 +124,8 @@
   color: #ffffff !important;
 }
 
-
 .hover\:bg-blood:hover {
-  background-color: #2563eb !important;
+  background-color: #1d4ed8 !important;
   color: #ffffff !important;
 }
 .hover\:bg-ink:hover {
@@ -132,9 +133,6 @@
   color: #ffffff !important;
 }
 
-/* Same root cause for row/card hover accents: the layered
-   `group-hover:text-blood` utility lost to the !important `.text-ink`
-   base color, so rows never turned blue on hover. Restore it. */
 .group:hover .group-hover\:text-blood {
   color: #2563eb !important;
 }
@@ -153,31 +151,34 @@
 [class~="border-paper\/15"],
 [class~="border-paper\/30"],
 [class~="border-paper\/40"] {
-  border-color: #e2e8f0 !important;
+  border-color: #f1f5f9 !important;
 }
 [class*="text-paper/"] {
   color: #64748b !important;
 }
 
-/* Replace hard offsets with restrained elevation. */
+/* Crisp, subtle modern elevation & soft shadow styles */
 .hard,
 .hard-sm,
 .hard-lg,
 .hard-red,
 .hard-paper {
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04) !important;
+  border-radius: 12px !important;
 }
 .press:active,
 .press-red:active {
-  transform: translateY(1px) !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  transform: scale(0.98) !important;
+  box-shadow: none !important;
+}
+.lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .lift:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.11) !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
 }
 
-/* Remove tilted sticker treatment and keep cards aligned. */
 .tilt-l,
 .tilt-r,
 .tilt-m {
@@ -189,18 +190,21 @@
   transform: translateY(-2px) !important;
 }
 
-/* Keep only a quiet blue accent strip instead of hazard decoration. */
+/* Subtle primary blue indicator accent bar */
 .hazard,
 .hazard-cream {
   background-image: none !important;
   background-color: #2563eb !important;
 }
 
-/* Cleaner typography: no poster-style all caps or excessive tracking. */
-.font-display,
+/* Refined typography styling */
+.font-display {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif !important;
+  letter-spacing: -0.015em;
+}
 .font-mono,
 .font-serif {
-  font-family: "Inter", "Segoe UI", Arial, sans-serif !important;
+  font-family: "Inter", sans-serif !important;
 }
 .uppercase {
   text-transform: none !important;
@@ -209,17 +213,17 @@
   letter-spacing: normal !important;
 }
 
-/* Form controls */
+/* Form controls styling */
 input,
 select,
 textarea {
   border-radius: 8px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
-/* Compact, useful motion only. */
+/* Micro animations */
 @keyframes blink {
-  0%,
-  100% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
 .blink {
@@ -227,26 +231,26 @@ textarea {
 }
 
 @keyframes pop-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(4px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .pop-in {
-  animation: pop-in 0.18s ease-out both;
+  animation: pop-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Replace the moving marquee with a stable, simple utility bar. */
 .marquee-track {
   animation: none !important;
   transform: none !important;
   display: block !important;
 }
 
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
@@ -268,9 +272,6 @@ textarea {
   }
 }
 
-/* ============================================================
-   PRINT only the selected element prints (see printElement)
-   ============================================================ */
 #print-host {
   display: none;
 }

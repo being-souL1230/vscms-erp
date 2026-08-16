@@ -126,15 +126,15 @@ export function Tag({
   className?: string;
 }) {
   const tones: Record<string, string> = {
-    ink: "bg-ink text-paper border-ink",
-    blood: "bg-blood text-paper border-ink",
-    paper: "bg-paper text-ink border-ink",
-    muted: "bg-paper-2 text-ink border-ink",
-    outline: "bg-transparent text-ink border-ink",
+    ink: "bg-slate-900 text-white border-slate-900",
+    blood: "bg-blue-50 text-blue-700 border-blue-200",
+    paper: "bg-white text-slate-900 border-slate-200",
+    muted: "bg-slate-100 text-slate-700 border-slate-200",
+    outline: "bg-transparent text-slate-700 border-slate-300",
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-[0.14em] px-2 py-0.5 border-2 ${tones[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 font-sans text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${tones[tone]} ${className}`}
     >
       {children}
     </span>
@@ -150,7 +150,7 @@ export function Stamp({
 }) {
   return (
     <span
-      className={`inline-block bg-blood text-paper font-mono text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 border-2 border-ink hard-sm ${className}`}
+      className={`inline-block bg-blue-600 text-white font-sans text-[11px] font-semibold px-3 py-1 rounded-full shadow-xs ${className}`}
     >
       {children}
     </span>
@@ -177,11 +177,11 @@ export function BrutalButton({
   title?: string;
 }) {
   const tones: Record<Tone, string> = {
-    blood: "bg-blood text-paper border-ink hard press",
-    ink: "bg-ink text-paper border-ink hard press",
-    paper: "bg-paper text-ink border-ink hard press",
+    blood: "bg-blue-600 text-white hover:bg-blue-700 shadow-xs hover:shadow-md",
+    ink: "bg-slate-900 text-white hover:bg-slate-800 shadow-xs hover:shadow-md",
+    paper: "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-xs",
     ghost:
-      "bg-transparent text-ink border-ink hard-sm press hover:bg-ink hover:text-paper",
+      "bg-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80",
   };
   return (
     <button
@@ -189,7 +189,7 @@ export function BrutalButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.12em] px-4 py-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${tones[tone]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-sans text-xs font-semibold px-4 py-2.5 rounded-lg transition-all duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed ${tones[tone]} ${className}`}
     >
       {children}
     </button>
@@ -212,24 +212,25 @@ export function SectionTitle({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b-2 border-ink pb-4">
+    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-4">
       <div>
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-2 mb-1.5">
           {index && (
-            <span className="font-mono text-xs font-bold text-blood">§ {index}</span>
+            <span className="font-mono text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+              {index}
+            </span>
           )}
           {kicker && (
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted">
+            <span className="font-sans text-xs font-medium text-slate-500">
               {kicker}
             </span>
           )}
-          <span className="hazard h-3 w-10 border border-ink" aria-hidden />
         </div>
-        <h2 className="font-display uppercase leading-[0.92] text-2xl sm:text-3xl lg:text-4xl text-ink">
-          {title} {accent && <span className="text-blood">{accent}</span>}
+        <h2 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight">
+          {title} {accent && <span className="text-blue-600">{accent}</span>}
         </h2>
         {sub && (
-          <p className="mt-2 font-serif italic text-sm text-muted max-w-xl">{sub}</p>
+          <p className="mt-1.5 font-sans text-sm text-slate-500 max-w-xl">{sub}</p>
         )}
       </div>
       {right && <div className="flex flex-wrap items-center gap-2">{right}</div>}
