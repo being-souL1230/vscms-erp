@@ -1,114 +1,180 @@
-# Apex University ERP
+# Apex University ERP - System Architecture and Module Manual
 
-Apex University ERP (Visual Student & Campus Management System) is a university management platform. It provides administrative tools, academic tracking, student billing, attendance management, examination workflows, document verification, and role-based security.
+Apex University ERP (Visual Student and Campus Management System) is an enterprise-grade university management system built with a decoupled architecture featuring a Next.js 16 frontend and an ASP.NET Core (.NET 10) backend.
 
-## Technology Stack
+The system manages academic governance, student records, fee collections, faculty registers, examination workflows, coursework submissions, document verification, and granular role-based security.
 
-| Layer | Technology Used | Description |
-| :--- | :--- | :--- |
-| Frontend | Next.js 16 (React 19, TypeScript) | Modern UI with App Router, server-side rendering, and responsive components |
-| Styling | Tailwind CSS v4, Lucide Icons | Responsive layout design, mobile sidebar drawer, and accessible controls |
-| Backend API | ASP.NET Core (.NET 10) | High-performance C# RESTful Web API backend |
-| Database | PostgreSQL / SQLite | Data persistence handled via Drizzle ORM and C# data access handlers |
-| Security | BCrypt.js, HttpOnly Session Cookies | Password hashing, rate limiting, origin protection, and session tokens |
+## System Architecture
 
-## Project Architecture
+The project consists of a Next.js client application and a C# ASP.NET Core web API backend connected through a same-origin proxy rewrite pipeline.
 
 ```
 apex-university-erp/
-├── aspnet-backend/             # ASP.NET Core C# API Backend
-│   ├── Auth/                   # Session authentication and cookie handlers
-│   ├── Data/                   # Database connection and DDL initialization
-│   ├── Endpoints/              # C# API Endpoint Controllers (24 modules)
+├── aspnet-backend/             # ASP.NET Core (.NET 10) API Server
+│   ├── Auth/                   # Cookie management, session tokens, and rate limiters
+│   ├── Data/                   # Database configuration and DDL schema handlers
+│   ├── Endpoints/              # C# API Controllers (24 distinct module endpoints)
 │   ├── Lib/                    # Business logic, grading formulas, and seed logic
-│   └── Program.cs              # Application entry point and security pipeline
-├── src/                        # Next.js Frontend Application
-│   ├── app/                    # Next.js App Router pages and global CSS
+│   ├── Program.cs              # Server boot pipeline, CORS, and middleware setup
+│   └── aspnet-backend.csproj   # C# project specification and dependencies
+├── src/                        # Next.js 16 Client Application
+│   ├── app/                    # Next.js App Router pages, layout, and global CSS
 │   ├── components/             # React UI components (Shell, Dashboards, Features, Charts)
-│   ├── db/                     # TypeScript schema and database definitions
-│   ├── lib/                    # Client-side utility functions and helper scripts
-│   └── middleware.ts           # Authentication and session validation middleware
-├── next.config.ts              # API rewrite proxies and HTTP security headers
-└── package.json                # Project dependencies and script definitions
+│   ├── db/                     # TypeScript database schemas and Drizzle ORM setup
+│   ├── lib/                    # Client utility functions, grading, and auth helpers
+│   ├── types/                  # TypeScript interface definitions for ERP models
+│   └── middleware.ts           # Next.js authentication middleware handler
+├── next.config.ts              # API proxy rewrite configuration and security headers
+├── package.json                # Frontend dependencies and CLI scripts
+└── LICENSE                     # Proprietary software license agreement
 ```
 
-## System Modules and Working Guide
+## Technology Stack
 
-| Module Name | Purpose | How It Works |
+| Layer | Technology | Purpose and Implementation Details |
 | :--- | :--- | :--- |
-| User & Auth Module | Authentication & Access Control | Handles user login, session token management using HttpOnly cookies, password hashing with BCrypt, and instant role switching between Admin, Faculty, and Student roles. |
-| Student Management | Scholar Records & Profiles | Stores student demographics, roll numbers, department assignments, GPA, contact info, and status. Admins can create, edit, and delete student records. |
-| Faculty Management | Academic Staff Administration | Manages teacher profiles, employee IDs, area specializations, designations, and department assignments. |
-| Course Management | Curriculum & Credits Control | Manages course codes, course titles, credit values, semester allocations, assigned faculty, and room locations. |
-| Department Management | Academic Divisions | Configures university departments, assigns Heads of Department (HOD), tracks student and faculty counts, and manages office locations. |
-| Attendance Module | Student & Staff Register | Allows faculty to record daily or period-wise student attendance, calculate attendance percentages, and track faculty attendance. |
-| Fees & Billing Module | Tuition & Structure Control | Manages semester fee structures, generates automated student invoices, processes full or partial fee payments, and prints payment receipts. |
-| Grading & Marks Module | Academic Evaluation & CGPA | Enables faculty to input internal assessment marks, practical marks, calculate letter grades, and auto-compute GPA and result statuses. |
-| Timetable Module | Class Schedule Allocation | Manages weekly lecture slots by day, time, room number, faculty, course code, and semester. |
-| Examination Cell | Offline Exam Planning | Defines exam schedules (Mid-Term, End-Term), configures passing thresholds, tracks schedules, and manages exam cells. |
-| Assignment Module | Coursework & Submissions | Faculty publish assignments with due dates and descriptions. Students submit coursework text or files for faculty grading. |
-| Noticeboard Module | Campus Announcements | Publishes priority bulletins and news to scholars and staff based on urgent or normal priorities. |
-| Leave Governance | Leave Request Workflow | Students submit leave requests with date ranges and reasons. Faculty or admins approve or reject requests with review remarks. |
-| Document Vault | Identity & Verification | Allows students to upload identity documents (PDF/images) for administrative verification and approval tracking. |
-| Academic Setup | Semesters, Sections & Sessions | Configures academic years, semesters, section divisions, and student course enrollments. |
-| Permissions Matrix | Dynamic Access Control | Controls granular read, create, edit, and delete permissions for each role across all system modules. |
+| Frontend Framework | Next.js 16 (React 19, TypeScript) | Provides client-side rendering, dynamic dashboard switching, and server routing. |
+| Styling & UI | Tailwind CSS v4, Lucide Icons | Responsive layout design, brutalist visual styling, mobile drawer navigation, and accessible forms. |
+| Backend Server | ASP.NET Core (.NET 10) | RESTful API backend handling data validation, business logic, rate limiting, and database access. |
+| Database Layer | PostgreSQL / SQLite | Relational storage for user accounts, fee records, grades, timetable, and attendance logs. |
+| Security Pipeline | BCrypt, HttpOnly Cookies, CORS | Password hashing, session token validation, per-IP rate limiting, and origin check middleware. |
 
-## Quick Command Reference
+## Detailed Module Specifications and Workflows
 
-### Frontend Commands
-
-| Command | Purpose |
-| :--- | :--- |
-| `npm run dev` | Start Next.js development server on http://localhost:3000 |
-| `npm run build` | Build Next.js production bundle with Turbopack |
-| `npm run start` | Run Next.js production server |
-| `npm run typecheck` | Execute TypeScript compiler check without emitting files |
-| `npm run lint` | Run ESLint check across all project files |
-| `npm run db:push` | Push schema changes via Drizzle Kit |
-
-### Backend Commands
-
-| Command | Working Directory | Purpose |
+| Module | Roles Involved | Technical Working and Workflow Description |
 | :--- | :--- | :--- |
-| `dotnet run` | `./aspnet-backend` | Start ASP.NET Core backend server on http://localhost:5199 |
-| `dotnet build` | `./aspnet-backend` | Compile ASP.NET Core project files |
-| `dotnet test` | `./aspnet-backend` | Run backend unit and integration tests |
+| Authentication & Sessions | Admin, Faculty, Student | Validates credentials against BCrypt hashes. Issues HttpOnly `apex_erp_session` cookies with automated session expiration and per-IP brute-force lockout defense. |
+| Student Records | Admin, Faculty, Student | Tracks scholar profiles, roll numbers, department assignments, GPA, contact numbers, and status. Supports filtering by department, keyword search, and CSV export. |
+| Faculty Management | Admin, Faculty | Manages academic staff, employee IDs, area designations, department mappings, and contact details. |
+| Course Administration | Admin, Faculty, Student | Defines course codes, credits, semester levels, room locations, and assigned area faculty. |
+| Departmental Setup | Admin | Configures university divisions, assigns Heads of Department (HOD), tracks student/faculty counts, and manages office locations. |
+| Student Attendance | Faculty, Student | Faculty log daily or period-wise student attendance (Present, Absent, Late). Calculates individual attendance percentages and flags low attendance. |
+| Faculty Attendance | Admin, Faculty | Tracks staff daily attendance registers. Admins can log or update faculty attendance records. |
+| Fee Structures & Invoicing | Admin, Accountant, Student | Admin defines semester fee structures by course and semester. Automated background generator creates student invoices. Students or accountants record payments. |
+| Fee Payments & Receipts | Student, Accountant, Admin | Processes partial or full fee payments via Cash, UPI, Card, or Bank Transfer. Generates printable receipts with transaction IDs. |
+| Grading & Internal Marks | Faculty, Admin, Student | Faculty input theory and practical internal exam marks. Automated formula calculates grade letters (A+, A, B, C, F), GPA, and pass/fail statuses. |
+| Examination Cell | Admin, Faculty, Student | Defines offline exam schedules (Mid-Term, End-Term), passing percentages, exam dates, room allocations, and publishes examination timetables. |
+| Timetable Allocation | Admin, Faculty, Student | Maps weekly lecture slots by day, start time, end time, assigned room, faculty, and semester. |
+| Coursework & Assignments | Faculty, Student | Faculty post assignments with due dates and mark weightage. Students submit text or file links. Faculty grade submissions and provide feedback. |
+| Campus Noticeboard | Admin, Faculty, Student | Broadcasts academic bulletins and urgent news categorized by priority (Urgent, Normal). |
+| Leave Governance | Student, Faculty, Admin | Students submit leave requests with date ranges and reasons. Faculty or admins review requests with approval/rejection remarks and self-approval guards. |
+| Document Vault | Student, Admin, Registrar | Students upload identity documents (PDF/images). Admins or registrars verify documents and update verification status. |
+| Academic Setup | Admin | Manages academic sessions (e.g. 2025-26), semester durations, section divisions (Section A, B), and student course enrollments. |
+| Permissions Matrix | Admin | Granular security matrix defining view, create, edit, and delete permissions for each role across all system modules. |
 
-## How to Setup and Run Locally
+## API Endpoints Reference
 
-### Prerequisites
+| Method | Endpoint | Access Level | Description |
+| :--- | :--- | :--- | :--- |
+| GET | `/api/health` | Public | System health check returning API status. |
+| POST | `/api/auth/login` | Public | Authenticates user email and password. |
+| POST | `/api/auth/demo` | Public | Instant demo login for specified role. |
+| POST | `/api/auth/logout` | Authenticated | Clears session cookie and invalidates session token. |
+| GET | `/api/students` | Authenticated | Fetches list of registered students. |
+| POST | `/api/students` | Admin | Registers a new student record. |
+| PUT | `/api/students` | Admin | Updates existing student details. |
+| DELETE | `/api/students?id={id}` | Admin | Deletes student record by ID. |
+| GET | `/api/faculty` | Authenticated | Fetches list of faculty members. |
+| POST | `/api/faculty` | Admin | Registers a new faculty record. |
+| PUT | `/api/faculty` | Admin | Updates faculty member details. |
+| DELETE | `/api/faculty?id={id}` | Admin | Removes faculty record by ID. |
+| GET | `/api/courses` | Authenticated | Fetches course catalog. |
+| POST | `/api/courses` | Admin | Adds new course definition. |
+| DELETE | `/api/courses?id={id}` | Admin | Deletes course from catalog. |
+| GET | `/api/departments` | Authenticated | Fetches university departments. |
+| POST | `/api/departments` | Admin | Creates a new department. |
+| PUT | `/api/departments` | Admin | Updates department details. |
+| DELETE | `/api/departments?id={id}` | Admin | Deletes department. |
+| GET | `/api/fees` | Authenticated | Fetches student fee invoices. |
+| PUT | `/api/fees` | Authenticated | Records fee payment against an invoice. |
+| POST | `/api/fees/generate` | Admin | Generates student invoices from fee structures. |
+| GET | `/api/fee-structures` | Authenticated | Fetches configured fee structures. |
+| POST | `/api/fee-structures` | Admin | Creates a new fee structure. |
+| DELETE | `/api/fee-structures?id={id}` | Admin | Deletes fee structure. |
+| GET | `/api/attendance` | Authenticated | Fetches student attendance logs. |
+| POST | `/api/attendance` | Faculty, Admin | Logs student attendance entries. |
+| GET | `/api/faculty-attendance` | Admin | Fetches staff attendance logs. |
+| POST | `/api/faculty-attendance` | Admin | Logs faculty attendance entries. |
+| GET | `/api/internal-marks` | Authenticated | Fetches internal exam marks. |
+| POST | `/api/internal-marks` | Faculty | Saves draft or submitted internal mark sheets. |
+| PATCH | `/api/internal-marks` | Faculty, Admin | Approves or changes status of internal mark sheets. |
+| GET | `/api/assignments` | Authenticated | Fetches assignments and submissions. |
+| POST | `/api/assignments` | Faculty | Posts a new assignment. |
+| GET | `/api/notices` | Authenticated | Fetches active campus notices. |
+| POST | `/api/notices` | Admin | Publishes a campus notice. |
+| DELETE | `/api/notices?id={id}` | Admin | Removes a notice. |
+| GET | `/api/timetable` | Authenticated | Fetches lecture timetable slots. |
+| POST | `/api/timetable` | Admin | Adds a new timetable slot. |
+| PUT | `/api/timetable` | Admin | Updates a timetable slot. |
+| DELETE | `/api/timetable?id={id}` | Admin | Removes a timetable slot. |
+| GET | `/api/leaves` | Authenticated | Fetches leave requests. |
+| POST | `/api/leaves` | Student, Faculty | Submits a new leave request. |
+| PUT | `/api/leaves` | Faculty, Admin | Reviews and approves or rejects leave requests. |
+| GET | `/api/documents` | Authenticated | Fetches student uploaded documents. |
+| POST | `/api/documents` | Student | Uploads identity or academic documents. |
+| PUT | `/api/documents` | Admin, Registrar | Updates document verification status. |
+| DELETE | `/api/documents?id={id}` | Admin | Deletes document from vault. |
+| GET | `/api/permissions` | Authenticated | Fetches security permissions matrix. |
+| POST | `/api/permissions` | Admin | Saves updated permissions matrix. |
+| POST | `/api/seed` | Admin | Resets and seeds database with initial demo data. |
+
+## CLI Commands Reference
+
+### Frontend CLI Commands
+
+| Command | Working Directory | Description |
+| :--- | :--- | :--- |
+| `npm run dev` | `./` (Root) | Starts Next.js development server on http://localhost:3000 |
+| `npm run build` | `./` (Root) | Builds optimized Next.js production bundle with Turbopack |
+| `npm run start` | `./` (Root) | Launches Next.js production server |
+| `npm run typecheck` | `./` (Root) | Runs TypeScript type checker without emitting output files |
+| `npm run lint` | `./` (Root) | Runs ESLint validation across project files |
+| `npm run db:push` | `./` (Root) | Applies schema updates using Drizzle Kit |
+
+### Backend CLI Commands
+
+| Command | Working Directory | Description |
+| :--- | :--- | :--- |
+| `dotnet run` | `./aspnet-backend` | Launches ASP.NET Core backend server on http://localhost:5199 |
+| `dotnet build` | `./aspnet-backend` | Compiles C# ASP.NET Core project files |
+| `dotnet test` | `./aspnet-backend` | Runs backend unit and integration test suite |
+| `dotnet clean` | `./aspnet-backend` | Cleans build output binaries |
+
+## Local Installation and Execution
+
+### System Prerequisites
 - Node.js version 18.x or higher
 - .NET 10 SDK or .NET 8 SDK
 - npm package manager
 
-### Installation Steps
+### Step-by-Step Local Setup
 
-1. Install frontend dependencies in the root directory:
+1. Install frontend dependencies in the root project directory:
 ```bash
 npm install
 ```
 
-2. Start the ASP.NET Core API backend:
+2. Open a terminal and start the ASP.NET Core API backend:
 ```bash
 cd aspnet-backend
 dotnet run
 ```
-The backend server runs on `http://localhost:5199` and automatically initializes the database schema and demo records.
+The backend starts on `http://localhost:5199` and automatically initializes the database tables and demo seed records.
 
-3. In a separate terminal window, start the Next.js development server:
+3. Open a second terminal window and start the Next.js development server:
 ```bash
 npm run dev
 ```
-The application runs on `http://localhost:3000`. Requests to `/api/*` are automatically proxied to the backend on `http://localhost:5199`.
+The application interface starts on `http://localhost:3000`. Requests sent to `/api/*` are automatically rewritten to the backend API running on `http://localhost:5199`.
 
-### Demo Login Accounts
+### Pre-configured Demo User Accounts
 
-| Role | Email | Default Password |
-| :--- | :--- | :--- |
-| Admin (Director) | director@vscms.edu | demo12345 |
-| Faculty (Professor) | tanya.m@vscms.edu | demo12345 |
-| Student (Scholar) | aarav.r@vscms.edu | demo12345 |
+| Console Role | Full Name | Email Address | Account ID | Password | Scope |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Admin | Prof. (Dr.) Gauri Singh Gaur | director@vscms.edu | EMP-1 | demo12345 | Full system administration, fee setup, user management, and security controls. |
+| Faculty | Dr. Tanya Mishra | tanya.m@vscms.edu | FAC-2 | demo12345 | Attendance logging, internal marks entry, assignments, and student evaluation. |
+| Student | Aarav Rao | aarav.r@vscms.edu | SCH-101 | demo12345 | View grades, attendance reports, pay fees, submit assignments, and request leaves. |
 
-## License
+## Proprietary License
 
-This project is proprietary software. All Rights Reserved. Unauthorized copying, distribution, modification, or public display of this software is strictly prohibited. See the [LICENSE](file:///c:/Users/risha/OneDrive/Desktop/new%20improved%20erp%20system/LICENSE) file for details.
+This project is proprietary software. All Rights Reserved. Unauthorized copying, distribution, modification, reverse engineering, or public display of this software is strictly prohibited. See the [LICENSE](file:///c:/Users/risha/OneDrive/Desktop/new%20improved%20erp%20system/LICENSE) file for complete legal terms.
