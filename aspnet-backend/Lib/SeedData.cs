@@ -73,14 +73,14 @@ public static class SeedData
 
     public static readonly SeedNotice[] InitialNotices =
     [
-        new("Sem 3 Exam Schedule Released",
-            "The exam schedule for Semester 3 has been posted. Students must check their dates and prepare accordingly. Contact the office for any changes.",
+        new("Exam Schedule Released",
+            "The exam schedule has been posted. Students must check their dates and prepare accordingly. Contact the office for any changes.",
             "Exam", "urgent", "Exam Cell", "2026-03-15"),
         new("Library Books Return Deadline",
             "All library books must be returned by 31 March. Late returns will attract a fine of ₹50 per day. Students are requested to clear their dues.",
             "Academic", "normal", "Library Office", "2026-03-12"),
-        new("Sem 2 Fee Payment Last Date",
-            "The last date for clearing Semester 2 tuition and lab fees is 31 March 2026. Pay online or visit the bursar office. Late fee of ₹200 applies after the deadline.",
+        new("Fee Payment Last Date",
+            "The last date for clearing tuition and lab fees is 31 March 2026. Pay online or visit the bursar office. Late fee of ₹200 applies after the deadline.",
             "Fee", "urgent", "Bursar Office", "2026-03-10"),
         new("Guest Lecture on AI in Business",
             "An alumnus working in AI will give a guest talk this Friday at 3 PM in the Seminar Hall. All students are welcome. Certificates will be provided.",

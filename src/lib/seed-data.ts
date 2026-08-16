@@ -253,9 +253,9 @@ export const initialCourses = [
 
 export const initialNotices = [
   {
-    title: "Sem 3 Exam Schedule Released",
+    title: "Exam Schedule Released",
     content:
-      "The exam schedule for Semester 3 has been posted. Students must check their dates and prepare accordingly. Contact the office for any changes.",
+      "The exam schedule has been posted. Students must check their dates and prepare accordingly. Contact the office for any changes.",
     category: "Exam",
     priority: "urgent",
     authorName: "Exam Cell",
@@ -271,9 +271,9 @@ export const initialNotices = [
     publishedDate: "2026-03-12",
   },
   {
-    title: "Sem 2 Fee Payment Last Date",
+    title: "Fee Payment Last Date",
     content:
-      "The last date for clearing Semester 2 tuition and lab fees is 31 March 2026. Pay online or visit the bursar office. Late fee of ₹200 applies after the deadline.",
+      "The last date for clearing tuition and lab fees is 31 March 2026. Pay online or visit the bursar office. Late fee of ₹200 applies after the deadline.",
     category: "Fee",
     priority: "urgent",
     authorName: "Bursar Office",

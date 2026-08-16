@@ -283,7 +283,7 @@ export function Ticker() {
         <span className="font-medium">College of Management Studies · Academic Operations Portal</span>
         <span className="hidden sm:flex items-center gap-2 text-slate-500">
           <span className="blink h-2 w-2 rounded-full bg-blue-600" />
-          Sem II · 2026 · Live
+          2026 · Live
         </span>
       </div>
     </div>
@@ -792,16 +792,6 @@ export function LoginPage({
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <Ticker />
-
-      {/* top meta strip */}
-      <div className="bg-paper border-b-2 border-ink">
-        <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
-          <span>Form VSCMS-01 - College Access</span>
-          <span className="hidden sm:flex items-center gap-2">
-            <span className="blink h-2 w-2 bg-blood" /> 2026 - Live
-          </span>
-        </div>
-      </div>
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 border-2 border-ink hard-lg bg-paper">

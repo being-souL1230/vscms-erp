@@ -185,7 +185,7 @@ function PanelHeader({
         <div className="flex items-center gap-2 mb-2">
           <Stamp>{tag}</Stamp>
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-paper/55">
-            {"// VSCMS · Sem II · 2026"}
+            {"// VSCMS · 2026"}
           </span>
         </div>
         <h1 className="font-display uppercase text-2xl sm:text-3xl lg:text-4xl leading-[0.9] text-paper">
