@@ -101,10 +101,10 @@ public static class FeeEndpoints
         var total = ParseMoney(record.Amount);
         var alreadyPaid = ParseMoney(record.PaidAmount);
         var remaining = Math.Max(0, total - alreadyPaid);
-        double requested;
-        if (body.Amount is null) requested = remaining;
-        else if (!double.TryParse(body.Amount, out requested)) requested = double.NaN;
-        if (double.IsNaN(requested) || requested <= 0)
+        // The frontend sends a JSON number for amount (e.g. 2500); null means
+        // "pay the full remaining balance".
+        var requested = body.Amount ?? remaining;
+        if (requested <= 0)
             return Results.Json(new { error = "Payment amount must be a positive number" }, statusCode: 400);
         var payAmount = Math.Min(remaining, requested);
         if (payAmount <= 0)
@@ -285,5 +285,5 @@ public static class FeeEndpoints
         long? StudentId, string? StudentName, string? RollNo, string? FeeType, string? Amount,
         string? DueDate, string? CourseCode, string? CourseName, long? Semester);
 
-    public sealed record FeePayRequest(long? Id, string? Amount, string? PaymentMethod);
+    public sealed record FeePayRequest(long? Id, double? Amount, string? PaymentMethod);
 }
