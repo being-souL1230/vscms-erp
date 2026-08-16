@@ -1,0 +1,291 @@
+// VSCMS - College of Management Studies
+// Indian-style seed data: BCA, MBA, BBA scholars and faculty.
+
+export const initialUsers = [
+  {
+    name: "Dr. Virendra Swaroop",
+    email: "director@vscms.edu",
+    role: "admin",
+    rollNo: "1",
+    department: "Office of the Director",
+    designation: "Director, College of Management Studies",
+    phone: "+91 11 4011 9001",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80",
+    status: "active",
+  },
+  {
+    name: "Prof. Elena Rostova",
+    email: "e.rostova@vscms.edu",
+    role: "faculty",
+    rollNo: "2",
+    department: "BCA (CSJM)",
+    designation: "Professor of Computer Science · HOD",
+    phone: "+91 11 4011 9142",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80",
+    status: "active",
+  },
+  {
+    name: "Dr. Marcus Lindqvist",
+    email: "m.lindqvist@vscms.edu",
+    role: "faculty",
+    rollNo: "3",
+    department: "MBA",
+    designation: "Associate Professor · Program Lead",
+    phone: "+91 11 4011 9221",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80",
+    status: "active",
+  },
+  {
+    name: "Prof. Aisha Okonkwo",
+    email: "a.okonkwo@vscms.edu",
+    role: "faculty",
+    rollNo: "4",
+    department: "BCA (MCU)",
+    designation: "Professor of Data Science",
+    phone: "+91 11 4011 9098",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80",
+    status: "active",
+  },
+  {
+    name: "Aarav Rao",
+    email: "aarav.r@vscms.edu",
+    role: "student",
+    rollNo: "101",
+    department: "BCA (CSJM)",
+    semester: 3,
+    phone: "+91 98200 11431",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=160&auto=format&fit=crop&q=80",
+    gpa: "3.81",
+    status: "active",
+  },
+  {
+    name: "Priya Nair",
+    email: "priya.n@vscms.edu",
+    role: "student",
+    rollNo: "102",
+    department: "BCA (MCU)",
+    semester: 3,
+    phone: "+91 98200 22718",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&auto=format&fit=crop&q=80",
+    gpa: "3.92",
+    status: "active",
+  },
+  {
+    name: "Rohan Das",
+    email: "rohan.d@vscms.edu",
+    role: "student",
+    rollNo: "103",
+    department: "MBA",
+    semester: 2,
+    phone: "+91 98200 33007",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&auto=format&fit=crop&q=80",
+    gpa: "3.66",
+    status: "active",
+  },
+  {
+    name: "Meera Iyer",
+    email: "meera.i@vscms.edu",
+    role: "student",
+    rollNo: "104",
+    department: "BBA",
+    semester: 2,
+    phone: "+91 98200 44012",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&auto=format&fit=crop&q=80",
+    gpa: "3.74",
+    status: "active",
+  },
+  {
+    name: "Kabir Shah",
+    email: "kabir.s@vscms.edu",
+    role: "student",
+    rollNo: "105",
+    department: "BCA (CSJM)",
+    semester: 4,
+    phone: "+91 98200 55044",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=160&auto=format&fit=crop&q=80",
+    gpa: "3.48",
+    status: "active",
+  },
+];
+
+export const initialDepartments = [
+  {
+    code: "BCA-CSJM",
+    name: "BCA (CSJM)",
+    headOfDepartment: "Prof. Elena Rostova",
+    location: "Computer Wing · Level 1",
+    studentCount: 120,
+    facultyCount: 8,
+  },
+  {
+    code: "BCA-MCU",
+    name: "BCA (MCU)",
+    headOfDepartment: "Prof. Aisha Okonkwo",
+    location: "Computer Wing · Level 2",
+    studentCount: 95,
+    facultyCount: 6,
+  },
+  {
+    code: "MBA",
+    name: "MBA",
+    headOfDepartment: "Dr. Marcus Lindqvist",
+    location: "Management Block · Level 3",
+    studentCount: 80,
+    facultyCount: 10,
+  },
+  {
+    code: "BBA",
+    name: "BBA",
+    headOfDepartment: "Prof. Nina Sharma",
+    location: "Management Block · Level 2",
+    studentCount: 110,
+    facultyCount: 7,
+  },
+];
+
+export const initialCourses = [
+  {
+    code: "BCA101",
+    name: "Introduction to Programming",
+    department: "BCA (CSJM)",
+    credits: 4,
+    semester: 1,
+    facultyName: "Prof. Elena Rostova",
+    room: "Lab 1 · LT-101",
+    schedule: "Mon · Wed · Fri  09:00 – 10:30",
+    description:
+      "Basics of programming with Python. Variables, loops, functions and simple projects.",
+  },
+  {
+    code: "BCA201",
+    name: "Data Structures & Algorithms",
+    department: "BCA (CSJM)",
+    credits: 4,
+    semester: 2,
+    facultyName: "Prof. Elena Rostova",
+    room: "Lab 2 · LT-202",
+    schedule: "Tue · Thu  09:00 – 10:30",
+    description:
+      "Arrays, linked lists, stacks, queues, trees and sorting algorithms.",
+  },
+  {
+    code: "BCA301",
+    name: "Database Management Systems",
+    department: "BCA (CSJM)",
+    credits: 3,
+    semester: 3,
+    facultyName: "Prof. Aisha Okonkwo",
+    room: "Lab 1 · LT-101",
+    schedule: "Mon · Wed  11:00 – 12:30",
+    description:
+      "SQL, relational databases, normalization and basic database design.",
+  },
+  {
+    code: "MBA101",
+    name: "Principles of Management",
+    department: "MBA",
+    credits: 3,
+    semester: 1,
+    facultyName: "Dr. Marcus Lindqvist",
+    room: "Hall 1 · MH-101",
+    schedule: "Tue · Thu  11:00 – 12:30",
+    description:
+      "Introduction to management concepts, planning, organizing, leading and controlling.",
+  },
+  {
+    code: "MBA201",
+    name: "Marketing Management",
+    department: "MBA",
+    credits: 3,
+    semester: 2,
+    facultyName: "Dr. Marcus Lindqvist",
+    room: "Hall 2 · MH-202",
+    schedule: "Mon · Wed  14:00 – 15:30",
+    description:
+      "Market research, consumer behaviour, branding and digital marketing basics.",
+  },
+  {
+    code: "BBA101",
+    name: "Business Communication",
+    department: "BBA",
+    credits: 3,
+    semester: 1,
+    facultyName: "Prof. Nina Sharma",
+    room: "Hall 1 · MH-101",
+    schedule: "Tue · Thu  09:00 – 10:30",
+    description:
+      "Business writing, presentations, email etiquette and professional communication skills.",
+  },
+  {
+    code: "BBA201",
+    name: "Financial Accounting",
+    department: "BBA",
+    credits: 3,
+    semester: 2,
+    facultyName: "Prof. Nina Sharma",
+    room: "Hall 2 · MH-202",
+    schedule: "Mon · Wed  11:00 – 12:30",
+    description:
+      "Basic accounting principles, ledger entries, balance sheets and profit & loss statements.",
+  },
+  {
+    code: "BCA401",
+    name: "Web Development",
+    department: "BCA (CSJM)",
+    credits: 3,
+    semester: 4,
+    facultyName: "Prof. Aisha Okonkwo",
+    room: "Lab 2 · LT-202",
+    schedule: "Fri  11:00 – 14:00",
+    description:
+      "HTML, CSS, JavaScript basics and building simple web pages.",
+  },
+];
+
+export const initialNotices = [
+  {
+    title: "Sem 3 Exam Schedule Released",
+    content:
+      "The exam schedule for Semester 3 has been posted. Students must check their dates and prepare accordingly. Contact the office for any changes.",
+    category: "Exam",
+    priority: "urgent",
+    authorName: "Exam Cell",
+    publishedDate: "2026-03-15",
+  },
+  {
+    title: "Library Books Return Deadline",
+    content:
+      "All library books must be returned by 31 March. Late returns will attract a fine of ₹50 per day. Students are requested to clear their dues.",
+    category: "Academic",
+    priority: "normal",
+    authorName: "Library Office",
+    publishedDate: "2026-03-12",
+  },
+  {
+    title: "Sem 2 Fee Payment Last Date",
+    content:
+      "The last date for clearing Semester 2 tuition and lab fees is 31 March 2026. Pay online or visit the bursar office. Late fee of ₹200 applies after the deadline.",
+    category: "Fee",
+    priority: "urgent",
+    authorName: "Bursar Office",
+    publishedDate: "2026-03-10",
+  },
+  {
+    title: "Guest Lecture on AI in Business",
+    content:
+      "An alumnus working in AI will give a guest talk this Friday at 3 PM in the Seminar Hall. All students are welcome. Certificates will be provided.",
+    category: "Event",
+    priority: "normal",
+    authorName: "Training & Placement Cell",
+    publishedDate: "2026-03-08",
+  },
+];

@@ -1,0 +1,14 @@
+node_modules/
+.next/
+tsconfig.tsbuildinfo
+.env
+**/.env
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/*.sqlite-journal
+data/*.corrupt-*.sqlite
+aspnet-backend/bin/
+aspnet-backend/obj/
+test-run
+nextjs dead endpoints

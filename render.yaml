@@ -1,0 +1,23 @@
+# Render Blueprint — deploys ONLY the ASP.NET Core API backend.
+#
+# The Next.js frontend goes on Vercel with API_PROXY_TARGET set to this
+# service's URL (e.g. https://vscms-erp-api.onrender.com).
+#
+# Database lives on Neon (Postgres) — so the backend needs NO persistent
+# disk and can run on Render's FREE plan. Set DATABASE_URL in the Render
+# dashboard (Environment → DATABASE_URL) to your Neon connection string;
+# the app auto-creates its tables + demo data on first boot.
+services:
+  - type: web
+    name: vscms-erp-api
+    runtime: docker
+    dockerfilePath: ./aspnet-backend/Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080

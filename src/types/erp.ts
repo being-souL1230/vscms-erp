@@ -1,0 +1,329 @@
+export type UserRole = "admin" | "faculty" | "student";
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  rollNo: string;
+  rollNoOrEmpId?: string;
+  department: string;
+  semester?: number | null;
+  designation?: string | null;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  gpa?: string | null;
+  status: string;
+  createdAt?: string;
+}
+
+export interface Department {
+  id: number;
+  code: string;
+  name: string;
+  headOfDepartment: string;
+  location?: string | null;
+  studentCount?: number | null;
+  facultyCount?: number | null;
+}
+
+export interface Course {
+  id: number;
+  code: string;
+  name: string;
+  department: string;
+  credits: number;
+  semester: number;
+  facultyId?: number | null;
+  facultyName?: string | null;
+  room?: string | null;
+  schedule?: string | null;
+  description?: string | null;
+}
+
+export interface AttendanceRecord {
+  id: number;
+  studentId: number;
+  studentName: string;
+  courseId: number;
+  courseCode: string;
+  date: string;
+  status: "present" | "absent" | "late";
+  period?: string | null;
+  markedBy?: string | null;
+}
+
+export interface GradeRecord {
+  id: number;
+  studentId: number;
+  studentName: string;
+  courseId: number;
+  courseName: string;
+  examType: string;
+  marksObtained: string;
+  maxMarks: string;
+  gradeLetter: string;
+  semester: number;
+  remarks?: string | null;
+}
+
+export interface FeeRecord {
+  id: number;
+  studentId: number;
+  studentName: string;
+  rollNo: string;
+  feeType: string;
+  amount: string;
+  dueDate: string;
+  paidDate?: string | null;
+  status: "paid" | "pending" | "overdue";
+  receiptNumber?: string | null;
+  paymentMethod?: string | null;
+  courseCode?: string | null;
+  courseName?: string | null;
+  semester?: number | null;
+  /** Running total already paid (supports partial / installment payments). */
+  paidAmount?: string | null;
+  /** Who last recorded a payment (admin, bursar or faculty). */
+  collectedBy?: string | null;
+  collectedAt?: string | null;
+}
+
+export interface FeeStructure {
+  id: number;
+  courseCode: string;
+  courseName: string;
+  semester: number;
+  feeType: string;
+  amount: string;
+  dueDate: string;
+}
+
+export interface FeePayment {
+  id: number;
+  feeRecordId: number;
+  studentId: number;
+  studentName: string;
+  amount: string;
+  paymentMethod: string;
+  receiptNumber: string;
+  paidAt: string;
+  /** Who collected this payment (session actor — admin, bursar or faculty). */
+  collectedBy?: string | null;
+  collectedById?: number | null;
+}
+
+/** Outstanding amount (total − paid so far), never negative. */
+export function feeRemaining(f: Pick<FeeRecord, "amount" | "paidAmount">): number {
+  return Math.max(0, Number(f.amount || 0) - Number(f.paidAmount || 0));
+}
+
+/**
+ * Effective status honouring partial payments: fully covered → paid;
+ * otherwise overdue once the due date has passed, else pending.
+ */
+export function feeEffectiveStatus(f: Pick<FeeRecord, "status" | "dueDate" | "amount" | "paidAmount">): "paid" | "pending" | "overdue" {
+  if (feeRemaining(f) <= 0) return "paid";
+  if (f.status === "overdue") return "overdue";
+  const today = new Date().toISOString().split("T")[0];
+  if (String(f.dueDate) < today) return "overdue";
+  return "pending";
+}
+
+export interface Assignment {
+  id: number;
+  courseId: number;
+  courseName: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  maxMarks: number;
+  facultyName: string;
+}
+
+export interface AssignmentSubmission {
+  id: number;
+  assignmentId: number;
+  studentId: number;
+  studentName: string;
+  submissionText?: string | null;
+  fileUrl?: string | null;
+  status: "submitted" | "graded";
+  marks?: string | null;
+  feedback?: string | null;
+  submittedAt?: string;
+}
+
+export interface Notice {
+  id: number;
+  title: string;
+  content: string;
+  category: string;
+  priority: "normal" | "urgent";
+  authorName: string;
+  publishedDate: string;
+}
+
+export interface TimetableSlot {
+  id: number;
+  courseCode: string;
+  courseName: string;
+  department: string;
+  semester: number;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  facultyName: string;
+}
+
+export interface LeaveRequest {
+  id: number;
+  studentId: number;
+  studentName: string;
+  rollNo: string;
+  department: string;
+  fromDate: string;
+  toDate: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  remarks?: string | null;
+  createdAt?: string;
+}
+
+export interface AdmissionInfo {
+  id: number;
+  studentId: number;
+  admissionNumber: string;
+  admissionDate: string;
+  category: string;
+  previousInstitution?: string | null;
+  fatherName?: string | null;
+  motherName?: string | null;
+  guardianPhone?: string | null;
+  bloodGroup?: string | null;
+  address?: string | null;
+  isHosteler: number;
+}
+
+export interface StudentDocument {
+  id: number;
+  studentId: number;
+  studentName: string;
+  title: string;
+  category: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  data: string;
+  status: string;
+  uploadedAt?: string;
+}
+
+export interface Enrollment {
+  id: number;
+  studentId: number;
+  studentName: string;
+  courseId: number;
+  courseCode: string;
+  courseName: string;
+  semester: number;
+  status: string;
+}
+
+export interface Section {
+  id: number;
+  code: string;
+  name: string;
+  department: string;
+  semester: number;
+  room?: string | null;
+}
+
+export interface SemesterInfo {
+  id: number;
+  number: number;
+  name: string;
+  department: string;
+  status: string;
+  startsOn?: string | null;
+  endsOn?: string | null;
+}
+
+export interface AcademicSession {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: number;
+}
+
+export interface ExamSchedule {
+  id: number;
+  examType: string;
+  courseCode: string;
+  courseName: string;
+  department: string;
+  semester: number;
+  examDate: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+}
+
+export interface ExamDefinition {
+  id: number;
+  name: string;
+  examType: string;
+  department: string;
+  semester: number;
+  session: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  passingPercent: number;
+}
+
+export interface InternalMark {
+  id: number;
+  studentId: number;
+  studentName: string;
+  courseId: number;
+  courseCode: string;
+  courseName: string;
+  examType: string;
+  semester: number;
+  theoryMarks: string;
+  practicalMarks: string;
+  maxTheory: string;
+  maxPractical: string;
+  totalMarks: string;
+  maxTotal: string;
+  passMarks: string;
+  gradeLetter: string;
+  result: string;
+  status: string;
+  remarks?: string | null;
+}
+
+export interface PermissionRow {
+  id: number;
+  role: string;
+  module: string;
+  canView: number;
+  canCreate: number;
+  canEdit: number;
+  canDelete: number;
+}
+
+export interface FacultyAttendance {
+  id: number;
+  facultyId: number;
+  facultyName: string;
+  date: string;
+  status: "present" | "absent" | "late";
+  markedBy?: string | null;
+  createdAt?: string;
+}

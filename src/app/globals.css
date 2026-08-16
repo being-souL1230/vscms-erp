@@ -1,0 +1,253 @@
+@import "tailwindcss";
+
+/* ============================================================
+   VSCMS ERP - SIMPLE LIGHT COLLEGE ERP THEME
+   Clean white surfaces · soft slate borders · academic blue
+   ============================================================ */
+@theme {
+  --color-paper: #ffffff;
+  --color-paper-2: #f8fafc;
+  --color-paper-3: #ffffff;
+  --color-ink: #0f172a;
+  --color-ink-2: #f1f5f9;
+  --color-blood: #2563eb;
+  --color-blood-dark: #1d4ed8;
+  --color-muted: #64748b;
+
+  --font-display: "Inter", "Segoe UI", Arial, sans-serif;
+  --font-mono: "Inter", "Segoe UI", Arial, sans-serif;
+  --font-serif: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  }
+
+  ::selection {
+    background: #dbeafe;
+    color: #1e3a8a;
+  }
+}
+
+/* The component layer still uses the original semantic names. These
+   overrides keep it light, restrained, and consistent without changing
+   the CRUD / dashboard implementation. */
+
+/* Text colors first. IMPORTANT: keep these rules BEFORE the background
+   fills below. Background fills (`.bg-ink`, `.bg-blood`) carry their own
+   text color for the light theme, so a combined class like
+   `bg-blood text-paper` must resolve to white-on-blue (bg rule later
+   wins the equal-specificity tie), not dark-on-blue. */
+.text-ink {
+  color: #0f172a !important;
+}
+.text-paper {
+  color: #0f172a !important;
+}
+.text-blood {
+  color: #2563eb !important;
+}
+.text-muted {
+  color: #64748b !important;
+}
+
+.bg-paper,
+.bg-paper-3 {
+  background-color: #ffffff !important;
+}
+.bg-paper-2,
+.bg-ink-2 {
+  background-color: #f8fafc !important;
+}
+.bg-ink {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+.bg-blood {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Hover fills: Tailwind's `hover:bg-blood` / `hover:bg-ink` utilities are
+   generated inside a cascade layer, so they lose to the unlayered
+   !important text rules above. The result: on hover the box filled but
+   the label kept its dark/blue color -> invisible text on the fill.
+   These explicit rules (higher specificity + !important) win on hover:
+   filled background with white text, always readable. */
+.hover\:bg-blood:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+.hover\:bg-ink:hover {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+/* Same root cause for row/card hover accents: the layered
+   `group-hover:text-blood` utility lost to the !important `.text-ink`
+   base color, so rows never turned blue on hover. Restore it. */
+.group:hover .group-hover\:text-blood {
+  color: #2563eb !important;
+}
+
+/* Same root cause for text-only hover accents (`hover:text-blood`,
+   `hover:text-ink` on links/tabs): the layered utilities lost to the
+   !important base text colors, so the color never changed on hover. */
+.hover\:text-blood:hover {
+  color: #2563eb !important;
+}
+.hover\:text-ink:hover {
+  color: #0f172a !important;
+}
+.border-ink,
+.border-paper {
+  border-color: #e2e8f0 !important;
+}
+[class~="border-paper\/20"],
+[class~="border-paper\/15"],
+[class~="border-paper\/30"],
+[class~="border-paper\/40"] {
+  border-color: #e2e8f0 !important;
+}
+[class*="text-paper/"] {
+  color: #64748b !important;
+}
+
+/* Replace hard offsets with restrained elevation. */
+.hard,
+.hard-sm,
+.hard-lg,
+.hard-red,
+.hard-paper {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+}
+.press:active,
+.press-red:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+}
+.lift:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.11) !important;
+}
+
+/* Remove tilted sticker treatment and keep cards aligned. */
+.tilt-l,
+.tilt-r,
+.tilt-m {
+  transform: none !important;
+}
+.tilt-l:hover,
+.tilt-r:hover,
+.tilt-m:hover {
+  transform: translateY(-2px) !important;
+}
+
+/* Keep only a quiet blue accent strip instead of hazard decoration. */
+.hazard,
+.hazard-cream {
+  background-image: none !important;
+  background-color: #2563eb !important;
+}
+
+/* Cleaner typography: no poster-style all caps or excessive tracking. */
+.font-display,
+.font-mono,
+.font-serif {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif !important;
+}
+.uppercase {
+  text-transform: none !important;
+}
+[class*="tracking-"] {
+  letter-spacing: normal !important;
+}
+
+/* Form controls */
+input,
+select,
+textarea {
+  border-radius: 8px !important;
+}
+
+/* Compact, useful motion only. */
+@keyframes blink {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.blink {
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pop-in {
+  animation: pop-in 0.18s ease-out both;
+}
+
+/* Replace the moving marquee with a stable, simple utility bar. */
+.marquee-track {
+  animation: none !important;
+  transform: none !important;
+  display: block !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.ruled-right {
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blink,
+  .pop-in,
+  .slide-in {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   PRINT — only the selected element prints (see printElement)
+   ============================================================ */
+#print-host {
+  display: none;
+}
+
+@media print {
+  body.print-mode > * {
+    display: none !important;
+  }
+  body.print-mode #print-host {
+    display: block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body.print-mode #print-host * {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
