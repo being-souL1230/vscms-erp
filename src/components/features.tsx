@@ -851,11 +851,26 @@ export function AdminReportsTab({
    ============================================================ */
 export function FacultyNoticesTab({
   notices,
+  currentUser,
+  permissions,
   onAddNotice,
+  onDeleteNotice,
 }: {
   notices: Notice[];
+  currentUser: User | null;
+  permissions: PermissionRow[];
   onAddNotice: (d: Partial<Notice>) => void;
+  onDeleteNotice: (id: number) => void;
 }) {
+  // The UI follows the actual permission matrix, not just the role: whatever
+  // the admin grants/revokes for notices shows/hides the matching controls.
+  const isAdmin = currentUser?.role === "admin";
+  const perm = permissions.find(
+    (p) => p.role === (currentUser?.role ?? "") && p.module === "notices",
+  );
+  const canCreate = isAdmin || (perm ? perm.canCreate === 1 : false);
+  const canDelete = isAdmin || (perm ? perm.canDelete === 1 : false);
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [category, setCategory] = useState("Academic");
@@ -871,7 +886,9 @@ export function FacultyNoticesTab({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      {/* Post box (same design as the admin panel) */}
+      {/* Post box (same design as the admin panel); hidden if the admin has
+          revoked the faculty notices-create permission */}
+      {canCreate && (
       <form onSubmit={publish} className="border-2 border-ink bg-paper hard p-5 h-fit space-y-3.5">
         <SectionTitle kicker="Broadcast" title="Post a" accent="Notice" />
         <Field label="Headline">
@@ -913,6 +930,7 @@ export function FacultyNoticesTab({
           <Send className="w-4 h-4" /> Post Notice
         </BrutalButton>
       </form>
+      )}
 
       {/* Notice board */}
       <div className="lg:col-span-2 space-y-3">
@@ -925,6 +943,15 @@ export function FacultyNoticesTab({
                 <Tag tone="ink">{n.category}</Tag>
                 {n.priority === "urgent" && <Stamp>Urgent</Stamp>}
               </div>
+              {canDelete && (
+                <button
+                  onClick={() => onDeleteNotice(n.id)}
+                  title="Delete notice"
+                  className="border-2 border-ink p-1.5 hover:bg-blood hover:text-paper hover:border-blood press"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <h4 className="font-display uppercase text-base text-ink leading-tight">{n.title}</h4>
             <p className="font-serif text-sm text-ink/80 mt-1.5 leading-relaxed">{n.content}</p>

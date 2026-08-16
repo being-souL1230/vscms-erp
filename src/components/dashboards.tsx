@@ -1514,6 +1514,8 @@ export function FacultyDashboard(props: {
   onReviewLeave: (id: number, status: "approved" | "rejected", remarks?: string) => void;
   onAddLeave: (d: { fromDate: string; toDate: string; reason: string }) => void;
   onAddNotice: (d: Partial<Notice>) => void;
+  onDeleteNotice: (id: number) => void;
+  permissions: PermissionRow[];
   onAddTimetable: (d: Partial<TimetableSlot>) => void;
   onDeleteTimetable: (id: number) => void;
   enrollments: Enrollment[];
@@ -1551,6 +1553,8 @@ export function FacultyDashboard(props: {
     onReviewLeave,
     onAddLeave,
     onAddNotice,
+    onDeleteNotice,
+    permissions,
     onAddTimetable,
     onDeleteTimetable,
     onSaveMarks,
@@ -1961,7 +1965,13 @@ export function FacultyDashboard(props: {
 
       {/* NOTICES (faculty) */}
       {currentTab === "notices" && (
-        <FacultyNoticesTab notices={notices} onAddNotice={onAddNotice} />
+        <FacultyNoticesTab
+          notices={notices}
+          currentUser={currentUser}
+          permissions={permissions}
+          onAddNotice={onAddNotice}
+          onDeleteNotice={onDeleteNotice}
+        />
       )}
 
       {/* PERFORMANCE (faculty) */}

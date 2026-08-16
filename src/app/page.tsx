@@ -857,6 +857,8 @@ export default function VscmsErpApp() {
               onReviewLeave={reviewLeave}
               onAddLeave={addLeave}
               onAddNotice={addNotice}
+              onDeleteNotice={delNotice}
+              permissions={permissions}
               onAddTimetable={addTimetable}
               onDeleteTimetable={delTimetable}
             />
