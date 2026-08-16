@@ -49,7 +49,6 @@
     caret-color: auto !important;
   }
 
-  /* Keep typing cursor strictly for text editable input fields */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -63,7 +62,6 @@
     cursor: text !important;
   }
 
-  /* Interactive elements show pointer cursor */
   button,
   a,
   select,
@@ -75,7 +73,6 @@
     cursor: pointer !important;
   }
 
-  /* Prevent text selection highlight artifacts when clicking buttons, tabs & badges */
   button,
   a,
   select,
@@ -94,15 +91,7 @@
   }
 }
 
-/* The component layer still uses the original semantic names. These
-   overrides keep it light, restrained, and consistent without changing
-   the CRUD / dashboard implementation. */
 
-/* Text colors first. IMPORTANT: keep these rules BEFORE the background
-   fills below. Background fills (`.bg-ink`, `.bg-blood`) carry their own
-   text color for the light theme, so a combined class like
-   `bg-blood text-paper` must resolve to white-on-blue (bg rule later
-   wins the equal-specificity tie), not dark-on-blue. */
 .text-ink {
   color: #0f172a !important;
 }
@@ -133,12 +122,7 @@
   color: #ffffff !important;
 }
 
-/* Hover fills: Tailwind's `hover:bg-blood` / `hover:bg-ink` utilities are
-   generated inside a cascade layer, so they lose to the unlayered
-   !important text rules above. The result: on hover the box filled but
-   the label kept its dark/blue color -> invisible text on the fill.
-   These explicit rules (higher specificity + !important) win on hover:
-   filled background with white text, always readable. */
+
 .hover\:bg-blood:hover {
   background-color: #2563eb !important;
   color: #ffffff !important;
@@ -155,9 +139,6 @@
   color: #2563eb !important;
 }
 
-/* Same root cause for text-only hover accents (`hover:text-blood`,
-   `hover:text-ink` on links/tabs): the layered utilities lost to the
-   !important base text colors, so the color never changed on hover. */
 .hover\:text-blood:hover {
   color: #2563eb !important;
 }
