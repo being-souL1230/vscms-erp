@@ -705,109 +705,143 @@ export function Sidebar({
   const roleLabel =
     activeRole === "admin" ? "Admin View" : activeRole === "faculty" ? "Teacher View" : "Student View";
 
-  const renderContent = (isMobile = false) => (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Hazard className="h-2 shrink-0" />
-      <div className="px-4 pt-4 pb-3 border-b-2 border-paper/15 flex items-center justify-between shrink-0">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/55">Current View</p>
-          <p className="font-display uppercase text-base text-paper mt-1 leading-none">{roleLabel}</p>
-          <p className="font-mono text-[10px] text-blood mt-1.5 tracking-[0.14em]">{"// College of Management"}</p>
-        </div>
-        {isMobile && onCloseMobile && (
-          <button
-            onClick={onCloseMobile}
-            aria-label="Close menu"
-            className="lg:hidden p-1.5 border-2 border-paper text-paper hover:bg-blood hover:border-blood press flex items-center justify-center"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
-      {isMobile && onRoleChange && (
-        <div className="p-3 border-b-2 border-paper/15 space-y-1.5 shrink-0 bg-paper/5">
-          <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-paper/60 px-1">Console View</p>
-          <div className="grid grid-cols-3 gap-1.5">
-            {[
-              { key: "admin", label: "Admin" },
-              { key: "faculty", label: "Teacher" },
-              { key: "student", label: "Scholar" },
-            ].map((r) => (
-              <button
-                key={r.key}
-                onClick={() => {
-                  onRoleChange(r.key as UserRole);
-                  onCloseMobile?.();
-                }}
-                className={`py-1.5 px-1 text-center font-mono text-[10px] font-bold uppercase border-2 transition-colors ${
-                  activeRole === r.key
-                    ? "bg-blood text-paper border-paper"
-                    : "bg-paper/10 text-paper/80 border-paper/20 hover:bg-paper hover:text-ink"
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto min-h-0">
-        {nav.map((item) => {
-          const active = currentTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                onTabChange(item.id);
-                if (isMobile) onCloseMobile?.();
-              }}
-              className={`w-full group flex items-center justify-between gap-2 px-3 py-2.5 border-2 transition-colors ${
-                active
-                  ? "bg-blood text-paper border-paper hard-paper"
-                  : "bg-transparent text-paper/80 border-transparent hover:bg-paper hover:text-ink hover:border-ink"
-              }`}
-            >
-              <span className="flex items-center gap-2.5 min-w-0">
-                <span
-                  className={`font-mono text-[10px] font-bold ${active ? "text-paper/80" : "text-blood"}`}
-                >
-                  {item.mark}
-                </span>
-                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] truncate">
-                  {item.label}
-                </span>
-              </span>
-              {item.badge && (
-                <span
-                  className={`font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 border ${
-                    active ? "border-paper text-paper" : "border-blood text-blood"
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-    </div>
-  );
-
   return (
     <>
-      {/* Desktop static Sidebar */}
-      <aside className="hidden lg:flex w-64 shrink-0 bg-ink text-paper border-2 border-ink hard flex-col self-start sticky top-[84px] max-h-[calc(100vh-100px)]">
-        {renderContent(false)}
+      {/* Desktop static Sidebar (Original non-scrolling full height layout) */}
+      <aside className="hidden lg:flex w-64 shrink-0 bg-ink text-paper border-2 border-ink hard flex-col">
+        <Hazard className="h-2" />
+        <div className="px-4 pt-4 pb-3 border-b-2 border-paper/15">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/55">Current View</p>
+          <p className="font-display uppercase text-base text-paper mt-1 leading-none">{roleLabel}</p>
+          <p className="font-mono text-[10px] text-blood mt-1.5 tracking-[0.14em]">{"// College of Management Studies"}</p>
+        </div>
+
+        <nav className="p-3 space-y-1.5 flex-1">
+          {nav.map((item) => {
+            const active = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={`w-full group flex items-center justify-between gap-2 px-3 py-2.5 border-2 transition-colors ${
+                  active
+                    ? "bg-blood text-paper border-paper hard-paper"
+                    : "bg-transparent text-paper/80 border-transparent hover:bg-paper hover:text-ink hover:border-ink"
+                }`}
+              >
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <span
+                    className={`font-mono text-[10px] font-bold ${active ? "text-paper/80" : "text-blood"}`}
+                  >
+                    {item.mark}
+                  </span>
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] truncate">
+                    {item.label}
+                  </span>
+                </span>
+                {item.badge && (
+                  <span
+                    className={`font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 border ${
+                      active ? "border-paper text-paper" : "border-blood text-blood"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
       </aside>
 
-      {/* Mobile Drawer Overlay */}
+      {/* Mobile Drawer Overlay (only shown on mobile when opened) */}
       {isOpenMobile && (
         <div className="lg:hidden fixed inset-0 z-[100] bg-ink/75 backdrop-blur-[2px] flex">
           <div className="fixed inset-0" onClick={onCloseMobile} />
           <aside className="relative z-10 w-[290px] max-w-[85vw] h-full bg-ink text-paper border-r-2 border-paper flex flex-col shadow-2xl overflow-hidden">
-            {renderContent(true)}
+            <Hazard className="h-2 shrink-0" />
+            <div className="px-4 pt-4 pb-3 border-b-2 border-paper/15 flex items-center justify-between shrink-0">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/55">Current View</p>
+                <p className="font-display uppercase text-base text-paper mt-1 leading-none">{roleLabel}</p>
+                <p className="font-mono text-[10px] text-blood mt-1.5 tracking-[0.14em]">{"// College of Management"}</p>
+              </div>
+              {onCloseMobile && (
+                <button
+                  onClick={onCloseMobile}
+                  aria-label="Close menu"
+                  className="lg:hidden p-1.5 border-2 border-paper text-paper hover:bg-blood hover:border-blood press flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {onRoleChange && (
+              <div className="p-3 border-b-2 border-paper/15 space-y-1.5 shrink-0 bg-paper/5">
+                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-paper/60 px-1">Console View</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { key: "admin", label: "Admin" },
+                    { key: "faculty", label: "Teacher" },
+                    { key: "student", label: "Scholar" },
+                  ].map((r) => (
+                    <button
+                      key={r.key}
+                      onClick={() => {
+                        onRoleChange(r.key as UserRole);
+                        onCloseMobile?.();
+                      }}
+                      className={`py-1.5 px-1 text-center font-mono text-[10px] font-bold uppercase border-2 transition-colors ${
+                        activeRole === r.key
+                          ? "bg-blood text-paper border-paper"
+                          : "bg-paper/10 text-paper/80 border-paper/20 hover:bg-paper hover:text-ink"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto min-h-0">
+              {nav.map((item) => {
+                const active = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onTabChange(item.id);
+                      onCloseMobile?.();
+                    }}
+                    className={`w-full group flex items-center justify-between gap-2 px-3 py-2.5 border-2 transition-colors ${
+                      active
+                        ? "bg-blood text-paper border-paper hard-paper"
+                        : "bg-transparent text-paper/80 border-transparent hover:bg-paper hover:text-ink hover:border-ink"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <span className={`font-mono text-[10px] font-bold ${active ? "text-paper/80" : "text-blood"}`}>
+                        {item.mark}
+                      </span>
+                      <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] truncate">
+                        {item.label}
+                      </span>
+                    </span>
+                    {item.badge && (
+                      <span
+                        className={`font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 border ${
+                          active ? "border-paper text-paper" : "border-blood text-blood"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
           </aside>
         </div>
       )}
