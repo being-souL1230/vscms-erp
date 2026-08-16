@@ -500,7 +500,7 @@ export function AdminDashboard(props: {
       />
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Stat mark="01" label="Total Students" value={students.length} unit="active" foot="Across 4 courses" Icon={Users} />
         <Stat mark="02" label="Total Teachers" value={faculty.length} unit="members" foot="Professors & area chairs" Icon={BookOpen} />
             <Stat mark="03" label="Fee Collection" value={`${rate}%`} foot={`₹ ${collected.toLocaleString()} of ${total.toLocaleString()}`} dark accent Icon={DollarSign} />
@@ -1683,7 +1683,7 @@ export function FacultyDashboard(props: {
 
       {(currentTab === "overview") && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Stat mark="01" label="Classes / Week" value={timetable.length} unit="slots" foot="This week" Icon={Calendar} />
             <Stat mark="02" label="Attendance Rate" value={`${presentPct}%`} foot="Last 6 classes" dark accent Icon={CheckSquare} />
             <Stat mark="03" label="Grades Entered" value={grades.length} foot="This term" Icon={Award} />
@@ -2248,7 +2248,7 @@ export function StudentDashboard(props: {
 
       {(currentTab === "overview") && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Stat mark="01" label="Attendance" value={`${pct}%`} foot={`${present} / ${total} classes`} accent Icon={CheckSquare} />
             <Stat mark="02" label="CGPA" value={currentUser?.gpa || "3.81"} unit="/ 4.0" foot="Current standing" dark Icon={Award} />
             <Stat mark="03" label="Pending Fees" value={myFees.filter((f) => f.status === "pending").length} unit="bills" foot="Pay before due date" Icon={DollarSign} />

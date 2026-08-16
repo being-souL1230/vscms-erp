@@ -770,7 +770,7 @@ export function AdminReportsTab({
           </div>
         }
       />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((s) => (
           <div key={s.label} className="lift border-2 border-ink bg-paper hard p-4">
             <div className="flex items-center justify-between">
@@ -1621,7 +1621,7 @@ export function AdminExamCellTab({
         accent="Exams"
         sub="Create offline internal exams, plan the timetable and publish results."
       />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="lift border-2 border-ink bg-paper hard p-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Exams Created</p>
           <p className="font-display text-3xl leading-none mt-3 text-ink">{examDefs.length}</p>
@@ -2114,7 +2114,7 @@ export function StudentResultsTab({
 
       {mine.length > 0 && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="lift border-2 border-ink bg-paper hard p-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Overall</p>
               <p className="font-display text-3xl leading-none mt-3 text-ink">{overall.toFixed(1)}%</p>
@@ -2638,7 +2638,7 @@ export function AdminAttendanceTab({
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((s) => (
           <div key={s.label} className="lift border-2 border-ink bg-paper hard p-4">
             <div className="flex items-center justify-between">
@@ -2943,7 +2943,7 @@ export function FacultyFeesTab({
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statCard("Total Invoices", `₹${fmtIN(total)}`, `${scopeFees.length} invoices in scope`)}
         {statCard("Collected", `₹${fmtIN(collected)}`, "By students, you & admin")}
         {statCard("Outstanding", `₹${fmtIN(remaining)}`, `${dueCount} not yet clear`, remaining > 0)}

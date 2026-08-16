@@ -179,6 +179,7 @@ export default function VscmsErpApp() {
   const [user, setUser] = useState<User | null>(null);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [tab, setTab] = useState<string>("overview");
+  const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
 
   const [students, setStudents] = useState<User[]>([]);
   const [faculty, setFaculty] = useState<User[]>([]);
@@ -719,6 +720,40 @@ export default function VscmsErpApp() {
     );
   }
 
+  const currentTabLabel = (() => {
+    const labels: Record<string, string> = {
+      overview: "Dashboard",
+      students: "Students",
+      faculty: "Teachers",
+      courses: "Courses",
+      departments: "Departments",
+      fees: "Fees",
+      notices: "Notices",
+      timetable: "Timetable",
+      exams: "Exam Schedule",
+      setup: "Academic Setup",
+      documents: "Documents",
+      users: "Users & Roles",
+      permissions: "Permissions",
+      reports: "Reports",
+      attendance: "Attendance",
+      grades: "Grades",
+      assignments: "Assignments",
+      marks: "Exam Marks",
+      leaves: "Leave Requests",
+      myleave: "My Leave",
+      performance: "Performance",
+      myattendance: "My Attendance",
+      results: "My Grades",
+      leave: "Leave Request",
+      history: "Academic History",
+      idcard: "ID Card",
+      profile: "My Profile",
+      admitcard: "Admit Card",
+    };
+    return labels[tab] || "Dashboard";
+  })();
+
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
       <Ticker />
@@ -732,15 +767,21 @@ export default function VscmsErpApp() {
         canReset={user?.role === "admin"}
         notices={notices}
         onToast={toast}
+        isMobileNavOpen={mobileNavOpen}
+        onToggleMobileNav={() => setMobileNavOpen((v) => !v)}
+        currentTabLabel={currentTabLabel}
       />
 
-      <div className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-5">
+      <div className="flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col lg:flex-row gap-4 sm:gap-5">
         <Sidebar
           activeRole={role}
           currentTab={tab}
-          onTabChange={setTab}
+          onTabChange={(t) => { setTab(t); setMobileNavOpen(false); }}
+          onRoleChange={switchRole}
           pendingFeeCount={pendingFees}
           assignmentsCount={assignments.length}
+          isOpenMobile={mobileNavOpen}
+          onCloseMobile={() => setMobileNavOpen(false)}
         />
 
         <main className="flex-1 min-w-0">

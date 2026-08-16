@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Info,
   Printer,
+  Menu,
 } from "lucide-react";
 import type { UserRole, User, Notice, Course, FeeRecord, FeeStructure, FeePayment } from "@/types/erp";
 import { feeRemaining } from "@/types/erp";
@@ -359,6 +360,9 @@ export function Navbar({
   canReset,
   notices,
   onToast,
+  isMobileNavOpen = false,
+  onToggleMobileNav,
+  currentTabLabel,
 }: {
   currentUser: User | null;
   activeRole: UserRole;
@@ -369,6 +373,9 @@ export function Navbar({
   canReset: boolean;
   notices: Notice[];
   onToast?: (type: "success" | "error" | "info", title: string, message: string) => void;
+  isMobileNavOpen?: boolean;
+  onToggleMobileNav?: () => void;
+  currentTabLabel?: string;
 }) {
   const [bell, setBell] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -381,18 +388,27 @@ export function Navbar({
   ];
 
   return (
-    <header className="bg-paper border-b-2 border-ink">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-[68px] gap-3">
-          {/* Crest + wordmark */}
-          <div className="flex items-center gap-3 min-w-0">
-            <Crest size={44} />
+    <header className="bg-paper border-b-2 border-ink sticky top-0 z-40">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6">
+        <div className="flex items-center justify-between h-[60px] sm:h-[68px] gap-2 sm:gap-3">
+          {/* Crest + Hamburger + wordmark */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {onToggleMobileNav && (
+              <button
+                onClick={onToggleMobileNav}
+                aria-label="Toggle Menu"
+                className="lg:hidden p-2 border-2 border-ink bg-paper hard-sm press flex items-center justify-center text-ink hover:bg-blood hover:text-paper"
+              >
+                {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            )}
+            <Crest size={40} />
             <div className="leading-none min-w-0">
-              <div className="font-display uppercase text-lg sm:text-xl text-ink tracking-tight">
+              <div className="font-display uppercase text-base sm:text-xl text-ink tracking-tight flex items-center gap-1.5 truncate">
                 VSCMS <span className="text-blood">ERP</span>
               </div>
-              <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] text-muted mt-1 truncate">
-                College of Management Studies
+              <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.16em] sm:tracking-[0.22em] text-muted mt-0.5 truncate">
+                {currentTabLabel ? <span className="text-blood font-bold lg:text-muted lg:font-normal">{currentTabLabel}</span> : "College of Management"}
               </div>
             </div>
           </div>
@@ -604,14 +620,20 @@ export function Sidebar({
   activeRole,
   currentTab,
   onTabChange,
+  onRoleChange,
   pendingFeeCount = 0,
   assignmentsCount = 0,
+  isOpenMobile = false,
+  onCloseMobile,
 }: {
   activeRole: UserRole;
   currentTab: string;
   onTabChange: (t: string) => void;
+  onRoleChange?: (r: UserRole) => void;
   pendingFeeCount?: number;
   assignmentsCount?: number;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
 }) {
   const nav = (() => {
     if (activeRole === "admin")
@@ -683,22 +705,64 @@ export function Sidebar({
   const roleLabel =
     activeRole === "admin" ? "Admin View" : activeRole === "faculty" ? "Teacher View" : "Student View";
 
-  return (
-    <aside className="w-full lg:w-64 shrink-0 bg-ink text-paper border-2 border-ink hard flex flex-col">
-      <Hazard className="h-2" />
-      <div className="px-4 pt-4 pb-3 border-b-2 border-paper/15">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/55">Current View</p>
-        <p className="font-display uppercase text-base text-paper mt-1 leading-none">{roleLabel}</p>
-        <p className="font-mono text-[10px] text-blood mt-1.5 tracking-[0.14em]">{"// College of Management Studies"}</p>
+  const renderContent = (isMobile = false) => (
+    <div className="flex flex-col h-full overflow-hidden">
+      <Hazard className="h-2 shrink-0" />
+      <div className="px-4 pt-4 pb-3 border-b-2 border-paper/15 flex items-center justify-between shrink-0">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/55">Current View</p>
+          <p className="font-display uppercase text-base text-paper mt-1 leading-none">{roleLabel}</p>
+          <p className="font-mono text-[10px] text-blood mt-1.5 tracking-[0.14em]">{"// College of Management"}</p>
+        </div>
+        {isMobile && onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            aria-label="Close menu"
+            className="lg:hidden p-1.5 border-2 border-paper text-paper hover:bg-blood hover:border-blood press flex items-center justify-center"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      <nav className="p-3 space-y-1.5 flex-1">
+      {isMobile && onRoleChange && (
+        <div className="p-3 border-b-2 border-paper/15 space-y-1.5 shrink-0 bg-paper/5">
+          <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-paper/60 px-1">Console View</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              { key: "admin", label: "Admin" },
+              { key: "faculty", label: "Teacher" },
+              { key: "student", label: "Scholar" },
+            ].map((r) => (
+              <button
+                key={r.key}
+                onClick={() => {
+                  onRoleChange(r.key as UserRole);
+                  onCloseMobile?.();
+                }}
+                className={`py-1.5 px-1 text-center font-mono text-[10px] font-bold uppercase border-2 transition-colors ${
+                  activeRole === r.key
+                    ? "bg-blood text-paper border-paper"
+                    : "bg-paper/10 text-paper/80 border-paper/20 hover:bg-paper hover:text-ink"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto min-h-0">
         {nav.map((item) => {
           const active = currentTab === item.id;
           return (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => {
+                onTabChange(item.id);
+                if (isMobile) onCloseMobile?.();
+              }}
               className={`w-full group flex items-center justify-between gap-2 px-3 py-2.5 border-2 transition-colors ${
                 active
                   ? "bg-blood text-paper border-paper hard-paper"
@@ -728,9 +792,26 @@ export function Sidebar({
           );
         })}
       </nav>
+    </div>
+  );
 
+  return (
+    <>
+      {/* Desktop static Sidebar */}
+      <aside className="hidden lg:flex w-64 shrink-0 bg-ink text-paper border-2 border-ink hard flex-col self-start sticky top-[84px] max-h-[calc(100vh-100px)]">
+        {renderContent(false)}
+      </aside>
 
-    </aside>
+      {/* Mobile Drawer Overlay */}
+      {isOpenMobile && (
+        <div className="lg:hidden fixed inset-0 z-[100] bg-ink/75 backdrop-blur-[2px] flex">
+          <div className="fixed inset-0" onClick={onCloseMobile} />
+          <aside className="relative z-10 w-[290px] max-w-[85vw] h-full bg-ink text-paper border-r-2 border-paper flex flex-col shadow-2xl overflow-hidden">
+            {renderContent(true)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1049,7 +1130,7 @@ export function StudentModal({
         <Field label="Full Name">
           <input className={INPUT} value={name} onChange={(e) => setName(e.target.value)} required />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Email">
             <input type="email" className={INPUT} value={email} onChange={(e) => setEmail(e.target.value)} required />
           </Field>
@@ -1057,7 +1138,7 @@ export function StudentModal({
             <input className={INPUT} value={roll} onChange={(e) => setRoll(e.target.value)} placeholder="auto e.g. 101" />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Department">
             <select className={INPUT} value={dept} onChange={(e) => setDept(e.target.value)}>
               <option>BCA (CSJM)</option>
@@ -1108,7 +1189,7 @@ export function CourseModal({
     <Overlay onClose={onClose}>
       <ModalHeader title="Add New Course" tag="FORM - CRS-02" onClose={onClose} />
       <form onSubmit={submit} className="p-5 space-y-3.5">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Course Code"><input className={INPUT} value={code} onChange={(e) => setCode(e.target.value)} required /></Field>
           <Field label="Credits"><input type="number" min={1} max={6} className={INPUT} value={credits} onChange={(e) => setCredits(Number(e.target.value))} /></Field>
         </div>
@@ -1121,7 +1202,7 @@ export function CourseModal({
             <option>BBA</option>
           </select>
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Faculty"><input className={INPUT} value={faculty} onChange={(e) => setFaculty(e.target.value)} /></Field>
           <Field label="Room"><input className={INPUT} value={room} onChange={(e) => setRoom(e.target.value)} /></Field>
         </div>
@@ -1701,9 +1782,9 @@ function Row({
 
 function Overlay({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[70] bg-ink/70 backdrop-blur-[2px] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[70] bg-ink/70 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4">
       <div
-        className="pop-in bg-paper border-2 border-ink hard-lg w-full max-w-md max-h-[92vh] overflow-y-auto"
+        className="pop-in bg-paper border-2 border-ink hard-lg w-full max-w-md max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="sr-only">close</button>
