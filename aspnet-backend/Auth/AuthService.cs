@@ -27,14 +27,16 @@ public static class AuthService
     public static void SetSessionCookie(HttpResponse response, string token, long expiresAt)
     {
         var maxAge = (int)Math.Max(0, (expiresAt - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) / 1000);
+        var secure = response.HttpContext.Request.IsHttps ? "; Secure" : "";
         response.Headers.Append("Set-Cookie",
-            $"{SessionCookie}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={maxAge}");
+            $"{SessionCookie}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={maxAge}{secure}");
     }
 
     public static void ExpireSessionCookie(HttpResponse response)
     {
+        var secure = response.HttpContext.Request.IsHttps ? "; Secure" : "";
         response.Headers.Append("Set-Cookie",
-            $"{SessionCookie}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
+            $"{SessionCookie}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0{secure}");
     }
 
     public static UserDto? GetCurrentUser(HttpRequest request)

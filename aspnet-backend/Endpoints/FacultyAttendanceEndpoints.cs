@@ -27,7 +27,7 @@ public static class FacultyAttendanceEndpoints
         using var cmd = conn.CreateCommand();
         cmd.CommandText = user.Role switch
         {
-            "student" => "SELECT * FROM faculty_attendance WHERE 0",
+            "student" => "SELECT * FROM faculty_attendance WHERE false",
             "faculty" => "SELECT * FROM faculty_attendance WHERE faculty_id = @id ORDER BY id DESC",
             _ => "SELECT * FROM faculty_attendance ORDER BY id DESC",
         };

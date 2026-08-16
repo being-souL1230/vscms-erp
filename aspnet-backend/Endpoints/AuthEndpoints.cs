@@ -2,6 +2,7 @@ using static BCrypt.Net.BCrypt;
 using Npgsql;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
+using VscmsErp.Api.Lib;
 
 namespace VscmsErp.Api.Endpoints;
 
@@ -13,9 +14,11 @@ public static class AuthEndpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/login", Login);
-        app.MapPost("/demo", DemoLogin);
-        app.MapPost("/register", Register);
+        // Login routes carry a strict rate limit (10 per 15 min per IP) on top
+        // of the per-email brute-force lockout in Security.cs.
+        app.MapPost("/login", Login).RequireRateLimiting("login");
+        app.MapPost("/demo", DemoLogin).RequireRateLimiting("login");
+        app.MapPost("/register", Register).RequireRateLimiting("login");
         app.MapPost("/logout", Logout);
         app.MapGet("/me", Me);
         app.MapPost("/change-password", ChangePassword);
@@ -29,10 +32,18 @@ public static class AuthEndpoints
         if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
             return Results.Json(new { error = "Email and password are required" }, statusCode: 400);
 
+        // Brute-force guard: lock the email after 5 failed attempts (15 min).
+        if (Security.IsLoginLocked(body.Email))
+            return Results.Json(new { error = "Too many failed attempts. Try again in 15 minutes." }, statusCode: 429);
+
         using var conn = Database.Open();
         var user = FindUserByEmail(conn, body.Email.Trim().ToLowerInvariant());
         if (user is null || string.IsNullOrEmpty(user.PasswordHash) || !Verify(body.Password, user.PasswordHash))
+        {
+            Security.RecordFailedLogin(body.Email);
             return Results.Json(new { error = "Invalid email or password" }, statusCode: 401);
+        }
+        Security.ClearFailedLogins(body.Email);
         if (user.Status != "active")
             return Results.Json(new { error = "This account is not active" }, statusCode: 403);
 
