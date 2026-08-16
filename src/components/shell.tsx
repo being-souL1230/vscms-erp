@@ -751,7 +751,9 @@ export function LoginPage({
     process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_DEMO_LOGIN === "1";
 
   const [role, setRole] = useState<UserRole>("admin");
-  const [email, setEmail] = useState("director@vscms.edu");
+  // Email starts empty: no prefilled demo email, and autoComplete="off" stops
+  // the browser from injecting a saved personal address into the field.
+  const [email, setEmail] = useState("");
   const [pass, setPass] = useState("demo12345");
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -929,7 +931,7 @@ export function LoginPage({
               <span className="flex-1 border-t-2 border-dashed border-ink/40" />
             </div>
 
-            <form onSubmit={submit} className="space-y-4 flex-1">
+            <form onSubmit={submit} className="space-y-4 flex-1" autoComplete="off">
               {registering && <>
                 <Field label="Full Name"><input required value={name} onChange={(e) => setName(e.target.value)} className={INPUT} /></Field>
                 <Field label="Roll Number / Student ID"><input required value={rollNo} onChange={(e) => setRollNo(e.target.value)} className={INPUT} /></Field>
