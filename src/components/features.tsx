@@ -849,40 +849,92 @@ export function AdminReportsTab({
 /* ============================================================
    FACULTY · NOTICES BOARD
    ============================================================ */
-export function FacultyNoticesTab({ notices }: { notices: Notice[] }) {
-  const [urgentOnly, setUrgentOnly] = useState(false);
-  const list = urgentOnly ? notices.filter((n) => n.priority === "urgent") : notices;
+export function FacultyNoticesTab({
+  notices,
+  onAddNotice,
+}: {
+  notices: Notice[];
+  onAddNotice: (d: Partial<Notice>) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [category, setCategory] = useState("Academic");
+  const [priority, setPriority] = useState<"normal" | "urgent">("normal");
+
+  const publish = (e: FormEvent) => {
+    e.preventDefault();
+    if (!title || !body) return;
+    onAddNotice({ title, content: body, category, priority });
+    setTitle("");
+    setBody("");
+  };
+
   return (
-    <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 space-y-3">
-      <SectionTitle
-        kicker="Notice Board"
-        title="Campus"
-        accent="Bulletins"
-        sub="Official announcements from the Director's office."
-        right={
-          <button
-            onClick={() => setUrgentOnly(!urgentOnly)}
-            className={`border-2 px-2.5 py-1 font-mono text-[10px] font-bold uppercase press ${
-              urgentOnly ? "bg-blood border-blood text-paper" : "border-ink bg-paper text-ink hover:bg-ink hover:text-paper"
-            }`}
-          >
-            Urgent only
-          </button>
-        }
-      />
-      {list.map((n) => (
-        <article key={n.id} className="lift border-2 border-ink bg-paper-3 hard p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Tag tone="ink">{n.category}</Tag>
-            {n.priority === "urgent" && <Stamp>Urgent</Stamp>}
-            <span className="ml-auto font-mono text-[10px] text-muted">{n.publishedDate}</span>
-          </div>
-          <h4 className="font-display uppercase text-base text-ink">{n.title}</h4>
-          <p className="font-serif text-sm text-ink/80 mt-1.5 leading-relaxed">{n.content}</p>
-          <p className="mt-2 font-mono text-[10px] text-blood">- {n.authorName}</p>
-        </article>
-      ))}
-      {list.length === 0 && <EmptyState label="No notices" hint="Post a notice from the admin panel." />}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Post box (same design as the admin panel) */}
+      <form onSubmit={publish} className="border-2 border-ink bg-paper hard p-5 h-fit space-y-3.5">
+        <SectionTitle kicker="Broadcast" title="Post a" accent="Notice" />
+        <Field label="Headline">
+          <input
+            className={INPUT}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            placeholder="e.g. Exam schedule update"
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Category">
+            <select className={INPUT} value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option>Academic</option>
+              <option>Exam</option>
+              <option>Event</option>
+              <option>Fee</option>
+            </select>
+          </Field>
+          <Field label="Priority">
+            <select className={INPUT} value={priority} onChange={(e) => setPriority(e.target.value as "normal" | "urgent")}>
+              <option value="normal">Standard</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="Body">
+          <textarea
+            rows={5}
+            className={INPUT}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            required
+            placeholder="Write notice details..."
+          />
+        </Field>
+        <BrutalButton type="submit" tone="blood" className="w-full">
+          <Send className="w-4 h-4" /> Post Notice
+        </BrutalButton>
+      </form>
+
+      {/* Notice board */}
+      <div className="lg:col-span-2 space-y-3">
+        <SectionTitle kicker="On the board" title="All" accent={`Notices (${notices.length})`} />
+        {notices.length === 0 && <EmptyState label="No notices yet" />}
+        {notices.map((n) => (
+          <article key={n.id} className="lift border-2 border-ink bg-paper hard p-4">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <Tag tone="ink">{n.category}</Tag>
+                {n.priority === "urgent" && <Stamp>Urgent</Stamp>}
+              </div>
+            </div>
+            <h4 className="font-display uppercase text-base text-ink leading-tight">{n.title}</h4>
+            <p className="font-serif text-sm text-ink/80 mt-1.5 leading-relaxed">{n.content}</p>
+            <div className="mt-3 pt-2 border-t-2 border-dashed border-ink/25 flex items-center justify-between font-mono text-[10px] text-muted">
+              <span>Posted by {n.authorName}</span>
+              <span>{n.publishedDate}</span>
+            </div>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

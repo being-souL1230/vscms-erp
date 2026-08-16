@@ -1513,6 +1513,7 @@ export function FacultyDashboard(props: {
   onGradeSubmission: (submissionId: number, marks: string, feedback: string) => void;
   onReviewLeave: (id: number, status: "approved" | "rejected", remarks?: string) => void;
   onAddLeave: (d: { fromDate: string; toDate: string; reason: string }) => void;
+  onAddNotice: (d: Partial<Notice>) => void;
   onAddTimetable: (d: Partial<TimetableSlot>) => void;
   onDeleteTimetable: (id: number) => void;
   enrollments: Enrollment[];
@@ -1549,6 +1550,7 @@ export function FacultyDashboard(props: {
     onGradeSubmission,
     onReviewLeave,
     onAddLeave,
+    onAddNotice,
     onAddTimetable,
     onDeleteTimetable,
     onSaveMarks,
@@ -1958,7 +1960,9 @@ export function FacultyDashboard(props: {
       )}
 
       {/* NOTICES (faculty) */}
-      {currentTab === "notices" && <FacultyNoticesTab notices={notices} />}
+      {currentTab === "notices" && (
+        <FacultyNoticesTab notices={notices} onAddNotice={onAddNotice} />
+      )}
 
       {/* PERFORMANCE (faculty) */}
       {currentTab === "performance" && (

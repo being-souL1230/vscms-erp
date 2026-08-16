@@ -220,6 +220,39 @@ export default function VscmsErpApp() {
   };
   const dismiss = (id: string) => setToasts((p) => p.filter((t) => t.id !== id));
 
+  // Pushes a fresh AppData snapshot into all the module states. Used both on
+  // initial mount and after login (login happens after the mount fetch ran
+  // anonymously, so admin-only collections like users/permissions would stay
+  // empty without this reload).
+  const applyData = (data: AppData) => {
+    setStudents(data.students);
+    setFaculty(data.faculty);
+    setCourses(data.courses);
+    setAttendance(data.attendance);
+    setGrades(data.grades);
+    setFees(data.fees);
+    setFeeStructures(data.feeStructures);
+    setFeePayments(data.feePayments);
+    setNotices(data.notices);
+    setAssignments(data.assignments);
+    setSubmissions(data.submissions);
+    setTimetable(data.timetable);
+    setDepartments(data.departments);
+    setLeaves(data.leaves);
+    setAdmissions(data.admissions);
+    setDocuments(data.documents);
+    setSections(data.sections);
+    setSemesters(data.semesters);
+    setSessions(data.sessions);
+    setExams(data.exams);
+    setExamDefs(data.examDefs);
+    setInternalMarks(data.internalMarks);
+    setPermissions(data.permissions);
+    setAllUsers(data.allUsers);
+    setEnrollments(data.enrollments);
+    setFacultyAttendance(data.facultyAttendance);
+  };
+
   useEffect(() => {
     let ignore = false;
     (async () => {
@@ -234,32 +267,7 @@ export default function VscmsErpApp() {
         }
         const data = await fetchAllData();
         if (ignore) return;
-        setStudents(data.students);
-        setFaculty(data.faculty);
-        setCourses(data.courses);
-        setAttendance(data.attendance);
-        setGrades(data.grades);
-        setFees(data.fees);
-        setFeeStructures(data.feeStructures);
-        setFeePayments(data.feePayments);
-        setNotices(data.notices);
-        setAssignments(data.assignments);
-        setSubmissions(data.submissions);
-        setTimetable(data.timetable);
-        setDepartments(data.departments);
-        setLeaves(data.leaves);
-        setAdmissions(data.admissions);
-        setDocuments(data.documents);
-        setSections(data.sections);
-        setSemesters(data.semesters);
-        setSessions(data.sessions);
-        setExams(data.exams);
-        setExamDefs(data.examDefs);
-        setInternalMarks(data.internalMarks);
-        setPermissions(data.permissions);
-        setAllUsers(data.allUsers);
-        setEnrollments(data.enrollments);
-        setFacultyAttendance(data.facultyAttendance);
+        applyData(data);
       } catch (e) {
         console.error("load failed", e);
       } finally {
@@ -381,8 +389,12 @@ export default function VscmsErpApp() {
   };
   const addNotice = async (d: Partial<Notice>) => {
     const r = await fetch("/api/notices", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) });
-    const c = await r.json();
-    setNotices((p) => [c, ...p]);
+    const c = await r.json().catch(() => null);
+    if (!r.ok) {
+      toast("error", "Notice failed", (c && c.error) || `Server error (${r.status})`);
+      return;
+    }
+    if (c && c.id) setNotices((p) => [c, ...p]);
     toast("success", "Notice posted", "Published to all users.");
   };
   const delNotice = async (id: number) => {
@@ -686,12 +698,20 @@ export default function VscmsErpApp() {
       <>
         <LoginPage
           allUsers={[...students, ...faculty]}
-          onLogin={(u, r) => {
+          onLogin={async (u, r) => {
             setUser(u);
             setRole(r);
             setTab("overview");
             setLoggedIn(true);
             toast("success", "Welcome", `Hello ${u.name.split(" ")[0]}!`);
+            // Reload everything with the fresh session: the mount fetch ran
+            // anonymously (before login) so admin-only data would stay empty.
+            try {
+              const data = await fetchAllData();
+              applyData(data);
+            } catch (e) {
+              console.error("reload after login failed", e);
+            }
           }}
         />
         <ToastContainer toasts={toasts} onDismiss={dismiss} />
@@ -836,6 +856,7 @@ export default function VscmsErpApp() {
               onGradeSubmission={gradeSubmission}
               onReviewLeave={reviewLeave}
               onAddLeave={addLeave}
+              onAddNotice={addNotice}
               onAddTimetable={addTimetable}
               onDeleteTimetable={delTimetable}
             />

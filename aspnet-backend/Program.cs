@@ -60,9 +60,12 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
+    // Login: 60 per 15 min per IP. The per-email lockout (Security.cs) is the
+    // real brute-force defence; this wider cap avoids locking out everyone who
+    // shares one IP (a college LAN/NAT or a classroom behind one gateway).
     options.AddFixedWindowLimiter("login", policy =>
     {
-        policy.PermitLimit = 10;
+        policy.PermitLimit = 60;
         policy.Window = TimeSpan.FromMinutes(15);
         policy.QueueLimit = 0;
     });

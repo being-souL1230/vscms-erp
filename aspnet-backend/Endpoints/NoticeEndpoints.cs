@@ -55,7 +55,9 @@ public static class NoticeEndpoints
         cmd.Parameters.AddWithValue("@content", body.Content);
         cmd.Parameters.AddWithValue("@category", string.IsNullOrEmpty(body.Category) ? "Academic" : body.Category);
         cmd.Parameters.AddWithValue("@priority", string.IsNullOrEmpty(body.Priority) ? "normal" : body.Priority);
-        cmd.Parameters.AddWithValue("@author", string.IsNullOrEmpty(body.AuthorName) ? "Administration Office" : body.AuthorName);
+        // Default the author to the signed-in user so faculty posts show their
+        // own name instead of a generic office label.
+        cmd.Parameters.AddWithValue("@author", string.IsNullOrEmpty(body.AuthorName) ? user.Name : body.AuthorName);
         cmd.Parameters.AddWithValue("@date", today);
         var id = (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
 
