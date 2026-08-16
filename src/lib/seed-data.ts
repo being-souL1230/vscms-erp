@@ -3,7 +3,7 @@
 
 export const initialUsers = [
   {
-    name: "Dr. Virendra Swaroop",
+    name: "Prof. (Dr.) Gauri Singh Gaur",
     email: "director@vscms.edu",
     role: "admin",
     rollNo: "1",
@@ -15,8 +15,8 @@ export const initialUsers = [
     status: "active",
   },
   {
-    name: "Prof. Elena Rostova",
-    email: "e.rostova@vscms.edu",
+    name: "Dr. Tanya Mishra",
+    email: "tanya.m@vscms.edu",
     role: "faculty",
     rollNo: "2",
     department: "BCA (CSJM)",
@@ -27,8 +27,8 @@ export const initialUsers = [
     status: "active",
   },
   {
-    name: "Dr. Marcus Lindqvist",
-    email: "m.lindqvist@vscms.edu",
+    name: "Mr. Prakhar Tiwari",
+    email: "prakhar.t@vscms.edu",
     role: "faculty",
     rollNo: "3",
     department: "MBA",
@@ -39,8 +39,8 @@ export const initialUsers = [
     status: "active",
   },
   {
-    name: "Prof. Aisha Okonkwo",
-    email: "a.okonkwo@vscms.edu",
+    name: "Mr. Ayush Yadav",
+    email: "ayush.y@vscms.edu",
     role: "faculty",
     rollNo: "4",
     department: "BCA (MCU)",
@@ -121,7 +121,7 @@ export const initialDepartments = [
   {
     code: "BCA-CSJM",
     name: "BCA (CSJM)",
-    headOfDepartment: "Prof. Elena Rostova",
+    headOfDepartment: "Dr. Tanya Mishra",
     location: "Computer Wing · Level 1",
     studentCount: 120,
     facultyCount: 8,
@@ -129,7 +129,7 @@ export const initialDepartments = [
   {
     code: "BCA-MCU",
     name: "BCA (MCU)",
-    headOfDepartment: "Prof. Aisha Okonkwo",
+    headOfDepartment: "Mr. Ayush Yadav",
     location: "Computer Wing · Level 2",
     studentCount: 95,
     facultyCount: 6,
@@ -137,7 +137,7 @@ export const initialDepartments = [
   {
     code: "MBA",
     name: "MBA",
-    headOfDepartment: "Dr. Marcus Lindqvist",
+    headOfDepartment: "Mr. Prakhar Tiwari",
     location: "Management Block · Level 3",
     studentCount: 80,
     facultyCount: 10,
@@ -145,7 +145,7 @@ export const initialDepartments = [
   {
     code: "BBA",
     name: "BBA",
-    headOfDepartment: "Prof. Nina Sharma",
+    headOfDepartment: "Mrs. Shruti Agarwal",
     location: "Management Block · Level 2",
     studentCount: 110,
     facultyCount: 7,
@@ -159,7 +159,7 @@ export const initialCourses = [
     department: "BCA (CSJM)",
     credits: 4,
     semester: 1,
-    facultyName: "Prof. Elena Rostova",
+    facultyName: "Dr. Tanya Mishra",
     room: "Lab 1 · LT-101",
     schedule: "Mon · Wed · Fri  09:00 10:30",
     description:
@@ -171,7 +171,7 @@ export const initialCourses = [
     department: "BCA (CSJM)",
     credits: 4,
     semester: 2,
-    facultyName: "Prof. Elena Rostova",
+    facultyName: "Dr. Tanya Mishra",
     room: "Lab 2 · LT-202",
     schedule: "Tue · Thu  09:00 10:30",
     description:
@@ -183,7 +183,7 @@ export const initialCourses = [
     department: "BCA (CSJM)",
     credits: 3,
     semester: 3,
-    facultyName: "Prof. Aisha Okonkwo",
+    facultyName: "Mr. Ayush Yadav",
     room: "Lab 1 · LT-101",
     schedule: "Mon · Wed  11:00 12:30",
     description:
@@ -195,7 +195,7 @@ export const initialCourses = [
     department: "MBA",
     credits: 3,
     semester: 1,
-    facultyName: "Dr. Marcus Lindqvist",
+    facultyName: "Mr. Prakhar Tiwari",
     room: "Hall 1 · MH-101",
     schedule: "Tue · Thu  11:00 12:30",
     description:
@@ -207,7 +207,7 @@ export const initialCourses = [
     department: "MBA",
     credits: 3,
     semester: 2,
-    facultyName: "Dr. Marcus Lindqvist",
+    facultyName: "Mr. Prakhar Tiwari",
     room: "Hall 2 · MH-202",
     schedule: "Mon · Wed  14:00 15:30",
     description:
@@ -219,7 +219,7 @@ export const initialCourses = [
     department: "BBA",
     credits: 3,
     semester: 1,
-    facultyName: "Prof. Nina Sharma",
+    facultyName: "Mrs. Shruti Agarwal",
     room: "Hall 1 · MH-101",
     schedule: "Tue · Thu  09:00 10:30",
     description:
@@ -231,7 +231,7 @@ export const initialCourses = [
     department: "BBA",
     credits: 3,
     semester: 2,
-    facultyName: "Prof. Nina Sharma",
+    facultyName: "Mrs. Shruti Agarwal",
     room: "Hall 2 · MH-202",
     schedule: "Mon · Wed  11:00 12:30",
     description:
@@ -243,7 +243,7 @@ export const initialCourses = [
     department: "BCA (CSJM)",
     credits: 3,
     semester: 4,
-    facultyName: "Prof. Aisha Okonkwo",
+    facultyName: "Mr. Ayush Yadav",
     room: "Lab 2 · LT-202",
     schedule: "Fri  11:00 14:00",
     description:

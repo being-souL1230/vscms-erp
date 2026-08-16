@@ -1,5 +1,6 @@
 using VscmsErp.Api.Data;
 using VscmsErp.Api.Endpoints;
+using VscmsErp.Api.Lib;
 
 // Load the gitignored .env file for local development (DATABASE_URL etc.).
 // Real environment variables always win over .env values, so production
@@ -49,6 +50,19 @@ app.Use(async (ctx, next) =>
 // so a fresh database works again.
 Database.EnsureDatabase();
 Console.WriteLine($"[db] connected to Postgres (DATABASE_URL set)");
+
+// Bootstrap demo data on a fresh/empty database (non-destructive backfill;
+// never wipes existing data). This keeps demo login working even before any
+// signed-in user triggers the seed endpoint.
+try
+{
+    SeedLogic.SeedDatabase(force: false);
+    Console.WriteLine("[db] demo data ready");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"[db] seed skipped: {ex.Message}");
+}
 
 app.MapGet("/", () => Results.Json(new { service = "VSCMS ERP API", status = "ok" }));
 

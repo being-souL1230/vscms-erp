@@ -160,7 +160,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
       startTime: "09:00 AM",
       endTime: "10:30 AM",
       room: "Lab 1 · LT-101",
-      facultyName: "Prof. Elena Rostova",
+      facultyName: "Dr. Tanya Mishra",
     },
     {
       courseCode: "BCA201",
@@ -171,7 +171,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
       startTime: "09:00 AM",
       endTime: "10:30 AM",
       room: "Lab 2 · LT-202",
-      facultyName: "Prof. Elena Rostova",
+      facultyName: "Dr. Tanya Mishra",
     },
     {
       courseCode: "BCA301",
@@ -182,7 +182,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
       startTime: "11:00 AM",
       endTime: "12:30 PM",
       room: "Lab 1 · LT-101",
-      facultyName: "Prof. Aisha Okonkwo",
+      facultyName: "Mr. Ayush Yadav",
     },
     {
       courseCode: "MBA101",
@@ -193,7 +193,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
       startTime: "11:00 AM",
       endTime: "12:30 PM",
       room: "Hall 1 · MH-101",
-      facultyName: "Dr. Marcus Lindqvist",
+      facultyName: "Mr. Prakhar Tiwari",
     },
     {
       courseCode: "BBA101",
@@ -204,7 +204,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
       startTime: "09:00 AM",
       endTime: "10:30 AM",
       room: "Hall 1 · MH-101",
-      facultyName: "Prof. Nina Sharma",
+      facultyName: "Mrs. Shruti Agarwal",
     },
   ]);
 
@@ -235,7 +235,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
           date: d,
           status: Math.random() > absentRate ? "present" : "absent",
           period: "Lecture 1 (09:00 - 10:30)",
-          markedBy: "Prof. Elena Rostova",
+          markedBy: "Dr. Tanya Mishra",
         });
       }
     }
@@ -380,7 +380,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
           "Write a Python program that uses loops and functions to solve a basic problem. Submit your .py file.",
         dueDate: "2026-03-28",
         maxMarks: 50,
-        facultyName: "Prof. Elena Rostova",
+        facultyName: "Dr. Tanya Mishra",
       },
       {
         courseId: insertedCourses[2].id,
@@ -390,7 +390,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
           "Design a simple database for a library system. Submit the SQL schema and a short explanation.",
         dueDate: "2026-04-05",
         maxMarks: 50,
-        facultyName: "Prof. Aisha Okonkwo",
+        facultyName: "Mr. Ayush Yadav",
       },
     ])
     .returning();
@@ -441,7 +441,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
         toDate: "2026-03-06",
         reason: "Represented the college at an inter-college debate competition.",
         status: "approved",
-        reviewedBy: "Prof. Elena Rostova",
+        reviewedBy: "Dr. Tanya Mishra",
         reviewedAt: "2026-03-04",
         remarks: "Approved - good luck with the competition.",
       },

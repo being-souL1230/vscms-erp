@@ -669,6 +669,7 @@ export default function VscmsErpApp() {
         onLogout={async () => { await fetch("/api/auth/logout", { method: "POST" }); setUser(null); setLoggedIn(false); }}
         onResetSeed={reseed}
         isSeeding={seeding}
+        canReset={user?.role === "admin"}
         notices={notices}
         onToast={toast}
       />

@@ -2258,7 +2258,7 @@ export function StudentAdmitCardTab({
           </div>
           <div className="text-right">
             <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted">Controller of Examinations</p>
-            <p className="font-display text-lg text-blood mt-1 border-b-2 border-blood inline-block px-4">Dr. V. Swaroop</p>
+            <p className="font-display text-lg text-blood mt-1 border-b-2 border-blood inline-block px-4">Prof. (Dr.) Gauri Singh Gaur</p>
           </div>
         </div>
         <div className="hazard h-2" />

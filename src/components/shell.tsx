@@ -31,26 +31,26 @@ import { feeRemaining } from "@/types/erp";
 export const PROFILES: Record<UserRole, User> = {
   admin: {
     id: 1,
-    name: "Dr. Virendra Swaroop",
+    name: "Prof. (Dr.) Gauri Singh Gaur",
     email: "director@vscms.edu",
     role: "admin",
     rollNo: "1",
     rollNoOrEmpId: "1",
     department: "Office of the Director",
-    designation: "Director, College of Management Studies",
+    designation: "Director, VSCMS",
     status: "active",
     avatarUrl:
       "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80",
   },
   faculty: {
     id: 2,
-    name: "Prof. Elena Rostova",
-    email: "e.rostova@vscms.edu",
+    name: "Dr. Tanya Mishra",
+    email: "tanya.m@vscms.edu",
     role: "faculty",
     rollNo: "2",
     rollNoOrEmpId: "2",
-    department: "BCA (CSJM)",
-    designation: "Professor of Computer Science · HOD",
+    department: "MBA",
+    designation: "Associate Professor, HR & Organizational Behaviour",
     status: "active",
     avatarUrl:
       "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80",
@@ -356,6 +356,7 @@ export function Navbar({
   onLogout,
   onResetSeed,
   isSeeding,
+  canReset,
   notices,
   onToast,
 }: {
@@ -365,6 +366,7 @@ export function Navbar({
   onLogout: () => void;
   onResetSeed: () => void;
   isSeeding: boolean;
+  canReset: boolean;
   notices: Notice[];
   onToast?: (type: "success" | "error" | "info", title: string, message: string) => void;
 }) {
@@ -419,15 +421,17 @@ export function Navbar({
 
           {/* Right cluster */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={onResetSeed}
-              disabled={isSeeding}
-              title="Reset demo data"
-              className="hidden sm:inline-flex items-center gap-2 border-2 border-ink bg-paper px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.12em] hard-sm press hover:bg-ink hover:text-paper disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSeeding ? "animate-spin text-blood" : ""}`} />
-              <span className="hidden md:inline">Reset</span>
-            </button>
+            {canReset && (
+              <button
+                onClick={onResetSeed}
+                disabled={isSeeding}
+                title="Reset demo data (admin only)"
+                className="hidden sm:inline-flex items-center gap-2 border-2 border-ink bg-paper px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.12em] hard-sm press hover:bg-ink hover:text-paper disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSeeding ? "animate-spin text-blood" : ""}`} />
+                <span className="hidden md:inline">Reset</span>
+              </button>
+            )}
 
             {/* Bell */}
             <div className="relative">
@@ -785,7 +789,7 @@ export function LoginPage({
 
   const cards: { key: UserRole; label: string; handle: string; Icon: typeof Shield; tilt: string }[] = [
     { key: "admin", label: "Admin", handle: "director", Icon: Shield, tilt: "tilt-l" },
-    { key: "faculty", label: "Faculty", handle: "e.rostova", Icon: BookOpen, tilt: "tilt-m" },
+    { key: "faculty", label: "Faculty", handle: "tanya.m", Icon: BookOpen, tilt: "tilt-m" },
     { key: "student", label: "Scholar", handle: "aarav.r", Icon: GraduationCap, tilt: "tilt-r" },
   ];
 
@@ -1078,7 +1082,7 @@ export function CourseModal({
   const [dept, setDept] = useState("BCA (CSJM)");
   const [credits, setCredits] = useState(3);
   const [sem, setSem] = useState(4);
-  const [faculty, setFaculty] = useState("Prof. Elena Rostova");
+  const [faculty, setFaculty] = useState("Dr. Tanya Mishra");
   const [room, setRoom] = useState("Bloomberg Wing · BL-305");
 
   if (!isOpen) return null;

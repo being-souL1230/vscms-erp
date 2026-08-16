@@ -1601,7 +1601,7 @@ export function FacultyDashboard(props: {
         date,
         period,
         status: statusOf(s.id),
-        markedBy: currentUser?.name || "Prof. Elena Rostova",
+        markedBy: currentUser?.name || "Dr. Tanya Mishra",
       }));
     onSubmitAttendance(rows);
   };
@@ -1645,7 +1645,7 @@ export function FacultyDashboard(props: {
       description: aDesc,
       dueDate: aDue,
       maxMarks: 50,
-      facultyName: currentUser?.name || "Prof. Elena Rostova",
+      facultyName: currentUser?.name || "Dr. Tanya Mishra",
     });
     setATitle("");
     setADesc("");
@@ -1661,7 +1661,7 @@ export function FacultyDashboard(props: {
     <div className="space-y-6">
       <PanelHeader
         tag="Teacher Console"
-        title={currentUser?.name?.split(" ").slice(-1)[0] || "Rostova"}
+        title={currentUser?.name?.split(" ").slice(-1)[0] || "Mishra"}
         accent="- Desk"
         sub={`${currentUser?.designation || "Teacher"} - ${currentUser?.department || "Finance"}`}
         right={

@@ -176,11 +176,11 @@ public static class SeedLogic
         // ---- timetable ----
         var timetableRows = new (string Code, string Name, string Department, long Semester, string Day, string Start, string End, string Room, string Faculty)[]
         {
-            ("BCA101", "Introduction to Programming", "BCA (CSJM)", 1, "Monday", "09:00 AM", "10:30 AM", "Lab 1 · LT-101", "Prof. Elena Rostova"),
-            ("BCA201", "Data Structures & Algorithms", "BCA (CSJM)", 2, "Tuesday", "09:00 AM", "10:30 AM", "Lab 2 · LT-202", "Prof. Elena Rostova"),
-            ("BCA301", "Database Management Systems", "BCA (CSJM)", 3, "Wednesday", "11:00 AM", "12:30 PM", "Lab 1 · LT-101", "Prof. Aisha Okonkwo"),
-            ("MBA101", "Principles of Management", "MBA", 1, "Thursday", "11:00 AM", "12:30 PM", "Hall 1 · MH-101", "Dr. Marcus Lindqvist"),
-            ("BBA101", "Business Communication", "BBA", 1, "Friday", "09:00 AM", "10:30 AM", "Hall 1 · MH-101", "Prof. Nina Sharma"),
+            ("BCA101", "Introduction to Programming", "BCA (CSJM)", 1, "Monday", "09:00 AM", "10:30 AM", "Lab 1 · LT-101", "Mr. Shivam Kr. Singh"),
+            ("BCA201", "Data Structures & Algorithms", "BCA (CSJM)", 2, "Tuesday", "09:00 AM", "10:30 AM", "Lab 2 · LT-202", "Mr. Shivam Kr. Singh"),
+            ("BCA301", "Database Management Systems", "BCA (CSJM)", 3, "Wednesday", "11:00 AM", "12:30 PM", "Lab 1 · LT-101", "Mr. Ayush Yadav"),
+            ("MBA101", "Principles of Management", "MBA", 1, "Thursday", "11:00 AM", "12:30 PM", "Hall 1 · MH-101", "Mr. Prakhar Tiwari"),
+            ("BBA101", "Business Communication", "BBA", 1, "Friday", "09:00 AM", "10:30 AM", "Hall 1 · MH-101", "Mrs. Shruti Agarwal"),
         };
         foreach (var t in timetableRows)
             Database.Exec(conn, """
@@ -218,7 +218,7 @@ public static class SeedLogic
                     Database.Exec(conn, """
                         INSERT INTO attendance (student_id, student_name, course_id, course_code, date,
                                                 status, period, marked_by)
-                        VALUES (@sid, @sname, @cid, @ccode, @date, @status, 'Lecture 1 (09:00 - 10:30)', 'Prof. Elena Rostova')
+                        VALUES (@sid, @sname, @cid, @ccode, @date, @status, 'Lecture 1 (09:00 - 10:30)', 'Mr. Shivam Kr. Singh')
                         """,
                         ("@sid", s.Id), ("@sname", s.Name), ("@cid", c.id), ("@ccode", c.code),
                         ("@date", d), ("@status", Random.Shared.NextDouble() > absentRate ? "present" : "absent"));
@@ -316,11 +316,11 @@ public static class SeedLogic
             assignment1 = InsertAssignment(conn, a0.id, $"{a0.name} ({a0.code})",
                 "Python Assignment - Loops & Functions",
                 "Write a Python program that uses loops and functions to solve a basic problem. Submit your .py file.",
-                "2026-03-28", 50, "Prof. Elena Rostova");
+                "2026-03-28", 50, "Mr. Shivam Kr. Singh");
             InsertAssignment(conn, a2.id, $"{a2.name} ({a2.code})",
                 "Database Design Assignment",
                 "Design a simple database for a library system. Submit the SQL schema and a short explanation.",
-                "2026-04-05", 50, "Prof. Aisha Okonkwo");
+                "2026-04-05", 50, "Mr. Ayush Yadav");
         }
 
         if (students.Count > 0 && assignment1 > 0)
@@ -358,7 +358,7 @@ public static class SeedLogic
                 INSERT INTO leave_requests (student_id, student_name, roll_no, department, from_date, to_date,
                                             reason, status, reviewed_by, reviewed_at, remarks)
                 VALUES (@sid, @sname, @rollNo, @department, @from, @to, @reason, 'approved',
-                        'Prof. Elena Rostova', '2026-03-04', 'Approved - good luck with the competition.')
+                        'Dr. Tanya Mishra', '2026-03-04', 'Approved - good luck with the competition.')
                 """,
                 ("@sid", s2.Id), ("@sname", s2.Name), ("@rollNo", s2.RollNo),
                 ("@department", s2.Department), ("@from", "2026-03-05"), ("@to", "2026-03-06"),
