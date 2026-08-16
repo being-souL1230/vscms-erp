@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Npgsql;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
@@ -69,7 +70,12 @@ public static class FeeEndpoints
         cmd.Parameters.AddWithValue("@sname", body.StudentName ?? "");
         cmd.Parameters.AddWithValue("@rollNo", body.RollNo ?? "");
         cmd.Parameters.AddWithValue("@feeType", body.FeeType ?? "");
-        cmd.Parameters.AddWithValue("@amount", body.Amount ?? "");
+        // Amount arrives as a string from the UI but may be a JSON number from
+        // other clients; accept both instead of failing JSON binding.
+        var amount = body.Amount is { } amt
+            ? (amt.ValueKind == JsonValueKind.Number ? amt.GetRawText() : amt.GetString() ?? "")
+            : "";
+        cmd.Parameters.AddWithValue("@amount", amount);
         cmd.Parameters.AddWithValue("@dueDate", string.IsNullOrEmpty(body.DueDate) ? "2026-04-15" : body.DueDate);
         cmd.Parameters.AddWithValue("@courseCode", (object?)body.CourseCode ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@courseName", (object?)body.CourseName ?? DBNull.Value);
@@ -282,7 +288,7 @@ public static class FeeEndpoints
     }
 
     public sealed record FeeCreateRequest(
-        long? StudentId, string? StudentName, string? RollNo, string? FeeType, string? Amount,
+        long? StudentId, string? StudentName, string? RollNo, string? FeeType, JsonElement? Amount,
         string? DueDate, string? CourseCode, string? CourseName, long? Semester);
 
     public sealed record FeePayRequest(long? Id, double? Amount, string? PaymentMethod);

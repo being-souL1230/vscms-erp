@@ -54,6 +54,14 @@ public static class AuthEndpoints
 
     private static IResult DemoLogin(HttpContext ctx, DemoRequest body)
     {
+        // Demo login is a development convenience: it hands out a session for the
+        // first user of a role with no credentials. That is a privilege-escalation
+        // hole in production, so it is disabled there (or via DEMO_LOGIN_DISABLED=1).
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase)
+            || Environment.GetEnvironmentVariable("DEMO_LOGIN_DISABLED") == "1")
+            return Results.Json(new { error = "Demo login is disabled" }, statusCode: 403);
+
         Database.EnsureDatabase();
         var role = body.Role;
         if (role is not ("admin" or "faculty" or "student"))

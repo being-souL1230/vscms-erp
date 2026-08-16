@@ -744,6 +744,12 @@ export function LoginPage({
   onLogin: (u: User, r: UserRole) => void;
   allUsers: User[];
 }) {
+  // One-click demo login is a dev convenience: it lets anyone grab a session
+  // without credentials. Hidden in production builds unless explicitly enabled
+  // with NEXT_PUBLIC_DEMO_LOGIN=1.
+  const DEMO_LOGIN_ENABLED =
+    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_DEMO_LOGIN === "1";
+
   const [role, setRole] = useState<UserRole>("admin");
   const [email, setEmail] = useState("director@vscms.edu");
   const [pass, setPass] = useState("demo12345");
@@ -757,7 +763,7 @@ export function LoginPage({
   const [department, setDepartment] = useState("BCA (CSJM)");
 
   const pickEmail = (r: UserRole) =>
-    r === "admin" ? "director@vscms.edu" : r === "faculty" ? "e.rostova@vscms.edu" : "aarav.r@vscms.edu";
+    r === "admin" ? "director@vscms.edu" : r === "faculty" ? "tanya.m@vscms.edu" : "aarav.r@vscms.edu";
 
   const selectRole = (r: UserRole) => {
     setRole(r);
@@ -828,7 +834,8 @@ export function LoginPage({
               one simple system.
             </p>
 
-            {/* demo credentials plate */}
+            {/* demo credentials plate (dev-only; hidden in production) */}
+            {DEMO_LOGIN_ENABLED && (
             <div className="mt-auto pt-8">
               <div className="border-2 border-paper/40 bg-ink-2 p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -860,6 +867,7 @@ export function LoginPage({
                 </div>
               </div>
             </div>
+            )}
           </div>
 
              {/* RIGHT - login form */}
@@ -878,6 +886,8 @@ export function LoginPage({
               </span>
             </div>
 
+            {DEMO_LOGIN_ENABLED && (
+            <>
             <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-ink">Quick Login</p>
             <div className="mt-3 grid grid-cols-3 gap-3">
               {cards.map((c) => {
@@ -908,6 +918,8 @@ export function LoginPage({
                 );
               })}
             </div>
+            </>
+            )}
 
             <div className="my-5 flex items-center gap-3">
               <span className="flex-1 border-t-2 border-dashed border-ink/40" />
