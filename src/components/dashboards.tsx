@@ -661,9 +661,10 @@ export function AdminDashboard(props: {
             {filtered.length === 0 ? (
               <EmptyState label="No students match" hint="Try changing the filter or add a new student." />
             ) : (
-              <div className="overflow-x-auto border-2 border-ink">
+              <div className="overflow-x-auto overflow-y-auto border-2 border-ink max-h-[760px]">
                 <table className="w-full text-sm">
-                  <thead>
+                  {/* sticky header stays visible while the list scrolls inside this container */}
+                  <thead className="sticky top-0 z-10">
                     <tr>
                     <th className={TH}>Student</th>
                     <th className={TH}>Roll / ID</th>
