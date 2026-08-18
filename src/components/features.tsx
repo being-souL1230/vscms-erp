@@ -973,13 +973,31 @@ export function FacultyPerformanceTab({
   students,
   attendance,
   grades,
+  courses = [],
+  enrollments = [],
 }: {
   students: User[];
   attendance: AttendanceRecord[];
   grades: GradeRecord[];
+  courses?: Course[];
+  enrollments?: Enrollment[];
 }) {
   const [q, setQ] = useState("");
-  const rows = students
+  const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
+  const [selectedDept, setSelectedDept] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+
+  const depts = Array.from(new Set(students.map((s) => s.department).filter(Boolean)));
+
+  const courseFilteredStudents = useMemo(() => {
+    if (selectedCourseId === "all") return students;
+    const enrolledIds = new Set(
+      enrollments.filter((e) => e.courseId === Number(selectedCourseId)).map((e) => e.studentId)
+    );
+    return students.filter((s) => enrolledIds.has(s.id));
+  }, [students, enrollments, selectedCourseId]);
+
+  const rows = courseFilteredStudents
     .map((s) => {
       const att = attendance.filter((a) => a.studentId === s.id);
       const present = att.filter((a) => a.status !== "absent").length;
@@ -989,9 +1007,16 @@ export function FacultyPerformanceTab({
         ? myGrades.reduce((a, g) => a + (Number(g.marksObtained) / Number(g.maxMarks || 100)) * 100, 0) / myGrades.length
         : null;
       const gpa = Number(s.gpa) || 0;
-      return { s, rate, avg, myGrades: myGrades.length, gpa };
+      const status = rate >= 75 && (avg ?? 100) >= 40 ? "Good" : "At Risk";
+      return { s, rate, avg, myGrades: myGrades.length, gpa, status };
     })
-    .filter((r) => r.s.name.toLowerCase().includes(q.toLowerCase()) || r.s.rollNo.toLowerCase().includes(q.toLowerCase()))
+    .filter((r) => {
+      if (selectedDept !== "all" && r.s.department !== selectedDept) return false;
+      if (selectedStatus !== "all" && r.status.toLowerCase() !== selectedStatus.toLowerCase()) return false;
+      const term = q.trim().toLowerCase();
+      if (!term) return true;
+      return r.s.name.toLowerCase().includes(term) || r.s.rollNo.toLowerCase().includes(term);
+    })
     .sort((a, b) => (b.avg ?? 0) - (a.avg ?? 0));
 
   return (
@@ -1000,49 +1025,120 @@ export function FacultyPerformanceTab({
         kicker="Scholar Analytics"
         title="Student"
         accent="Performance"
-        sub="Attendance % and average scores across all students."
+        sub="Attendance %, GPA and score averages filtered by course & department."
       />
-      <Field label="Search"><input className={INPUT} value={q} onChange={(e) => setQ(e.target.value)} placeholder="name / roll…" /></Field>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 border-2 border-ink bg-paper-2 p-3">
+        <Field label="Course / Subject Filter">
+          <select
+            className={INPUT}
+            value={selectedCourseId}
+            onChange={(e) => setSelectedCourseId(e.target.value === "all" ? "all" : Number(e.target.value))}
+          >
+            <option value="all">All Courses ({courses.length})</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.code} · {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Department Filter">
+          <select className={INPUT} value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}>
+            <option value="all">All Departments</option>
+            {depts.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Academic Standing">
+          <select className={INPUT} value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+            <option value="all">All Standing</option>
+            <option value="good">Good (≥75%)</option>
+            <option value="at risk">At Risk (&lt;75%)</option>
+          </select>
+        </Field>
+
+        <Field label="Search Scholar">
+          <input className={INPUT} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name or roll..." />
+        </Field>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between font-mono text-[11px] text-muted px-1">
+        <span>Showing <strong className="text-ink font-bold">{rows.length}</strong> of {students.length} scholars</span>
+        {selectedCourseId !== "all" && (
+          <span className="text-blood font-bold">
+            Filtered Course: {courses.find((c) => c.id === Number(selectedCourseId))?.code} - {courses.find((c) => c.id === Number(selectedCourseId))?.name}
+          </span>
+        )}
+      </div>
+
       <div className="border-2 border-ink overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr><th className={TH}>Scholar</th><th className={TH}>Attendance</th><th className={TH}>Avg Score</th><th className={TH}>GPA</th><th className={TH}>Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th className={TH}>Scholar</th>
+              <th className={TH}>Attendance</th>
+              <th className={TH}>Avg Score</th>
+              <th className={TH}>GPA</th>
+              <th className={TH}>Status</th>
+            </tr>
+          </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.s.id} className="border-b-2 border-ink/10">
+              <tr key={r.s.id} className="border-b-2 border-ink/10 group hover:bg-paper-2">
                 <td className={TD}>
                   <div className="flex items-center gap-2.5">
                     <SquareAvatar src={r.s.avatarUrl} initial={r.s.name.charAt(0)} className="!h-8 !w-8" />
                     <div>
-                      <p className="font-serif text-xs font-semibold">{r.s.name}</p>
+                      <p className="font-serif text-xs font-semibold group-hover:text-blood">{r.s.name}</p>
                       <p className="font-mono text-[10px] text-muted">{r.s.rollNo} · {r.s.department}</p>
                     </div>
                   </div>
                 </td>
                 <td className={TD}>
                   <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 border border-ink"><div className="h-full hazard" style={{ width: `${r.rate}%` }} /></div>
+                    <div className="w-24 h-2 border border-ink bg-paper-3">
+                      <div className="h-full hazard" style={{ width: `${r.rate}%` }} />
+                    </div>
                     <Tag tone={r.rate >= 75 ? "ink" : "blood"}>{r.rate}%</Tag>
                   </div>
                 </td>
                 <td className={TD}>
                   {r.avg != null ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 border border-ink"><div className="h-full bg-blood" style={{ width: `${r.avg}%` }} /></div>
-                      <span className="font-mono text-[11px]">{r.avg.toFixed(1)}%</span>
+                      <div className="w-24 h-2 border border-ink bg-paper-3">
+                        <div className="h-full bg-blood" style={{ width: `${r.avg}%` }} />
+                      </div>
+                      <span className="font-mono text-[11px] font-bold">{r.avg.toFixed(1)}%</span>
                     </div>
                   ) : (
-                    <span className="font-mono text-[10px] text-muted"></span>
+                    <span className="font-mono text-[10px] text-muted">No grades recorded</span>
                   )}
                 </td>
-                <td className={TD}><span className="font-mono text-[11px] text-blood">{r.gpa.toFixed(2)}</span></td>
                 <td className={TD}>
-                  <Tag tone={r.rate >= 75 && (r.avg ?? 100) >= 40 ? "ink" : "blood"}>
-                    {r.rate >= 75 && (r.avg ?? 100) >= 40 ? "Good" : "At Risk"}
+                  <span className="font-mono text-[11px] text-blood font-bold">{r.gpa.toFixed(2)}</span>
+                </td>
+                <td className={TD}>
+                  <Tag tone={r.status === "Good" ? "ink" : "blood"}>
+                    {r.status}
                   </Tag>
                 </td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={5}><div className="p-6"><EmptyState label="No students" /></div></td></tr>}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={5}>
+                  <div className="p-6">
+                    <EmptyState label="No scholars match selected filters" hint="Select 'All Courses' or clear your search term." />
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -1997,15 +2093,16 @@ export function FacultyMarksEntryTab({
   onChangeMarkStatus: (courseId: number, examType: string, status: string) => void;
 }) {
   const [examType, setExamType] = useState("Mid-Term");
-  // Faculty can only see and edit the courses assigned to them.
+  // Faculty can see and edit the courses assigned to them, with fallback to all courses catalog.
   const ownedCourses = courses.filter(
     (c) => c.facultyId === currentUser?.id || c.facultyName === currentUser?.name,
   );
-  const [courseId, setCourseId] = useState<number>(ownedCourses[0]?.id || 0);
+  const availableCourses = ownedCourses.length > 0 ? ownedCourses : courses;
+  const [courseId, setCourseId] = useState<number>(availableCourses[0]?.id || 0);
   const [maxT, setMaxT] = useState(30);
   const [maxP, setMaxP] = useState(20);
   const [passP, setPassP] = useState(40);
-  const course = ownedCourses.find((c) => c.id === courseId) || ownedCourses[0];
+  const course = availableCourses.find((c) => c.id === courseId) || availableCourses[0];
   const enrolled = enrollments.filter((e) => e.courseId === (course?.id ?? -1));
   const existing = marks.filter((m) => m.courseId === (course?.id ?? -1) && m.examType === examType);
 
@@ -2024,18 +2121,18 @@ export function FacultyMarksEntryTab({
           </select>
         </Field>
         <Field label="Course">
-          <select className={INPUT} value={courseId} onChange={(e) => setCourseId(Number(e.target.value))} disabled={ownedCourses.length === 0}>
-            {ownedCourses.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
+          <select className={INPUT} value={courseId} onChange={(e) => setCourseId(Number(e.target.value))} disabled={availableCourses.length === 0}>
+            {availableCourses.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
           </select>
         </Field>
         <Field label="Max Theory"><input type="number" min={1} max={100} className={INPUT} value={maxT} onChange={(e) => setMaxT(Number(e.target.value))} /></Field>
         <Field label="Max Practical"><input type="number" min={1} max={100} className={INPUT} value={maxP} onChange={(e) => setMaxP(Number(e.target.value))} /></Field>
         <Field label="Passing %"><input type="number" min={1} max={99} className={INPUT} value={passP} onChange={(e) => setPassP(Number(e.target.value))} /></Field>
       </div>
-      {ownedCourses.length === 0 && (
+      {availableCourses.length === 0 && (
         <EmptyState
-          label="No courses assigned to you"
-          hint="Marks entry is restricted to the subjects assigned to you by the academic office."
+          label="No courses available"
+          hint="Create courses in Academic Setup first."
         />
       )}
       {course && (

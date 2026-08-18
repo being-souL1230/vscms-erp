@@ -2254,7 +2254,13 @@ export function FacultyDashboard(props: {
 
       {/* PERFORMANCE (faculty) */}
       {currentTab === "performance" && (
-        <FacultyPerformanceTab students={students} attendance={attendanceRecords} grades={grades} />
+        <FacultyPerformanceTab
+          students={students}
+          attendance={attendanceRecords}
+          grades={grades}
+          courses={courses}
+          enrollments={enrollments}
+        />
       )}
 
       {/* MY LEAVE (faculty) */}
