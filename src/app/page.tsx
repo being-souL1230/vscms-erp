@@ -44,6 +44,7 @@ import {
   StudentDashboard,
 } from "@/components/dashboards";
 import { CMSbot } from "@/components/cmsbot";
+import type { IdVerificationRecord } from "@/components/features";
 
 type AppData = {
   students: User[];
@@ -213,6 +214,93 @@ export default function VscmsErpApp() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [facultyAttendance, setFacultyAttendance] = useState<FacultyAttendance[]>([]);
   const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>(initialCourseMaterials);
+  const [idVerifications, setIdVerifications] = useState<Record<string, IdVerificationRecord>>({
+    "2024-BCA-001": {
+      rollNo: "2024-BCA-001",
+      studentName: "Aarav Rao",
+      department: "Data Science",
+      status: "verified",
+      verifiedBy: "Dr. Aris Thorne (HOD Computer Science)",
+      verifiedAt: "2026-08-18 10:30 AM",
+    },
+    "2024-BCA-002": {
+      rollNo: "2024-BCA-002",
+      studentName: "Priya Nair",
+      department: "Computer Applications",
+      status: "pending",
+      requestedAt: "2026-08-18 09:15 AM",
+    },
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vscms_id_verifications");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setIdVerifications((prev) => ({ ...prev, ...parsed }));
+        }
+      } catch {}
+    }
+  }, []);
+
+  const requestStudentVerification = (rollNo: string) => {
+    const student = students.find((s) => s.rollNo === rollNo) || user;
+    const newRecord: IdVerificationRecord = {
+      rollNo,
+      studentName: student?.name || "Student",
+      department: student?.department || "General",
+      status: "pending",
+      requestedAt: new Date().toLocaleString(),
+    };
+    setIdVerifications((prev) => {
+      const updated = { ...prev, [rollNo]: newRecord };
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("info", "Verification Requested", "Verification request sent to Faculty/Registrar.");
+  };
+
+  const approveStudentVerification = (rollNo: string, facultyName: string) => {
+    const student = students.find((s) => s.rollNo === rollNo);
+    const updatedRecord: IdVerificationRecord = {
+      rollNo,
+      studentName: student?.name || "Student",
+      department: student?.department || "General",
+      status: "verified",
+      verifiedBy: facultyName,
+      verifiedAt: new Date().toLocaleString(),
+    };
+    setIdVerifications((prev) => {
+      const updated = { ...prev, [rollNo]: updatedRecord };
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("success", "ID Card Verified", `Student ${student?.name || rollNo} is now officially verified.`);
+  };
+
+  const rejectStudentVerification = (rollNo: string, reason: string) => {
+    const student = students.find((s) => s.rollNo === rollNo);
+    const updatedRecord: IdVerificationRecord = {
+      rollNo,
+      studentName: student?.name || "Student",
+      department: student?.department || "General",
+      status: "rejected",
+      rejectReason: reason,
+    };
+    setIdVerifications((prev) => {
+      const updated = { ...prev, [rollNo]: updatedRecord };
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("info", "Verification Flagged", `ID verification status for ${rollNo} updated.`);
+  };
 
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
@@ -1007,6 +1095,9 @@ export default function VscmsErpApp() {
               onUploadMaterial={uploadCourseMaterial}
               onDeleteMaterial={deleteCourseMaterial}
               onIncrementDownload={incrementCourseMaterialDownload}
+              idVerifications={idVerifications}
+              onApproveIdVerification={approveStudentVerification}
+              onRejectIdVerification={rejectStudentVerification}
             />
           ) : (
             <StudentDashboard
@@ -1039,6 +1130,8 @@ export default function VscmsErpApp() {
               onUploadMaterial={uploadCourseMaterial}
               onDeleteMaterial={deleteCourseMaterial}
               onIncrementDownload={incrementCourseMaterialDownload}
+              idVerifications={idVerifications}
+              onRequestVerification={requestStudentVerification}
             />
           )}
         </main>

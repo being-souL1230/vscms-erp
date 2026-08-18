@@ -1310,65 +1310,616 @@ export function StudentDocumentsTab({
 /* ============================================================
    STUDENT · ID CARD (printable)
    ============================================================ */
+/* ============================================================
+   STUDENT · ID CARD (Digital & Printable QR Code System)
+   ============================================================ */
+
+function StudentQrCode({ value, size = 68 }: { value: string; size?: number }) {
+  const gridCount = 21;
+  const matrix: boolean[][] = Array.from({ length: gridCount }, () => Array(gridCount).fill(false));
+
+  const drawFinder = (row: number, col: number) => {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
+          matrix[row + r][col + c] = true;
+        }
+      }
+    }
+  };
+
+  drawFinder(0, 0);
+  drawFinder(0, 14);
+  drawFinder(14, 0);
+
+  for (let i = 8; i < 13; i++) {
+    matrix[6][i] = i % 2 === 0;
+    matrix[i][6] = i % 2 === 0;
+  }
+
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+
+  for (let r = 0; r < gridCount; r++) {
+    for (let c = 0; c < gridCount; c++) {
+      const isTopLeft = r < 8 && c < 8;
+      const isTopRight = r < 8 && c >= 13;
+      const isBottomLeft = r >= 13 && c < 8;
+      const isTiming = r === 6 || c === 6;
+
+      if (!isTopLeft && !isTopRight && !isBottomLeft && !isTiming) {
+        const bitSeed = (r * gridCount + c + Math.abs(hash)) % 100;
+        matrix[r][c] = bitSeed > 42;
+      }
+    }
+  }
+
+  const cellSize = size / gridCount;
+
+  return (
+    <div className="bg-white p-1 border-2 border-ink inline-block">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {matrix.map((row, r) =>
+          row.map((cell, c) =>
+            cell ? (
+              <rect
+                key={`${r}-${c}`}
+                x={c * cellSize}
+                y={r * cellSize}
+                width={cellSize + 0.15}
+                height={cellSize + 0.15}
+                fill="#111111"
+              />
+            ) : null
+          )
+        )}
+      </svg>
+    </div>
+  );
+}
+
+export interface IdVerificationRecord {
+  rollNo: string;
+  studentName: string;
+  department: string;
+  semester?: number;
+  avatarUrl?: string;
+  status: "verified" | "pending" | "unverified" | "rejected";
+  requestedAt?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  rejectReason?: string;
+}
+
 export function StudentIdCardTab({
   currentUser,
   admission,
+  verificationRecord,
+  onRequestVerification,
 }: {
   currentUser: User | null;
   admission: AdmissionInfo | null;
+  verificationRecord?: IdVerificationRecord | null;
+  onRequestVerification?: (rollNo: string) => void;
 }) {
   const u = currentUser;
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
   if (!u) return <EmptyState label="Sign in to view your ID card" />;
   const session = "2025-26";
   const a = admission;
+  const qrDataPayload = `https://vscms.edu/verify?rollNo=${u.rollNo}&name=${encodeURIComponent(u.name)}&dept=${u.department}`;
+
+  const status = verificationRecord?.status || "unverified";
+  const isVerified = status === "verified";
+  const isPending = status === "pending";
+  const isRejected = status === "rejected";
+
   return (
     <div className="border-2 border-ink bg-paper hard p-4 sm:p-6 space-y-5">
       <SectionTitle
-        kicker="Identity"
+        index="39"
+        kicker="Digital Identity"
         title="Student"
         accent="ID Card"
-        sub="Your official institute identity valid for session 2025-26."
-        right={<BrutalButton tone="ink" onClick={() => printElement("student-id-card")}><Printer className="w-4 h-4" /> Print</BrutalButton>}
+        sub="Official VSCMS institutional identity card with active QR code verification."
+        right={
+          <div className="flex flex-wrap gap-2">
+            <BrutalButton tone="ghost" onClick={() => setIsFlipped(!isFlipped)}>
+              <RotateCcw className="w-4 h-4" /> {isFlipped ? "Show Front" : "Flip to Back"}
+            </BrutalButton>
+            <BrutalButton tone="blood" onClick={() => setShowVerifyModal(true)}>
+              <BadgeCheck className="w-4 h-4" /> Scan QR Profile
+            </BrutalButton>
+            <BrutalButton tone="ink" onClick={() => printElement("student-id-card")}>
+              <Printer className="w-4 h-4" /> Print ID
+            </BrutalButton>
+          </div>
+        }
       />
-      <div id="student-id-card" className="max-w-md mx-auto border-2 border-ink hard overflow-hidden">
-        <div className="bg-ink text-paper px-5 py-4 flex items-center justify-between">
-          <div>
-            <p className="font-display uppercase text-base leading-none">College of Management Studies</p>
-            <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-paper/70 mt-1">VSCMS · {session}</p>
+
+      {/* Verification Status Alert Banner */}
+      {!bannerDismissed && (
+        <div className={`relative border-2 border-ink p-3 sm:p-4 hard-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+          isVerified ? "bg-emerald-50 text-emerald-900" : isPending ? "bg-amber-50 text-amber-900" : isRejected ? "bg-rose-50 text-rose-900" : "bg-paper-2 text-ink"
+        }`}>
+          <div className="flex items-center gap-2.5 pr-6 sm:pr-0">
+            {isVerified ? (
+              <BadgeCheck className="w-5 h-5 text-emerald-700 shrink-0" />
+            ) : isPending ? (
+              <Clock className="w-5 h-5 text-amber-700 shrink-0 animate-spin" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-blood shrink-0" />
+            )}
+            <div>
+              <p className="font-mono text-xs font-extrabold uppercase tracking-wider">
+                {isVerified
+                  ? `Institutionally Verified by ${verificationRecord?.verifiedBy || "Faculty Registrar"}`
+                  : isPending
+                  ? "Verification Request Pending at Faculty/Registrar"
+                  : isRejected
+                  ? `Verification Rejected: ${verificationRecord?.rejectReason || "Please re-check photo"}`
+                  : "Unverified ID Card - Request Faculty Approval"}
+              </p>
+              <p className="font-mono text-[10px] text-muted mt-0.5">
+                {isVerified
+                  ? `Verified on ${verificationRecord?.verifiedAt || "2026-08-18"}. Card active for all campus entrances & exams.`
+                  : isPending
+                  ? "Your verification request has been sent to Faculty. Verification status will update once approved."
+                  : "Students must request Faculty verification before using ID for official campus verification."}
+              </p>
+            </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/vscms-logo.png"
-            alt="College of Management Studies"
-            className="h-11 w-11 rounded-full bg-paper border-2 border-paper object-contain"
-          />
+
+          <div className="flex items-center gap-2 shrink-0">
+            {(!isVerified && onRequestVerification) && (
+              <BrutalButton
+                tone={isPending ? "ghost" : "blood"}
+                disabled={isPending}
+                onClick={() => onRequestVerification(u.rollNo)}
+                className="!py-1.5 !px-3 !text-xs"
+              >
+                {isPending ? "Pending Faculty Approval" : isRejected ? "Re-send Request to Faculty" : "Send Verification Request to Faculty"}
+              </BrutalButton>
+            )}
+            <button
+              type="button"
+              onClick={() => setBannerDismissed(true)}
+              className="border-2 border-ink p-1 bg-paper hover:bg-ink hover:text-paper press"
+              title="Dismiss notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <div className="bg-paper px-5 py-5 flex gap-4">
-          <div className="shrink-0">
-            <SquareAvatar src={u.avatarUrl} initial={u.name.charAt(0)} className="!h-20 !w-20 border-2 border-ink" />
+      )}
+
+      {/* ID Card Display Frame */}
+      <div id="student-id-card" className="max-w-md mx-auto border-2 border-ink hard overflow-hidden bg-paper transition-all">
+        {!isFlipped ? (
+          /* FRONT SIDE */
+          <div>
+            {/* Institute Banner Header */}
+            <div className="bg-ink text-paper px-5 py-3.5 flex items-center justify-between border-b-2 border-ink">
+              <div>
+                <p className="font-display uppercase text-base tracking-wide leading-none text-paper">
+                  Visual Student & Campus Management
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-paper/70 mt-1">
+                  VSCMS ERP · SESSION {session}
+                </p>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/vscms-logo.png"
+                alt="College of Management Studies"
+                className="h-10 w-10 rounded-full bg-paper border-2 border-paper object-contain shrink-0"
+              />
+            </div>
+
+            {/* Main Body */}
+            <div className="p-4 sm:p-5 bg-paper space-y-4">
+              <div className="flex gap-4 items-start">
+                <div className="shrink-0 space-y-1.5 text-center">
+                  <SquareAvatar src={u.avatarUrl} initial={u.name.charAt(0)} className="!h-24 !w-24 border-2 border-ink shadow-md" />
+                  <span className={`block font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 border border-ink ${
+                    isVerified ? "bg-emerald-100 text-emerald-900" : isPending ? "bg-amber-100 text-amber-900" : "bg-rose-100 text-rose-900"
+                  }`}>
+                    {isVerified ? "VERIFIED STUDENT" : isPending ? "PENDING AUTH" : "UNVERIFIED"}
+                  </span>
+                </div>
+
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div>
+                    <h3 className="font-display uppercase text-xl text-ink leading-tight tracking-wide">{u.name}</h3>
+                    <p className="font-mono text-xs font-extrabold text-blood mt-0.5">Roll No · {u.rollNo}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[11px] border-t border-b border-ink/15 py-2">
+                    <div>
+                      <span className="text-muted text-[10px] uppercase block">Course</span>
+                      <strong className="text-ink font-bold">{u.department}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted text-[10px] uppercase block">Semester</span>
+                      <strong className="text-ink font-bold">Sem {u.semester || 1}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted text-[10px] uppercase block">Batch</span>
+                      <strong className="text-ink font-bold">2024-2027</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted text-[10px] uppercase block">Blood Grp</span>
+                      <strong className="text-ink font-bold">{a?.bloodGroup || "O+"}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Code & Barcode Row */}
+              <div className="pt-2 border-t-2 border-ink flex items-center justify-between bg-paper-2 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="cursor-pointer" onClick={() => setShowVerifyModal(true)} title="Click to verify QR Profile">
+                    <StudentQrCode value={qrDataPayload} size={64} />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="font-mono text-[9px] uppercase font-bold text-ink flex items-center gap-1">
+                      <BadgeCheck className={`w-3 h-3 ${isVerified ? "text-emerald-700" : "text-blood"}`} /> {isVerified ? "Faculty Verified QR" : "Unverified QR"}
+                    </p>
+                    <p className="font-mono text-[9px] text-muted">Scan to verify credentials</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowVerifyModal(true)}
+                      className="font-mono text-[9px] font-bold text-blood underline hover:text-ink"
+                    >
+                      Click to Scan Profile
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="font-mono text-[9px] text-muted">Adm No: {a?.admissionNumber || "ADM-2024-88"}</p>
+                  <p className="font-mono text-[9px] text-muted">Cat: {a?.category || "General"}</p>
+                </div>
+              </div>
+
+              {/* Simulated Barcode Strip */}
+              <div className="pt-1 text-center">
+                <div className="h-6 w-full bg-ink/10 flex items-center justify-center font-mono text-[9px] tracking-[0.3em] font-bold border border-ink text-ink">
+                  ||||| | |||||| || | |||| |||||| ||| {u.rollNo}
+                </div>
+              </div>
+            </div>
+
+            <div className="hazard h-2" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-display uppercase text-lg text-ink leading-tight">{u.name}</p>
-            <p className="font-mono text-[10px] text-blood mt-1">Roll No · {u.rollNo}</p>
-            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[10px]">
-              <span className="text-muted">Course</span><span className="text-ink font-bold">{u.department}</span>
-              <span className="text-muted">Semester</span><span className="text-ink font-bold">{u.semester || 1}</span>
-              <span className="text-muted">Blood</span><span className="text-ink font-bold">{a?.bloodGroup || ""}</span>
-              <span className="text-muted">Category</span><span className="text-ink font-bold">{a?.category || "General"}</span>
+        ) : (
+          /* BACK SIDE */
+          <div>
+            <div className="bg-ink text-paper px-5 py-3 flex items-center justify-between border-b-2 border-ink">
+              <p className="font-mono text-xs uppercase font-bold tracking-wider text-paper">
+                Institutional Terms & Emergency Contact
+              </p>
+              <span className="font-mono text-[9px] text-paper/70">BACK SIDE</span>
+            </div>
+
+            <div className="p-5 space-y-4 font-mono text-xs text-ink bg-paper">
+              <div className="space-y-1.5 border-b border-ink/15 pb-3">
+                <p className="text-[10px] text-muted uppercase font-bold">Residential Address:</p>
+                <p className="text-xs font-serif leading-relaxed">
+                  {a?.fatherName ? `C/O ${a.fatherName}, ` : ""}{a?.category ? `Room 402, Block B, Campus Hostel` : "Main Campus, University Hostel"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 border-b border-ink/15 pb-3 text-[11px]">
+                <div>
+                  <span className="text-muted text-[10px] uppercase block">Emergency Phone:</span>
+                  <strong>{a?.guardianPhone || "+91 98765 43210"}</strong>
+                </div>
+                <div>
+                  <span className="text-muted text-[10px] uppercase block">Library Card ID:</span>
+                  <strong>LIB-{u.rollNo}</strong>
+                </div>
+              </div>
+
+              <div className="space-y-1 text-[10px] text-muted">
+                <p className="font-bold text-ink">CARD INSTRUCTIONS:</p>
+                <ul className="list-disc pl-4 space-y-0.5 leading-tight">
+                  <li>This card is non-transferable and remains property of VSCMS ERP.</li>
+                  <li>Mandatory for campus entry, library issuing, labs & examination halls.</li>
+                  <li>Must be verified by Faculty/Registrar for institutional validity.</li>
+                </ul>
+              </div>
+
+              <div className="pt-3 border-t-2 border-ink flex items-end justify-between">
+                <div className="text-center">
+                  <div className="w-20 h-6 border-b border-ink flex items-center justify-center italic font-serif text-xs text-muted">
+                    VSCMS Seal
+                  </div>
+                  <span className="font-mono text-[9px] text-muted uppercase">Student Sign</span>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-24 h-6 border-b border-ink flex items-center justify-center font-serif font-bold text-xs text-blood">
+                    {verificationRecord?.verifiedBy ? verificationRecord.verifiedBy : "Registrar VSCMS"}
+                  </div>
+                  <span className="font-mono text-[9px] text-muted uppercase">Authorized Faculty</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="hazard h-2" />
+          </div>
+        )}
+      </div>
+
+      <p className="font-mono text-xs text-muted text-center max-w-md mx-auto">
+        Print this official student ID card or scan the QR Code for instant institutional authentication.
+      </p>
+
+      {/* QR SCAN & VERIFIED PROFILE MODAL */}
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="border-2 border-ink bg-paper hard p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
+              <span className={`font-mono text-xs uppercase font-bold flex items-center gap-1.5 ${
+                isVerified ? "text-emerald-800" : isPending ? "text-amber-800" : "text-rose-800"
+              }`}>
+                {isVerified ? (
+                  <><BadgeCheck className="w-4 h-4 text-emerald-600" /> INSTITUTIONAL QR VERIFIED</>
+                ) : isPending ? (
+                  <><Clock className="w-4 h-4 text-amber-600" /> PENDING FACULTY APPROVAL</>
+                ) : (
+                  <><AlertTriangle className="w-4 h-4 text-rose-600" /> UNVERIFIED ID CARD</>
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowVerifyModal(false)}
+                className="p-1 text-muted hover:text-ink"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className={`border-2 p-4 space-y-3 hard-sm ${
+              isVerified ? "border-emerald-800 bg-emerald-50" : isPending ? "border-amber-800 bg-amber-50" : "border-rose-800 bg-rose-50"
+            }`}>
+              <div className={`flex items-center gap-2 font-mono text-xs font-extrabold uppercase ${
+                isVerified ? "text-emerald-900" : isPending ? "text-amber-900" : "text-rose-900"
+              }`}>
+                {isVerified ? (
+                  <><Check className="w-4 h-4 text-emerald-700 stroke-[3]" /> OFFICIAL VERIFIED STUDENT PROFILE</>
+                ) : isPending ? (
+                  <><Clock className="w-4 h-4 text-amber-700 stroke-[3]" /> AWAITING FACULTY VERIFICATION</>
+                ) : (
+                  <><AlertTriangle className="w-4 h-4 text-rose-700 stroke-[3]" /> UNVERIFIED STUDENT CARD</>
+                )}
+              </div>
+
+              <div className="flex gap-3 items-center pt-2 border-t border-ink/10">
+                <SquareAvatar src={u.avatarUrl} initial={u.name.charAt(0)} className="!h-16 !w-16 border-2 border-ink" />
+                <div className="space-y-0.5 font-mono text-xs">
+                  <h4 className="font-serif font-bold text-base text-ink">{u.name}</h4>
+                  <p className="text-blood font-bold">Roll No: {u.rollNo}</p>
+                  <p className="text-muted text-[11px]">{u.department} · Semester {u.semester || 1}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 font-mono text-[11px] pt-2 border-t border-ink/10">
+                <div>
+                  <span className="text-muted text-[10px] block uppercase">Verification Status</span>
+                  <span className={`font-extrabold ${isVerified ? "text-emerald-800" : isPending ? "text-amber-800" : "text-rose-800"}`}>
+                    {isVerified ? "OFFICIALLY VERIFIED" : isPending ? "PENDING SIGN-OFF" : "NOT VERIFIED"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted text-[10px] block uppercase">Verified By</span>
+                  <span className="text-ink font-bold">{verificationRecord?.verifiedBy || "None"}</span>
+                </div>
+                <div>
+                  <span className="text-muted text-[10px] block uppercase">Admission No</span>
+                  <span className="text-ink font-bold">{a?.admissionNumber || "ADM-2024-88"}</span>
+                </div>
+                <div>
+                  <span className="text-muted text-[10px] block uppercase">Token Hash</span>
+                  <span className="text-blood font-bold">VSCMS-SEC-8849</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between font-mono text-[10px] text-muted">
+              <span>Scanned at: {new Date().toLocaleTimeString()}</span>
+              <span>Campus Security Verification</span>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <BrutalButton tone="ink" onClick={() => setShowVerifyModal(false)}>
+                Close Verification
+              </BrutalButton>
             </div>
           </div>
         </div>
-        <div className="border-t-2 border-ink px-5 py-3 bg-paper-2">
-          <div className="flex items-center justify-between font-mono text-[9px] text-muted">
-            <span>Admission · {a?.admissionNumber || ""}</span>
-            <span>Guardian · {a?.guardianPhone || ""}</span>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   FACULTY / ADMIN · STUDENT ID VERIFICATIONS CONSOLE
+   ============================================================ */
+export function FacultyIdVerificationsTab({
+  students,
+  verifications,
+  currentUser,
+  onApproveVerification,
+  onRejectVerification,
+}: {
+  students: User[];
+  verifications: Record<string, IdVerificationRecord>;
+  currentUser: User | null;
+  onApproveVerification: (rollNo: string, facultyName: string) => void;
+  onRejectVerification: (rollNo: string, reason: string) => void;
+}) {
+  const [searchQ, setSearchQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const facultyName = currentUser?.name || "Dr. Aris Thorne (Faculty)";
+
+  const studentList = useMemo(() => {
+    return students.map((s) => {
+      const v = verifications[s.rollNo] || {
+        rollNo: s.rollNo,
+        studentName: s.name,
+        department: s.department,
+        status: "unverified",
+      };
+      return { ...s, verification: v };
+    });
+  }, [students, verifications]);
+
+  const filtered = useMemo(() => {
+    return studentList.filter((item) => {
+      if (statusFilter !== "all" && item.verification.status !== statusFilter) return false;
+      if (searchQ.trim()) {
+        const q = searchQ.trim().toLowerCase();
+        return item.name.toLowerCase().includes(q) || item.rollNo.toLowerCase().includes(q) || item.department.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [studentList, statusFilter, searchQ]);
+
+  const pendingCount = studentList.filter((s) => s.verification.status === "pending").length;
+  const verifiedCount = studentList.filter((s) => s.verification.status === "verified").length;
+
+  return (
+    <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 space-y-5">
+      <SectionTitle
+        index="39"
+        kicker="Campus Security & Registrar"
+        title="Student ID"
+        accent="Verifications Console"
+        sub="Review and approve student ID card verification requests."
+        right={
+          <div className="flex items-center gap-2">
+            <Tag tone="blood">{pendingCount} Pending Approval</Tag>
+            <Tag tone="ink">{verifiedCount} Verified</Tag>
           </div>
-        </div>
-        <div className="hazard h-2" />
+        }
+      />
+
+      {/* Filter toolbar */}
+      <div className="border-2 border-ink bg-paper hard p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Search Student">
+          <input
+            className={INPUT}
+            placeholder="Search by student name or roll number..."
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+          />
+        </Field>
+        <Field label="Filter Verification Status">
+          <select className={INPUT} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">All Students ({studentList.length})</option>
+            <option value="pending">Pending Approval ({pendingCount})</option>
+            <option value="verified">Verified ({verifiedCount})</option>
+            <option value="unverified">Unverified</option>
+            <option value="rejected">Rejected / Flagged</option>
+          </select>
+        </Field>
       </div>
-      <p className="font-mono text-[10px] text-muted text-center">
-        Print this card and laminate it carry it for library, lab and exam entry.
-      </p>
+
+      {/* Table */}
+      <div className="border-2 border-ink bg-paper hard overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-ink text-paper font-mono text-xs uppercase tracking-wider">
+              <th className="p-3 border-r border-paper/20">Student Name</th>
+              <th className="p-3 border-r border-paper/20">Roll No</th>
+              <th className="p-3 border-r border-paper/20">Course</th>
+              <th className="p-3 border-r border-paper/20">Status</th>
+              <th className="p-3 border-r border-paper/20">Verified By / Timestamp</th>
+              <th className="p-3 text-right">Faculty Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y-2 divide-ink/10 font-mono text-xs">
+            {filtered.map((s) => {
+              const v = s.verification;
+              const isVerified = v.status === "verified";
+              const isPending = v.status === "pending";
+              const isRejected = v.status === "rejected";
+
+              return (
+                <tr key={s.id} className="hover:bg-paper-2 transition-colors">
+                  <td className="p-3 font-serif font-bold text-ink flex items-center gap-2">
+                    <SquareAvatar src={s.avatarUrl} initial={s.name.charAt(0)} className="!h-8 !w-8 border border-ink" />
+                    <span>{s.name}</span>
+                  </td>
+                  <td className="p-3 text-blood font-bold">{s.rollNo}</td>
+                  <td className="p-3 text-muted">{s.department}</td>
+                  <td className="p-3">
+                    {isVerified ? (
+                      <span className="bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 border border-ink text-[10px] uppercase flex items-center gap-1 w-fit">
+                        <BadgeCheck className="w-3 h-3 text-emerald-700" /> Verified
+                      </span>
+                    ) : isPending ? (
+                      <span className="bg-amber-100 text-amber-900 font-extrabold px-2 py-0.5 border border-ink text-[10px] uppercase flex items-center gap-1 w-fit">
+                        <Clock className="w-3 h-3 text-amber-800 animate-spin" /> Pending Sign-off
+                      </span>
+                    ) : isRejected ? (
+                      <span className="bg-rose-100 text-rose-800 font-extrabold px-2 py-0.5 border border-ink text-[10px] uppercase flex items-center gap-1 w-fit">
+                        <AlertTriangle className="w-3 h-3 text-rose-700" /> Flagged
+                      </span>
+                    ) : (
+                      <span className="bg-paper-3 text-muted font-bold px-2 py-0.5 border border-ink text-[10px] uppercase">
+                        Unverified
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3 text-muted text-[11px]">
+                    {isVerified ? (
+                      <div>
+                        <span className="text-ink font-bold">{v.verifiedBy || facultyName}</span>
+                        <span className="block text-[9px] text-muted">{v.verifiedAt || "2026-08-18"}</span>
+                      </div>
+                    ) : isPending ? (
+                      <span className="text-amber-800 font-bold">Requested: {v.requestedAt || "Just now"}</span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td className="p-3 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {!isVerified && (
+                        <BrutalButton
+                          tone="blood"
+                          className="!py-1 !px-2.5 !text-[10px]"
+                          onClick={() => onApproveVerification(s.rollNo, facultyName)}
+                        >
+                          <BadgeCheck className="w-3 h-3" /> Approve & Verify
+                        </BrutalButton>
+                      )}
+                      {isVerified && (
+                        <BrutalButton
+                          tone="ghost"
+                          className="!py-1 !px-2 !text-[10px]"
+                          onClick={() => onRejectVerification(s.rollNo, "Faculty re-verification requested")}
+                        >
+                          Revoke
+                        </BrutalButton>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

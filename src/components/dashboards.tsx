@@ -95,6 +95,8 @@ import {
   StudentResultsTab,
   StudentAdmitCardTab,
   DigitalCourseMaterialsTab,
+  FacultyIdVerificationsTab,
+  IdVerificationRecord,
 } from "@/components/features";
 
 /* ---------- shared UI components for dashboards ---------- */
@@ -1554,6 +1556,9 @@ export function FacultyDashboard(props: {
   onUploadMaterial?: (m: Partial<CourseMaterial>) => void;
   onDeleteMaterial?: (id: number) => void;
   onIncrementDownload?: (id: number) => void;
+  idVerifications?: Record<string, IdVerificationRecord>;
+  onApproveIdVerification?: (rollNo: string, facultyName: string) => void;
+  onRejectIdVerification?: (rollNo: string, reason: string) => void;
 }) {
   const {
     currentTab,
@@ -1591,6 +1596,9 @@ export function FacultyDashboard(props: {
     onUploadMaterial = () => {},
     onDeleteMaterial = () => {},
     onIncrementDownload = () => {},
+    idVerifications = {},
+    onApproveIdVerification = () => {},
+    onRejectIdVerification = () => {},
   } = props;
 
   // Faculty cannot review their own leave requests.
@@ -2324,6 +2332,17 @@ export function FacultyDashboard(props: {
           onPayFee={onPayFee}
         />
       )}
+
+      {/* ID VERIFICATIONS (faculty) */}
+      {currentTab === "idverifications" && (
+        <FacultyIdVerificationsTab
+          students={students}
+          verifications={idVerifications || {}}
+          currentUser={currentUser}
+          onApproveVerification={onApproveIdVerification || (() => {})}
+          onRejectVerification={onRejectIdVerification || (() => {})}
+        />
+      )}
     </div>
   );
 }
@@ -2477,6 +2496,8 @@ export function StudentDashboard(props: {
   onUploadMaterial?: (m: Partial<CourseMaterial>) => void;
   onDeleteMaterial?: (id: number) => void;
   onIncrementDownload?: (id: number) => void;
+  idVerifications?: Record<string, IdVerificationRecord>;
+  onRequestVerification?: (rollNo: string) => void;
 }) {
   const {
     currentTab,
@@ -2508,6 +2529,8 @@ export function StudentDashboard(props: {
     onUploadMaterial = () => {},
     onDeleteMaterial = () => {},
     onIncrementDownload = () => {},
+    idVerifications = {},
+    onRequestVerification = () => {},
   } = props;
 
   // leave request form
@@ -2959,6 +2982,8 @@ export function StudentDashboard(props: {
         <StudentIdCardTab
           currentUser={currentUser}
           admission={admissions.find((a) => a.studentId === currentUser?.id) || null}
+          verificationRecord={currentUser ? idVerifications?.[currentUser.rollNo] || null : null}
+          onRequestVerification={onRequestVerification}
         />
       )}
 

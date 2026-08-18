@@ -687,6 +687,7 @@ export function Sidebar({
         { id: "timetable", label: "Timetable", mark: "11" },
         { id: "myattendance", label: "My Attendance", mark: "12" },
         { id: "fees", label: "Fees", mark: "13" },
+        { id: "idverifications", label: "ID Verifications", mark: "14" },
       ];
     return [
       { id: "overview", label: "My Dashboard", mark: "01" },
