@@ -311,36 +311,35 @@ export function ToastContainer({
 }) {
   if (toasts.length === 0) return null;
   return (
-    <div className="fixed bottom-5 right-5 z-[60] flex flex-col gap-2.5 w-[330px] max-w-[92vw]">
+    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 w-[350px] max-w-[92vw] pointer-events-none">
       {toasts.map((t) => {
-        const palette =
-          t.type === "error"
-            ? "bg-blood text-paper border-ink"
-            : t.type === "info"
-              ? "bg-paper text-ink border-ink"
-              : "bg-ink text-paper border-ink";
         const Icon = t.type === "success" ? CheckCircle2 : t.type === "error" ? AlertCircle : Info;
-        const bar = t.type === "success" ? "bg-blood" : t.type === "error" ? "bg-paper" : "bg-blood";
+        const iconStyle =
+          t.type === "error"
+            ? "bg-rose-50 text-rose-600 border-rose-200/90 shadow-[0_2px_8px_rgba(244,63,94,0.15)]"
+            : t.type === "info"
+              ? "bg-blue-50 text-blue-600 border-blue-200/90 shadow-[0_2px_8px_rgba(37,99,235,0.15)]"
+              : "bg-emerald-50 text-emerald-600 border-emerald-200/90 shadow-[0_2px_8px_rgba(16,185,129,0.15)]";
+
         return (
           <div
             key={t.id}
-            className={`pop-in flex items-start gap-3 border-2 hard ${palette} relative overflow-hidden`}
+            className="pointer-events-auto pop-in relative flex items-start gap-3.5 p-4 rounded-xl border border-slate-200/90 bg-white text-slate-900 shadow-[0_12px_28px_-6px_rgba(15,23,42,0.12),0_1px_0_0_rgba(255,255,255,1)_inset] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_-4px_rgba(15,23,42,0.16)]"
           >
-            <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${bar}`} />
-            <div className="pl-4 pr-2 py-3 flex items-start gap-2.5 w-full">
-              <Icon className="w-4 h-4 mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-mono text-[11px] font-bold uppercase tracking-[0.14em]">{t.title}</p>
-                <p className="font-serif text-xs mt-0.5 opacity-90">{t.message}</p>
-              </div>
-              <button
-                onClick={() => onDismiss(t.id)}
-                className="opacity-70 hover:opacity-100 p-0.5"
-                aria-label="dismiss"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-lg border ${iconStyle} shrink-0 mt-0.5`}>
+              <Icon className="w-4 h-4" />
             </div>
+            <div className="flex-1 min-w-0 pr-1">
+              <p className="font-display text-[13px] font-bold text-slate-900 leading-tight tracking-normal">{t.title}</p>
+              <p className="font-mono text-[11px] text-slate-600 mt-1 leading-relaxed">{t.message}</p>
+            </div>
+            <button
+              onClick={() => onDismiss(t.id)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0 -mr-1 -mt-1"
+              aria-label="dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         );
       })}
