@@ -1565,14 +1565,15 @@ export function FacultyDashboard(props: {
   // Faculty cannot review their own leave requests.
   const reviewLeaves = leaves.filter((l) => l.studentId !== currentUser?.id);
 
-  // Faculty can only mark attendance for the courses assigned to them.
+  // Faculty can mark attendance for the courses assigned to them, with fallback to all courses catalog.
   const ownedCourses = courses.filter(
     (c) => c.facultyId === currentUser?.id || c.facultyName === currentUser?.name,
   );
-  const [courseId, setCourseId] = useState<number>(ownedCourses[0]?.id || 0);
+  const availableCourses = ownedCourses.length > 0 ? ownedCourses : courses;
+  const [courseId, setCourseId] = useState<number>(availableCourses[0]?.id || 0);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [period, setPeriod] = useState("Lecture 1 (09:00 - 10:30)");
-  const rollCourse = ownedCourses.find((c) => c.id === courseId) || ownedCourses[0];
+  const rollCourse = availableCourses.find((c) => c.id === courseId) || availableCourses[0];
   // Only students enrolled in the selected course appear on the roll sheet.
   const enrolledIds = new Set(
     enrollments.filter((e) => e.courseId === (rollCourse?.id ?? -1)).map((e) => e.studentId),
@@ -1618,7 +1619,14 @@ export function FacultyDashboard(props: {
   const [gExam, setGExam] = useState("Mid-Term Case Test");
   const [gMarks, setGMarks] = useState("90");
   const [gRemark, setGRemark] = useState("Boardroom-grade defence of the case.");
+  const [gradeMode, setGradeMode] = useState<"batch" | "single">("batch");
+  const [batchScores, setBatchScores] = useState<Record<number, string>>({});
+  const [batchRemarks, setBatchRemarks] = useState<Record<number, string>>({});
+  const [gradeSearch, setGradeSearch] = useState("");
+  const [isSavingBatchGrades, setIsSavingBatchGrades] = useState(false);
+
   const letter = (m: number) => (m >= 90 ? "A+" : m >= 80 ? "A" : m >= 70 ? "B" : m >= 60 ? "C" : "F");
+
   const postGrade = (e: FormEvent) => {
     e.preventDefault();
     const st = students.find((s) => s.id === Number(gStu));
@@ -1627,8 +1635,8 @@ export function FacultyDashboard(props: {
     onSubmitGrade({
       studentId: st.id,
       studentName: st.name,
-      courseId: 1,
-      courseName: `Corporate Finance & Valuation (${rollCourse?.code || "FIN601"})`,
+      courseId: rollCourse?.id || 1,
+      courseName: `${rollCourse?.name || "Corporate Finance"} (${rollCourse?.code || "FIN601"})`,
       examType: gExam,
       marksObtained: String(m),
       maxMarks: "100.00",
@@ -1636,6 +1644,33 @@ export function FacultyDashboard(props: {
       semester: st.semester || 3,
       remarks: gRemark,
     });
+  };
+
+  const saveBatchGrades = async () => {
+    const toSave = rollStudents.filter((s) => batchScores[s.id] !== undefined && batchScores[s.id].trim() !== "");
+    if (toSave.length === 0) return;
+    setIsSavingBatchGrades(true);
+    try {
+      for (const st of toSave) {
+        const m = parseFloat(batchScores[st.id]) || 0;
+        await onSubmitGrade({
+          studentId: st.id,
+          studentName: st.name,
+          courseId: rollCourse?.id || 1,
+          courseName: `${rollCourse?.name || "Corporate Finance"} (${rollCourse?.code || "FIN601"})`,
+          examType: gExam,
+          marksObtained: String(m),
+          maxMarks: "100.00",
+          gradeLetter: letter(m),
+          semester: st.semester || 3,
+          remarks: batchRemarks[st.id] || "Academic evaluation record",
+        });
+      }
+      setBatchScores({});
+      setBatchRemarks({});
+    } finally {
+      setIsSavingBatchGrades(false);
+    }
   };
 
   // assignment
@@ -1752,8 +1787,8 @@ export function FacultyDashboard(props: {
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="Course">
-              <select className={INPUT} value={rollCourse?.id || 0} onChange={(e) => setCourseId(Number(e.target.value))} disabled={ownedCourses.length === 0}>
-                {ownedCourses.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
+              <select className={INPUT} value={rollCourse?.id || 0} onChange={(e) => setCourseId(Number(e.target.value))} disabled={availableCourses.length === 0}>
+                {availableCourses.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
               </select>
             </Field>
             <Field label="Session Date"><input type="date" className={INPUT} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
@@ -1780,44 +1815,287 @@ export function FacultyDashboard(props: {
 
       {/* GRADES */}
       {currentTab === "grades" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <form onSubmit={postGrade} className="border-2 border-ink bg-paper hard p-5 space-y-3.5 h-fit">
-            <SectionTitle kicker="Assessment" title="Enter" accent="Grades" />
-            <Field label="Student"><select className={INPUT} value={gStu} onChange={(e) => setGStu(Number(e.target.value))}>{students.map((s) => (<option key={s.id} value={s.id}>{s.name} - {s.rollNo}</option>))}</select></Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Exam Type"><select className={INPUT} value={gExam} onChange={(e) => setGExam(e.target.value)}><option>Mid-Term</option><option>Final Exam</option><option>Assignment</option><option>Quiz</option></select></Field>
-              <Field label="Score"><input type="number" min={0} max={100} step="0.5" className={INPUT + " font-display text-blood"} value={gMarks} onChange={(e) => setGMarks(e.target.value)} /></Field>
+        <div className="space-y-5">
+          {/* Mode Header */}
+          <div className="border-2 border-ink bg-paper hard p-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <SectionTitle kicker="Assessment" title="Class" accent="Gradebook" sub="Record grades for the entire class or single scholar." />
             </div>
-            <Field label="Teacher Remark"><input className={INPUT} value={gRemark} onChange={(e) => setGRemark(e.target.value)} /></Field>
-            <div className="flex items-center justify-between pt-1">
-              <span className="font-mono text-[11px] text-muted">Computed letter · <span className="text-blood font-bold">{letter(parseFloat(gMarks) || 0)}</span></span>
-              <BrutalButton type="submit" tone="blood">Record</BrutalButton>
+            <div className="flex items-center gap-2 border-2 border-ink bg-paper-2 p-1 hard-sm">
+              <button
+                type="button"
+                onClick={() => setGradeMode("batch")}
+                className={`px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
+                  gradeMode === "batch" ? "bg-ink text-paper" : "text-ink hover:bg-paper"
+                }`}
+              >
+                Batch Class Sheet ({rollStudents.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setGradeMode("single")}
+                className={`px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
+                  gradeMode === "single" ? "bg-ink text-paper" : "text-ink hover:bg-paper"
+                }`}
+              >
+                Single Scholar Form
+              </button>
             </div>
-          </form>
-          <div className="lg:col-span-2 border-2 border-ink bg-paper hard">
-            <div className="px-4 py-3 border-b-2 border-ink bg-paper-2 flex items-center justify-between">
-              <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold">Recent Grades</span>
-              <Tag tone="ink">{grades.length}</Tag>
-            </div>
-            {grades.length === 0 ? <div className="p-4"><EmptyState label="No grades yet" hint="Add the first grade on the left." /></div> : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr><th className={TH}>Scholar</th><th className={TH}>Course</th><th className={TH}>Component</th><th className={TH}>Score</th><th className={TH}>Grade</th></tr></thead>
-                  <tbody>
-                    {grades.map((g) => (
-                      <tr key={g.id} className="border-b-2 border-ink/10 hover:bg-paper-2">
-                        <td className={`${TD} font-serif font-semibold`}>{g.studentName}</td>
-                        <td className={`${TD} text-muted`}>{g.courseName}</td>
-                        <td className={`${TD} font-mono text-[11px] text-blood`}>{g.examType}</td>
-                        <td className={`${TD} font-mono font-bold`}>{g.marksObtained}</td>
-                        <td className={TD}><span className="font-display text-blood border-2 border-ink px-2 py-0.5 bg-paper-3">{g.gradeLetter}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
+
+          {gradeMode === "single" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <form onSubmit={postGrade} className="border-2 border-ink bg-paper hard p-5 space-y-3.5 h-fit">
+                <SectionTitle kicker="Single Entry" title="Record" accent="Grade" />
+                <Field label="Scholar">
+                  <select className={INPUT} value={gStu} onChange={(e) => setGStu(Number(e.target.value))}>
+                    {students.map((s) => (<option key={s.id} value={s.id}>{s.name} - {s.rollNo}</option>))}
+                  </select>
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Exam Type">
+                    <select className={INPUT} value={gExam} onChange={(e) => setGExam(e.target.value)}>
+                      <option>Mid-Term Case Test</option>
+                      <option>Final Examination</option>
+                      <option>Continuous Assignment</option>
+                      <option>Sessional Quiz</option>
+                    </select>
+                  </Field>
+                  <Field label="Score">
+                    <input type="number" min={0} max={100} step="0.5" className={INPUT + " font-display text-blood"} value={gMarks} onChange={(e) => setGMarks(e.target.value)} />
+                  </Field>
+                </div>
+                <Field label="Teacher Remark">
+                  <input className={INPUT} value={gRemark} onChange={(e) => setGRemark(e.target.value)} />
+                </Field>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-mono text-[11px] text-muted">Computed letter · <span className="text-blood font-bold">{letter(parseFloat(gMarks) || 0)}</span></span>
+                  <BrutalButton type="submit" tone="blood">Record Grade</BrutalButton>
+                </div>
+              </form>
+
+              {/* Directory of Recorded Grades (Right side in Single Entry Mode) */}
+              <div className="lg:col-span-2 border-2 border-ink bg-paper hard">
+                <div className="px-4 py-3 border-b-2 border-ink bg-paper-2 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold">Recent Recorded Grades</span>
+                    <Tag tone="ink">{grades.length}</Tag>
+                  </div>
+                  <div className="w-56 max-w-[40vw]">
+                    <input
+                      type="text"
+                      placeholder="Search student or exam..."
+                      className={INPUT + " text-xs py-1 px-2.5"}
+                      value={gradeSearch}
+                      onChange={(e) => setGradeSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {grades.length === 0 ? (
+                  <div className="p-4"><EmptyState label="No grades recorded yet" hint="Record a grade on the left." /></div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr>
+                          <th className={TH}>Scholar</th>
+                          <th className={TH}>Course</th>
+                          <th className={TH}>Component</th>
+                          <th className={TH}>Score</th>
+                          <th className={TH}>Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {grades
+                          .filter((g) =>
+                            gradeSearch === ""
+                              ? true
+                              : g.studentName.toLowerCase().includes(gradeSearch.toLowerCase()) ||
+                                g.examType.toLowerCase().includes(gradeSearch.toLowerCase()) ||
+                                g.courseName.toLowerCase().includes(gradeSearch.toLowerCase())
+                          )
+                          .map((g) => (
+                            <tr key={g.id} className="border-b-2 border-ink/10 hover:bg-paper-2">
+                              <td className={`${TD} font-serif font-semibold`}>{g.studentName}</td>
+                              <td className={`${TD} text-muted`}>{g.courseName}</td>
+                              <td className={`${TD} font-mono text-[11px] text-blood`}>{g.examType}</td>
+                              <td className={`${TD} font-mono font-bold`}>{g.marksObtained}</td>
+                              <td className={TD}>
+                                <span className="font-display text-blood border-2 border-ink px-2 py-0.5 bg-paper-3 font-bold">
+                                  {g.gradeLetter}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Batch Class Sheet */}
+              <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-2 border-ink bg-paper-2 p-3">
+                  <Field label="Course / Subject">
+                    <select className={INPUT} value={rollCourse?.id || 0} onChange={(e) => setCourseId(Number(e.target.value))} disabled={availableCourses.length === 0}>
+                      {availableCourses.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Assessment / Exam Type">
+                    <select className={INPUT} value={gExam} onChange={(e) => setGExam(e.target.value)}>
+                      <option>Mid-Term Case Test</option>
+                      <option>Final Examination</option>
+                      <option>Continuous Assignment</option>
+                      <option>Sessional Quiz</option>
+                      <option>Practical Viva</option>
+                    </select>
+                  </Field>
+                  <div className="flex items-end justify-end">
+                    <BrutalButton
+                      tone="blood"
+                      onClick={saveBatchGrades}
+                      disabled={isSavingBatchGrades || Object.keys(batchScores).filter((k) => batchScores[Number(k)]?.trim()).length === 0}
+                    >
+                      <Send className="w-4 h-4" /> Save All Grades ({Object.keys(batchScores).filter((k) => batchScores[Number(k)]?.trim()).length})
+                    </BrutalButton>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto border-2 border-ink">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className={TH}>Scholar</th>
+                        <th className={TH}>Roll No</th>
+                        <th className={TH}>Department</th>
+                        <th className={TH + " w-36"}>Score (/100)</th>
+                        <th className={TH + " text-center"}>Grade</th>
+                        <th className={TH}>Teacher Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rollStudents.map((s, idx) => {
+                        const val = batchScores[s.id] || "";
+                        const num = parseFloat(val);
+                        const hasVal = !isNaN(num) && val.trim() !== "";
+                        const currentLetter = hasVal ? letter(num) : "-";
+                        return (
+                          <tr key={s.id} className="border-b-2 border-ink/10 group hover:bg-paper-2">
+                            <td className={TD}>
+                              <div className="flex items-center gap-2.5">
+                                <SquareAvatar src={s.avatarUrl} initial={s.name.charAt(0)} />
+                                <span className="font-serif font-semibold group-hover:text-blood">{s.name}</span>
+                              </div>
+                            </td>
+                            <td className={`${TD} font-mono text-[11px] text-blood`}>{s.rollNo}</td>
+                            <td className={`${TD} text-muted`}>{s.department}</td>
+                            <td className={TD}>
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                step="0.5"
+                                tabIndex={idx + 1}
+                                placeholder="Marks"
+                                className={INPUT + " font-display text-blood font-bold"}
+                                value={val}
+                                onChange={(e) => setBatchScores((p) => ({ ...p, [s.id]: e.target.value }))}
+                              />
+                            </td>
+                            <td className={TD + " text-center"}>
+                              <span className={`font-display border-2 border-ink px-2.5 py-1 text-xs font-bold ${hasVal ? "bg-ink text-paper" : "bg-paper-3 text-muted"}`}>
+                                {currentLetter}
+                              </span>
+                            </td>
+                            <td className={TD}>
+                              <input
+                                placeholder="Optional remark..."
+                                className={INPUT + " text-xs"}
+                                value={batchRemarks[s.id] || ""}
+                                onChange={(e) => setBatchRemarks((p) => ({ ...p, [s.id]: e.target.value }))}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {rollStudents.length === 0 && (
+                        <tr>
+                          <td colSpan={6}>
+                            <div className="p-4">
+                              <EmptyState label="No scholars enrolled in this course" hint="Select another course or enroll scholars." />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Directory of Recorded Grades (Below batch sheet) */}
+              <div className="border-2 border-ink bg-paper hard">
+                <div className="px-4 py-3 border-b-2 border-ink bg-paper-2 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold">Recent Recorded Grades</span>
+                    <Tag tone="ink">{grades.length}</Tag>
+                  </div>
+                  <div className="w-64 max-w-[50vw]">
+                    <input
+                      type="text"
+                      placeholder="Search student or exam..."
+                      className={INPUT + " text-xs py-1 px-2.5"}
+                      value={gradeSearch}
+                      onChange={(e) => setGradeSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {grades.length === 0 ? (
+                  <div className="p-4"><EmptyState label="No grades recorded yet" hint="Record class grades using the batch sheet above." /></div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr>
+                          <th className={TH}>Scholar</th>
+                          <th className={TH}>Course</th>
+                          <th className={TH}>Component</th>
+                          <th className={TH}>Score</th>
+                          <th className={TH}>Grade</th>
+                          <th className={TH}>Remark</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {grades
+                          .filter((g) =>
+                            gradeSearch === ""
+                              ? true
+                              : g.studentName.toLowerCase().includes(gradeSearch.toLowerCase()) ||
+                                g.examType.toLowerCase().includes(gradeSearch.toLowerCase()) ||
+                                g.courseName.toLowerCase().includes(gradeSearch.toLowerCase())
+                          )
+                          .map((g) => (
+                            <tr key={g.id} className="border-b-2 border-ink/10 hover:bg-paper-2">
+                              <td className={`${TD} font-serif font-semibold`}>{g.studentName}</td>
+                              <td className={`${TD} text-muted`}>{g.courseName}</td>
+                              <td className={`${TD} font-mono text-[11px] text-blood`}>{g.examType}</td>
+                              <td className={`${TD} font-mono font-bold`}>{g.marksObtained}</td>
+                              <td className={TD}>
+                                <span className="font-display text-blood border-2 border-ink px-2 py-0.5 bg-paper-3 font-bold">
+                                  {g.gradeLetter}
+                                </span>
+                              </td>
+                              <td className={`${TD} text-xs text-muted max-w-xs truncate`}>{g.remarks || "-"}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -2263,16 +2541,32 @@ export function StudentDashboard(props: {
                 <span className={`font-bold ${pct >= 75 ? "text-ink" : "text-blood"}`}>{pct}% - {pct >= 75 ? "OK" : "LOW"}</span>
               </div>
               <div className="mt-2"><Meter value={pct} /></div>
-              <div className="mt-4 border-2 border-ink p-3 bg-paper-2">
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted mb-3">Composition</p>
-                <StackedBar
-                  totalLabel="marked classes"
-                  data={[
-                    { label: "Present", value: present, color: "#2563eb" },
-                    { label: "Late", value: mine.filter((a) => a.status === "late").length, color: "#94a3b8" },
-                    { label: "Absent", value: mine.filter((a) => a.status === "absent").length, color: "#1d4ed8" },
-                  ]}
-                />
+              {/* Attendance Composition Breakdown */}
+              <div className="mt-3 border-2 border-ink bg-paper-2 hard p-3">
+                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em]">
+                  <span className="font-bold text-ink">Composition</span>
+                  <span className="text-muted">Total Marked Classes · <strong className="text-ink font-bold">{total}</strong></span>
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                  <div className="border-2 border-ink bg-paper p-2 hard-sm">
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted">Present</p>
+                    <p className="font-display text-sm sm:text-base font-bold text-ink leading-tight mt-0.5">
+                      {present} <span className="font-mono text-[10px] text-muted font-normal">({total > 0 ? Math.round((present / total) * 100) : 0}%)</span>
+                    </p>
+                  </div>
+                  <div className="border-2 border-ink bg-paper p-2 hard-sm">
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted">Late</p>
+                    <p className="font-display text-sm sm:text-base font-bold text-ink leading-tight mt-0.5">
+                      {mine.filter((a) => a.status === "late").length} <span className="font-mono text-[10px] text-muted font-normal">({total > 0 ? Math.round((mine.filter((a) => a.status === "late").length / total) * 100) : 0}%)</span>
+                    </p>
+                  </div>
+                  <div className="border-2 border-ink bg-paper p-2 hard-sm">
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted">Absent</p>
+                    <p className="font-display text-sm sm:text-base font-bold text-ink leading-tight mt-0.5">
+                      {mine.filter((a) => a.status === "absent").length} <span className="font-mono text-[10px] text-muted font-normal">({total > 0 ? Math.round((mine.filter((a) => a.status === "absent").length / total) * 100) : 0}%)</span>
+                    </p>
+                  </div>
+                </div>
               </div>
               <div className="mt-4 overflow-x-auto border-2 border-ink">
                 <table className="w-full text-sm">

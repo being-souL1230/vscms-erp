@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
   GraduationCap,
@@ -381,6 +381,24 @@ export function Navbar({
   const [menu, setMenu] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
 
+  const bellRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (bellRef.current && !bellRef.current.contains(event.target as Node)) {
+        setBell(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const roles: { key: UserRole; label: string; Icon: typeof Shield; handle: string }[] = [
     { key: "admin", label: "Admin", Icon: Shield, handle: "director" },
     { key: "faculty", label: "Faculty", Icon: BookOpen, handle: "e.rostova" },
@@ -437,20 +455,9 @@ export function Navbar({
 
           {/* Right cluster */}
           <div className="flex items-center gap-2">
-            {canReset && (
-              <button
-                onClick={onResetSeed}
-                disabled={isSeeding}
-                title="Reset demo data (admin only)"
-                className="hidden sm:inline-flex items-center gap-2 border-2 border-ink bg-paper px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.12em] hard-sm press hover:bg-ink hover:text-paper disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSeeding ? "animate-spin text-blood" : ""}`} />
-                <span className="hidden md:inline">Reset</span>
-              </button>
-            )}
 
             {/* Bell */}
-            <div className="relative">
+            <div className="relative" ref={bellRef}>
               <button
                 onClick={() => {
                   setBell((v) => !v);
@@ -496,7 +503,7 @@ export function Navbar({
             </div>
 
             {/* User chip */}
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => {
                   setMenu((v) => !v);
