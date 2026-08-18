@@ -6,12 +6,12 @@ namespace VscmsErp.Api.Auth;
 
 /// <summary>
 /// Cookie-session auth mirroring src/lib/auth.ts:
-/// cookie "apex_erp_session" holds a 64-char hex token stored in the
+/// cookie "vscms_erp_session" holds a 64-char hex token stored in the
 /// sessions table with a 7-day expiry; HttpOnly + SameSite=Lax.
 /// </summary>
 public static class AuthService
 {
-    public const string SessionCookie = "apex_erp_session";
+    public const string SessionCookie = "vscms_erp_session";
     private static readonly TimeSpan SessionDuration = TimeSpan.FromDays(7);
 
     public static (string Token, long ExpiresAt) CreateSession(NpgsqlConnection conn, long userId)

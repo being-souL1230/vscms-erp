@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
  * API proxy: the ASP.NET Core backend (aspnet-backend/) now owns every
  * /api/* route. Instead of changing the UI, Next.js rewrites those same-origin
  * requests to the backend, so the browser keeps talking to this origin and the
- * apex_erp_session cookie flows through unchanged.
+ * vscms_erp_session cookie flows through unchanged.
  *
  * Point the proxy elsewhere with API_PROXY_TARGET, e.g.:
  *   API_PROXY_TARGET=http://192.168.1.50:5199 npm run dev

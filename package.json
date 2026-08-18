@@ -1,5 +1,5 @@
 {
-  "name": "apex-university-erp",
+  "name": "vscms-erp",
   "private": true,
   "scripts": {
     "dev": "next dev",

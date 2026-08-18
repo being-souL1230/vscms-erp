@@ -4,7 +4,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 
-export const SESSION_COOKIE = "apex_erp_session";
+export const SESSION_COOKIE = "vscms_erp_session";
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type AuthUser = Omit<typeof users.$inferSelect, "passwordHash"> & { rollNoOrEmpId: string };

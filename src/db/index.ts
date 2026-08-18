@@ -25,7 +25,15 @@ function resolveDatabasePath(): string {
   ) {
     const localAppData =
       process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
-    return path.join(localAppData, "apex-university-erp", "erp.sqlite");
+    const newPath = path.join(localAppData, "vscms-erp", "erp.sqlite");
+    const oldPath = path.join(localAppData, "apex-university-erp", "erp.sqlite");
+    if (!fs.existsSync(newPath) && fs.existsSync(oldPath)) {
+      try {
+        fs.mkdirSync(path.dirname(newPath), { recursive: true });
+        fs.copyFileSync(oldPath, newPath);
+      } catch (_) {}
+    }
+    return newPath;
   }
   return path.join(projectRoot, "data", "erp.sqlite");
 }
@@ -52,7 +60,7 @@ export const databasePath = resolveDatabasePath();
 // Make sure the folder exists even on a fresh clone.
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 
-const globalForDb = globalThis as typeof globalThis & { __apexErpSqlite?: Sqlite };
+const globalForDb = globalThis as typeof globalThis & { __vscmsErpSqlite?: Sqlite };
 
 function openDatabase(): Sqlite {
   try {
@@ -82,7 +90,7 @@ function openDatabase(): Sqlite {
   }
 }
 
-const sqlite = globalForDb.__apexErpSqlite ?? openDatabase();
+const sqlite = globalForDb.__vscmsErpSqlite ?? openDatabase();
 
 // Single-file journal mode. This is critical when the project lives inside
 // a OneDrive/Dropbox/Google-Drive folder: WAL mode spreads data across
@@ -105,6 +113,6 @@ for (const [pragma, label] of PRAGMAS) {
   }
 }
 
-if (process.env.NODE_ENV !== "production") globalForDb.__apexErpSqlite = sqlite;
+if (process.env.NODE_ENV !== "production") globalForDb.__vscmsErpSqlite = sqlite;
 
 export const db = drizzle(sqlite);

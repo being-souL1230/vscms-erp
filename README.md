@@ -9,7 +9,7 @@ The system manages academic governance, student records, fee collections, facult
 The project consists of a Next.js client application and a C# ASP.NET Core web API backend connected through a same-origin proxy rewrite pipeline.
 
 ```
-apex-university-erp/
+vscms-erp/
 ├── aspnet-backend/             # ASP.NET Core (.NET 10) API Server
 │   ├── Auth/                   # Cookie management, session tokens, and rate limiters
 │   ├── Data/                   # Database configuration and DDL schema handlers
@@ -43,7 +43,7 @@ apex-university-erp/
 
 | Module | Roles Involved | Technical Working and Workflow Description |
 | :--- | :--- | :--- |
-| Authentication & Sessions | Admin, Faculty, Student | Validates credentials against BCrypt hashes. Issues HttpOnly `apex_erp_session` cookies with automated session expiration and per-IP brute-force lockout defense. |
+| Authentication & Sessions | Admin, Faculty, Student | Validates credentials against BCrypt hashes. Issues HttpOnly `vscms_erp_session` cookies with automated session expiration and per-IP brute-force lockout defense. |
 | Student Records | Admin, Faculty, Student | Tracks scholar profiles, roll numbers, department assignments, GPA, contact numbers, and status. Supports filtering by department, keyword search, and CSV export. |
 | Faculty Management | Admin, Faculty | Manages academic staff, employee IDs, area designations, department mappings, and contact details. |
 | Course Administration | Admin, Faculty, Student | Defines course codes, credits, semester levels, room locations, and assigned area faculty. |

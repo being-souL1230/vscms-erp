@@ -16,7 +16,7 @@ function resolveDatabasePath(): string {
   ) {
     const localAppData =
       process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
-    return path.join(localAppData, "apex-university-erp", "erp.sqlite");
+    return path.join(localAppData, "vscms-erp", "erp.sqlite");
   }
   return path.join(projectRoot, "data", "erp.sqlite");
 }
