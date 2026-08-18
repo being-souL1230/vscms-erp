@@ -21,3 +21,7 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://+:8080
+      # Demo login (POST /api/auth/demo) is disabled in Production by default;
+      # this opt-in keeps the one-click role switch working for the showcase.
+      - key: DEMO_LOGIN_ENABLED
+        value: "1"
