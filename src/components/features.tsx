@@ -42,6 +42,7 @@ import type {
   AdmissionInfo,
   StudentDocument,
   Enrollment,
+  CourseMaterial,
   Section,
   SemesterInfo,
   AcademicSession,
@@ -3153,6 +3154,544 @@ export function FacultyFeesTab({
         onClose={() => setHistoryRecord(null)}
         title={historyRecord ? `${historyRecord.studentName} · ${historyRecord.feeType}` : "Payment History"}
       />
+    </div>
+  );
+}
+
+/* ============================================================
+   DIGITAL COURSE MATERIALS TAB (Faculty & Student)
+   ============================================================ */
+export function DigitalCourseMaterialsTab({
+  courses,
+  materials,
+  currentUser,
+  enrollments = [],
+  onUploadMaterial,
+  onDeleteMaterial,
+  onIncrementDownload,
+}: {
+  courses: Course[];
+  materials: CourseMaterial[];
+  currentUser: User | null;
+  enrollments?: Enrollment[];
+  onUploadMaterial: (m: Partial<CourseMaterial>) => void;
+  onDeleteMaterial: (id: number) => void;
+  onIncrementDownload: (id: number) => void;
+}) {
+  const isFaculty = currentUser?.role === "faculty";
+  const isAdmin = currentUser?.role === "admin";
+  const canUpload = isFaculty || isAdmin;
+
+  // Filter courses based on user role
+  const relevantCourses = useMemo(() => {
+    if (isFaculty) {
+      const owned = courses.filter(
+        (c) => c.facultyId === currentUser?.id || c.facultyName === currentUser?.name
+      );
+      return owned.length > 0 ? owned : courses;
+    }
+    if (currentUser?.role === "student") {
+      const myEnrolledCourseIds = new Set(
+        enrollments.filter((e) => e.studentId === currentUser.id).map((e) => e.courseId)
+      );
+      const enrolled = courses.filter((c) => myEnrolledCourseIds.has(c.id));
+      return enrolled.length > 0 ? enrolled : courses;
+    }
+    return courses;
+  }, [courses, enrollments, currentUser, isFaculty]);
+
+  const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
+  const [selectedModule, setSelectedModule] = useState<string>("all");
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [searchQ, setSearchQ] = useState("");
+  const [previewMaterial, setPreviewMaterial] = useState<CourseMaterial | null>(null);
+
+  // Upload Form State
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [sourceMode, setSourceMode] = useState<"file" | "link">("file");
+  const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const [uploadCourseId, setUploadCourseId] = useState<number>(relevantCourses[0]?.id || 0);
+  const [uploadModule, setUploadModule] = useState("Module 1: Fundamentals & Syntax");
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadDesc, setUploadDesc] = useState("");
+  const [uploadType, setUploadType] = useState<"PDF" | "PPT" | "Video" | "Notes">("PDF");
+  const [uploadUrl, setUploadUrl] = useState("");
+  const [uploadSize, setUploadSize] = useState("2.4 MB");
+
+  // Get all unique modules for the selected course
+  const availableModules = useMemo(() => {
+    const relevant = materials.filter((m) =>
+      selectedCourseId === "all" ? true : m.courseId === Number(selectedCourseId)
+    );
+    return Array.from(new Set(relevant.map((m) => m.moduleName).filter(Boolean)));
+  }, [materials, selectedCourseId]);
+
+  // Filtered materials
+  const filteredMaterials = useMemo(() => {
+    return materials.filter((m) => {
+      if (selectedCourseId !== "all" && m.courseId !== Number(selectedCourseId)) return false;
+      if (selectedModule !== "all" && m.moduleName !== selectedModule) return false;
+      if (selectedType !== "all" && m.type.toLowerCase() !== selectedType.toLowerCase()) return false;
+      if (searchQ.trim()) {
+        const q = searchQ.trim().toLowerCase();
+        return (
+          m.title.toLowerCase().includes(q) ||
+          (m.description || "").toLowerCase().includes(q) ||
+          m.moduleName.toLowerCase().includes(q) ||
+          m.facultyName.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [materials, selectedCourseId, selectedModule, selectedType, searchQ]);
+
+  const handleDownload = (material: CourseMaterial) => {
+    onIncrementDownload(material.id);
+    const link = document.createElement("a");
+    link.href = material.fileUrl;
+    link.target = "_blank";
+    link.download = `${material.title}.${material.type.toLowerCase()}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleUploadSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!uploadTitle || !uploadModule) return;
+    const selectedC = courses.find((c) => c.id === Number(uploadCourseId)) || courses[0];
+    onUploadMaterial({
+      courseId: selectedC?.id || 1,
+      courseCode: selectedC?.code || "CSE101",
+      courseName: selectedC?.name || "Core Curriculum",
+      moduleName: uploadModule,
+      title: uploadTitle,
+      description: uploadDesc,
+      type: uploadType,
+      fileUrl: uploadUrl || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      fileSize: uploadSize || "2.1 MB",
+      facultyId: currentUser?.id,
+      facultyName: currentUser?.name || "Faculty Member",
+      downloadCount: 0,
+    });
+    setShowUploadModal(false);
+    setUploadTitle("");
+    setUploadDesc("");
+    setUploadUrl("");
+  };
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle
+        index="41"
+        kicker="Academic Repository"
+        title="Digital Course"
+        accent="Materials"
+        sub="Access course modules, lecture slides, video demonstrations, and study notes."
+        right={
+          canUpload ? (
+            <BrutalButton tone="blood" onClick={() => setShowUploadModal(true)}>
+              <Plus className="w-4 h-4" /> Upload Material
+            </BrutalButton>
+          ) : undefined
+        }
+      />
+
+      {/* Filter Header Toolbar */}
+      <div className="border-2 border-ink bg-paper hard p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Field label="Select Course">
+            <select
+              className={INPUT}
+              value={selectedCourseId}
+              onChange={(e) => {
+                const val = e.target.value === "all" ? "all" : Number(e.target.value);
+                setSelectedCourseId(val);
+                setSelectedModule("all");
+              }}
+            >
+              <option value="all">All Courses ({relevantCourses.length})</option>
+              {relevantCourses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} · {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Filter Module">
+            <select
+              className={INPUT}
+              value={selectedModule}
+              onChange={(e) => setSelectedModule(e.target.value)}
+            >
+              <option value="all">All Modules ({availableModules.length})</option>
+              {availableModules.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Search Resource">
+            <input
+              className={INPUT}
+              placeholder="Search title, topic or notes..."
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+            />
+          </Field>
+        </div>
+
+        {/* Resource Type Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-ink/10">
+          <span className="font-mono text-[10px] uppercase font-bold text-muted mr-1">Format:</span>
+          {["all", "PDF", "PPT", "Video", "Notes"].map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setSelectedType(t)}
+              className={`px-3 py-1 font-mono text-[10px] uppercase tracking-wider font-bold border border-ink transition-all ${
+                selectedType.toLowerCase() === t.toLowerCase()
+                  ? "bg-ink text-paper hard-sm"
+                  : "bg-paper-2 text-ink hover:bg-paper-3"
+              }`}
+            >
+              {t === "all" ? "All Formats" : t}
+            </button>
+          ))}
+          <span className="ml-auto font-mono text-[11px] text-muted">
+            Found <strong className="text-ink">{filteredMaterials.length}</strong> resources
+          </span>
+        </div>
+      </div>
+
+      {/* Materials Cards Grid */}
+      {filteredMaterials.length === 0 ? (
+        <div className="border-2 border-ink bg-paper hard p-6">
+          <EmptyState
+            label="No digital course materials found"
+            hint="Try selecting 'All Courses' or clear active filters."
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {filteredMaterials.map((m) => {
+            const isPdf = m.type.toUpperCase() === "PDF";
+            const isPpt = m.type.toUpperCase() === "PPT";
+            const isVid = m.type.toUpperCase() === "VIDEO";
+
+            return (
+              <div
+                key={m.id}
+                className="border-2 border-ink bg-paper hard p-3 flex flex-col justify-between space-y-2 transition-all hover:-translate-y-0.5"
+              >
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span
+                      className={`font-mono text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 border border-ink rounded ${
+                        isPdf
+                          ? "bg-rose-100 text-rose-800"
+                          : isPpt
+                          ? "bg-amber-100 text-amber-800"
+                          : isVid
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-emerald-100 text-emerald-800"
+                      }`}
+                    >
+                      {m.type}
+                    </span>
+                    <span className="font-mono text-[9px] font-bold text-muted">{m.courseCode}</span>
+                  </div>
+
+                  <span className="inline-block font-mono text-[9px] font-bold text-muted uppercase tracking-wider truncate max-w-full">
+                    {m.moduleName}
+                  </span>
+
+                  <h4 className="font-serif font-bold text-sm text-ink leading-tight hover:text-blood line-clamp-1">
+                    {m.title}
+                  </h4>
+
+                  {m.description && (
+                    <p className="font-serif text-[11px] text-muted line-clamp-1 leading-tight">
+                      {m.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t-2 border-ink/10 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-muted">
+                    <span className="truncate max-w-[120px]">By: <strong className="text-ink">{m.facultyName}</strong></span>
+                    <span className="shrink-0">{m.fileSize}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-0.5">
+                    <span className="font-mono text-[9px] text-muted flex items-center gap-0.5">
+                      <Download className="w-3 h-3 text-blood" /> {m.downloadCount}
+                    </span>
+
+                    <div className="flex items-center gap-1">
+                      <BrutalButton
+                        tone="ghost"
+                        className="!py-0.5 !px-2 !text-[10px]"
+                        onClick={() => setPreviewMaterial(m)}
+                      >
+                        Preview
+                      </BrutalButton>
+                      <BrutalButton
+                        tone="blood"
+                        className="!py-0.5 !px-2 !text-[10px]"
+                        onClick={() => handleDownload(m)}
+                      >
+                        <Download className="w-2.5 h-2.5" /> Get
+                      </BrutalButton>
+                      {canUpload && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteMaterial(m.id)}
+                          className="p-0.5 text-muted hover:text-blood transition-colors"
+                          title="Delete material"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Upload Material Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-3">
+          <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 w-full max-w-md space-y-3">
+            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2">
+              <span className="font-mono text-[11px] uppercase font-bold text-blood tracking-wider">
+                Upload Digital Course Resource
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowUploadModal(false)}
+                className="p-1 text-muted hover:text-ink"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadSubmit} className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Target Course">
+                  <select
+                    className={INPUT + " !py-1 text-xs"}
+                    value={uploadCourseId}
+                    onChange={(e) => setUploadCourseId(Number(e.target.value))}
+                  >
+                    {relevantCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.code} · {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Format / Type">
+                  <select
+                    className={INPUT + " !py-1 text-xs"}
+                    value={uploadType}
+                    onChange={(e) => setUploadType(e.target.value as any)}
+                  >
+                    <option value="PDF">PDF Document</option>
+                    <option value="PPT">PPT Presentation</option>
+                    <option value="Video">Video Lecture</option>
+                    <option value="Notes">Lecture Notes</option>
+                  </select>
+                </Field>
+              </div>
+
+              <Field label="Module / Chapter Name">
+                <input
+                  className={INPUT + " !py-1 text-xs"}
+                  required
+                  placeholder="e.g. Module 1: Python Basics & Syntax"
+                  value={uploadModule}
+                  onChange={(e) => setUploadModule(e.target.value)}
+                />
+              </Field>
+
+              <Field label="Resource Title">
+                <input
+                  className={INPUT + " !py-1 text-xs"}
+                  required
+                  placeholder="e.g. Lecture Slide Deck & Notes"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                />
+              </Field>
+
+              <Field label="Source Option">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSourceMode("file")}
+                    className={`py-1 px-2 font-mono text-[10px] font-bold uppercase tracking-wider border border-ink transition-all flex items-center justify-center gap-1 ${
+                      sourceMode === "file" ? "bg-ink text-paper hard-sm" : "bg-paper-2 text-ink hover:bg-paper-3"
+                    }`}
+                  >
+                    <UploadCloud className="w-3 h-3" /> Device File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceMode("link")}
+                    className={`py-1 px-2 font-mono text-[10px] font-bold uppercase tracking-wider border border-ink transition-all flex items-center justify-center gap-1 ${
+                      sourceMode === "link" ? "bg-ink text-paper hard-sm" : "bg-paper-2 text-ink hover:bg-paper-3"
+                    }`}
+                  >
+                    <FileText className="w-3 h-3" /> Web Link
+                  </button>
+                </div>
+              </Field>
+
+              {sourceMode === "file" ? (
+                <Field label="File Upload (Device)">
+                  <div className="border border-dashed border-ink p-2.5 text-center bg-paper-2 hover:bg-paper-3 transition-colors cursor-pointer relative hard-sm">
+                    <input
+                      type="file"
+                      accept=".pdf,.ppt,.pptx,.mp4,.doc,.docx,.txt"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setSelectedFileName(file.name);
+                          if (!uploadTitle) {
+                            setUploadTitle(file.name.replace(/\.[^/.]+$/, ""));
+                          }
+                          const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+                          setUploadSize(file.size > 1024 * 1024 ? `${sizeMb} MB` : `${Math.round(file.size / 1024)} KB`);
+                          
+                          const ext = file.name.toLowerCase();
+                          if (ext.endsWith(".pdf")) setUploadType("PDF");
+                          else if (ext.endsWith(".ppt") || ext.endsWith(".pptx")) setUploadType("PPT");
+                          else if (ext.endsWith(".mp4") || ext.endsWith(".webm") || ext.endsWith(".mkv")) setUploadType("Video");
+                          else setUploadType("Notes");
+
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            if (ev.target?.result) setUploadUrl(ev.target.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <UploadCloud className="w-5 h-5 text-blood mx-auto mb-1" />
+                    {selectedFileName ? (
+                      <div>
+                        <p className="font-mono text-[11px] font-bold text-ink truncate max-w-[240px] mx-auto">{selectedFileName}</p>
+                        <p className="font-mono text-[9px] text-blood font-bold">Attached ({uploadSize})</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-mono text-[11px] font-bold text-ink">Choose PDF, PPT or Video</p>
+                        <p className="font-mono text-[9px] text-muted">Click or drag file from device</p>
+                      </div>
+                    )}
+                  </div>
+                </Field>
+              ) : (
+                <Field label="Web Link URL">
+                  <input
+                    className={INPUT + " !py-1 text-xs"}
+                    required
+                    placeholder="https://example.com/lecture-notes.pdf"
+                    value={uploadUrl}
+                    onChange={(e) => setUploadUrl(e.target.value)}
+                  />
+                </Field>
+              )}
+
+              <Field label="Description">
+                <textarea
+                  className={INPUT + " min-h-[48px] !py-1 text-xs"}
+                  placeholder="Overview of topics..."
+                  value={uploadDesc}
+                  onChange={(e) => setUploadDesc(e.target.value)}
+                />
+              </Field>
+
+              <div className="flex items-center justify-end gap-2 pt-1.5">
+                <BrutalButton tone="ghost" className="!py-1 !px-3 !text-xs" type="button" onClick={() => setShowUploadModal(false)}>
+                  Cancel
+                </BrutalButton>
+                <BrutalButton tone="blood" className="!py-1 !px-3 !text-xs" type="submit">
+                  <UploadCloud className="w-3.5 h-3.5" /> Publish
+                </BrutalButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Resource Preview Modal */}
+      {previewMaterial && (
+        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="border-2 border-ink bg-paper hard p-5 sm:p-6 w-full max-w-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
+              <div>
+                <span className="font-mono text-[10px] uppercase font-bold text-blood tracking-wider">
+                  {previewMaterial.courseCode} · {previewMaterial.moduleName}
+                </span>
+                <h3 className="font-serif font-bold text-lg text-ink">{previewMaterial.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewMaterial(null)}
+                className="p-1 text-muted hover:text-ink"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {previewMaterial.type.toUpperCase() === "VIDEO" ? (
+                <div className="aspect-video bg-ink rounded-lg overflow-hidden border-2 border-ink">
+                  <video src={previewMaterial.fileUrl} controls className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="border-2 border-ink bg-paper-2 p-4 rounded-lg space-y-2">
+                  <p className="font-mono text-xs uppercase font-bold text-muted">Document Overview</p>
+                  <p className="font-serif text-sm text-ink leading-relaxed">
+                    {previewMaterial.description || "Digital course reference material provided for student self-study and revision."}
+                  </p>
+                  <div className="pt-2 flex items-center gap-2 font-mono text-xs text-muted">
+                    <span>Uploaded by: <strong className="text-ink">{previewMaterial.facultyName}</strong></span>
+                    <span>·</span>
+                    <span>Format: <strong className="text-blood">{previewMaterial.type}</strong></span>
+                    <span>·</span>
+                    <span>Size: <strong>{previewMaterial.fileSize}</strong></span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-3 border-t-2 border-ink/10">
+                <span className="font-mono text-xs text-muted">
+                  Total downloads: <strong className="text-ink">{previewMaterial.downloadCount}</strong>
+                </span>
+                <div className="flex items-center gap-2">
+                  <BrutalButton tone="ghost" onClick={() => setPreviewMaterial(null)}>
+                    Close Preview
+                  </BrutalButton>
+                  <BrutalButton tone="blood" onClick={() => handleDownload(previewMaterial)}>
+                    <Download className="w-4 h-4" /> Download Resource
+                  </BrutalButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

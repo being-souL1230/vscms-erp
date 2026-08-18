@@ -327,3 +327,20 @@ export interface FacultyAttendance {
   markedBy?: string | null;
   createdAt?: string;
 }
+
+export interface CourseMaterial {
+  id: number;
+  courseId: number;
+  courseCode: string;
+  courseName: string;
+  moduleName: string;
+  title: string;
+  description?: string | null;
+  type: "PDF" | "PPT" | "Video" | "Notes";
+  fileUrl: string;
+  fileSize: string;
+  facultyId?: number | null;
+  facultyName: string;
+  downloadCount: number;
+  createdAt?: string;
+}

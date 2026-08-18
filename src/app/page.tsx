@@ -26,7 +26,9 @@ import type {
   InternalMark,
   PermissionRow,
   FacultyAttendance,
+  CourseMaterial,
 } from "@/types/erp";
+import { initialCourseMaterials } from "@/lib/seed-data";
 import {
   Navbar,
   Sidebar,
@@ -70,6 +72,7 @@ type AppData = {
   allUsers: User[];
   enrollments: Enrollment[];
   facultyAttendance: FacultyAttendance[];
+  courseMaterials: CourseMaterial[];
 };
 
 /**
@@ -110,7 +113,7 @@ async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
         body: JSON.stringify({ force: true }),
       });
     }
-    const [s, f, c, a, g, fe, n, as, tt, dp, lv, ad, dc, se, sm, ss, ex, em, im, pm, us, en, fa, fst, fp] = await Promise.all([
+    const [s, f, c, a, g, fe, n, as, tt, dp, lv, ad, dc, se, sm, ss, ex, em, im, pm, us, en, fa, fst, fp, cm] = await Promise.all([
       fetchJson("/api/students"),
       fetchJson("/api/faculty"),
       fetchJson("/api/courses"),
@@ -136,6 +139,7 @@ async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
       fetchJson("/api/faculty-attendance"),
       fetchJson("/api/fee-structures"),
       fetchJson("/api/fee-payments"),
+      fetchJson("/api/course-materials"),
     ]);
   return {
     students: Array.isArray(s) ? s : [],
@@ -164,6 +168,7 @@ async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
     allUsers: Array.isArray(us) ? us : [],
     enrollments: Array.isArray(en) ? en : [],
     facultyAttendance: Array.isArray(fa) ? fa : [],
+    courseMaterials: Array.isArray(cm) && cm.length > 0 ? cm : initialCourseMaterials,
     };
   } catch (e) {
     if (attempt < 2) {
@@ -207,6 +212,7 @@ export default function VscmsErpApp() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [facultyAttendance, setFacultyAttendance] = useState<FacultyAttendance[]>([]);
+  const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>(initialCourseMaterials);
 
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
@@ -252,6 +258,20 @@ export default function VscmsErpApp() {
     setAllUsers(data.allUsers);
     setEnrollments(data.enrollments);
     setFacultyAttendance(data.facultyAttendance);
+    
+    let localSaved: CourseMaterial[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vscms_course_materials");
+        if (raw) localSaved = JSON.parse(raw);
+      } catch {}
+    }
+    const combined = [...(data.courseMaterials || []), ...localSaved];
+    const uniqueMap = new Map<number, CourseMaterial>();
+    (combined.length ? combined : initialCourseMaterials).forEach((m) => {
+      uniqueMap.set(m.id, m);
+    });
+    setCourseMaterials(Array.from(uniqueMap.values()));
   };
 
   useEffect(() => {
@@ -695,6 +715,81 @@ export default function VscmsErpApp() {
 
   const pendingFees = fees.filter((f) => f.status === "pending").length;
 
+  const uploadCourseMaterial = async (m: Partial<CourseMaterial>) => {
+    let created: any = null;
+    try {
+      const res = await fetch("/api/course-materials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(m),
+      });
+      if (res.ok) {
+        created = await res.json().catch(() => null);
+      }
+    } catch (e) {
+      console.warn("API upload fallback to local state:", e);
+    }
+
+    let targetMaterial: CourseMaterial;
+    if (created && created.id) {
+      targetMaterial = created;
+    } else {
+      const tempId = Date.now();
+      targetMaterial = {
+        id: tempId,
+        courseId: m.courseId || 1,
+        courseCode: m.courseCode || "BCA101",
+        courseName: m.courseName || "Introduction to Programming",
+        moduleName: m.moduleName || "Module 1",
+        title: m.title || "Untitled Resource",
+        description: m.description || "",
+        type: (m.type as any) || "PDF",
+        fileUrl: m.fileUrl || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        fileSize: m.fileSize || "1.5 MB",
+        facultyId: user?.id,
+        facultyName: user?.name || m.facultyName || "Faculty Member",
+        downloadCount: 0,
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+    }
+
+    setCourseMaterials((prev) => {
+      const updated = [targetMaterial, ...prev.filter((p) => p.id !== targetMaterial.id)];
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_course_materials", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("success", "Material Published", `"${targetMaterial.title}" is now available for students.`);
+  };
+
+  const deleteCourseMaterial = async (id: number) => {
+    try {
+      await fetch(`/api/course-materials?id=${id}`, { method: "DELETE" });
+    } catch {}
+    setCourseMaterials((prev) => {
+      const updated = prev.filter((m) => m.id !== id);
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_course_materials", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("info", "Material Removed", "Digital resource deleted successfully.");
+  };
+
+  const incrementCourseMaterialDownload = async (id: number) => {
+    try {
+      await fetch("/api/course-materials/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch {}
+    setCourseMaterials((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, downloadCount: m.downloadCount + 1 } : m))
+    );
+  };
+
   if (!loggedIn) {
     return (
       <>
@@ -727,6 +822,7 @@ export default function VscmsErpApp() {
       students: "Students",
       faculty: "Teachers",
       courses: "Courses",
+      materials: "Course Materials",
       departments: "Departments",
       fees: "Fees",
       notices: "Notices",
@@ -869,6 +965,10 @@ export default function VscmsErpApp() {
               onUpdateFeeStructure={setupFeeStruct.update}
               onDeleteFeeStructure={setupFeeStruct.del}
               onGenerateInvoices={generateInvoices}
+              courseMaterials={courseMaterials}
+              onUploadMaterial={uploadCourseMaterial}
+              onDeleteMaterial={deleteCourseMaterial}
+              onIncrementDownload={incrementCourseMaterialDownload}
             />
           ) : role === "faculty" ? (
             <FacultyDashboard
@@ -903,6 +1003,10 @@ export default function VscmsErpApp() {
               permissions={permissions}
               onAddTimetable={addTimetable}
               onDeleteTimetable={delTimetable}
+              courseMaterials={courseMaterials}
+              onUploadMaterial={uploadCourseMaterial}
+              onDeleteMaterial={deleteCourseMaterial}
+              onIncrementDownload={incrementCourseMaterialDownload}
             />
           ) : (
             <StudentDashboard
@@ -930,6 +1034,11 @@ export default function VscmsErpApp() {
               onDeleteDocument={deleteDocument}
               onUpdateProfile={updateProfile}
               onSaveAdmission={saveAdmission}
+              courses={courses}
+              courseMaterials={courseMaterials}
+              onUploadMaterial={uploadCourseMaterial}
+              onDeleteMaterial={deleteCourseMaterial}
+              onIncrementDownload={incrementCourseMaterialDownload}
             />
           )}
         </main>

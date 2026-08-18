@@ -48,6 +48,7 @@ import type {
   InternalMark,
   PermissionRow,
   FacultyAttendance,
+  CourseMaterial,
 } from "@/types/erp";
 import { feeRemaining, feeEffectiveStatus } from "@/types/erp";
 import {
@@ -93,6 +94,7 @@ import {
   StudentHistoryTab,
   StudentResultsTab,
   StudentAdmitCardTab,
+  DigitalCourseMaterialsTab,
 } from "@/components/features";
 
 /* ---------- shared UI components for dashboards ---------- */
@@ -275,6 +277,10 @@ export function AdminDashboard(props: {
   onDeleteDocument: (id: number) => void;
   onUpdateUser: (d: { id: number; role?: string; status?: string; password?: string }) => void;
   onSavePermissions: (rows: PermissionRow[]) => void;
+  courseMaterials?: CourseMaterial[];
+  onUploadMaterial?: (m: Partial<CourseMaterial>) => void;
+  onDeleteMaterial?: (id: number) => void;
+  onIncrementDownload?: (id: number) => void;
 }) {
   const {
     currentTab,
@@ -346,6 +352,10 @@ export function AdminDashboard(props: {
     onDeleteDocument,
     onUpdateUser,
     onSavePermissions,
+    courseMaterials = [],
+    onUploadMaterial = () => {},
+    onDeleteMaterial = () => {},
+    onIncrementDownload = () => {},
   } = props;
 
   const [q, setQ] = useState("");
@@ -1339,6 +1349,19 @@ export function AdminDashboard(props: {
         />
       )}
 
+      {/* COURSE MATERIALS (admin) */}
+      {currentTab === "materials" && (
+        <DigitalCourseMaterialsTab
+          courses={courses}
+          materials={courseMaterials}
+          currentUser={{ id: 1, name: "System Admin", role: "admin", email: "admin@vscms.edu", rollNoOrEmpId: "ADM001", rollNo: "ADM001", department: "Administration", status: "active" }}
+          enrollments={enrollments}
+          onUploadMaterial={onUploadMaterial}
+          onDeleteMaterial={onDeleteMaterial}
+          onIncrementDownload={onIncrementDownload}
+        />
+      )}
+
       <StudentModal
         isOpen={stuOpen}
         onClose={() => setStuOpen(false)}
@@ -1527,6 +1550,10 @@ export function FacultyDashboard(props: {
   onSaveMarks: (rows: Partial<InternalMark>[], status?: string) => void;
   onDeleteMark: (id: number) => void;
   onChangeMarkStatus: (courseId: number, examType: string, status: string) => void;
+  courseMaterials?: CourseMaterial[];
+  onUploadMaterial?: (m: Partial<CourseMaterial>) => void;
+  onDeleteMaterial?: (id: number) => void;
+  onIncrementDownload?: (id: number) => void;
 }) {
   const {
     currentTab,
@@ -1560,6 +1587,10 @@ export function FacultyDashboard(props: {
     onSaveMarks,
     onDeleteMark,
     onChangeMarkStatus,
+    courseMaterials = [],
+    onUploadMaterial = () => {},
+    onDeleteMaterial = () => {},
+    onIncrementDownload = () => {},
   } = props;
 
   // Faculty cannot review their own leave requests.
@@ -2268,6 +2299,19 @@ export function FacultyDashboard(props: {
         <FacultyLeaveTab leaves={leaves} currentUser={currentUser} onAddLeave={onAddLeave} />
       )}
 
+      {/* COURSE MATERIALS (faculty) */}
+      {currentTab === "materials" && (
+        <DigitalCourseMaterialsTab
+          courses={courses}
+          materials={courseMaterials}
+          currentUser={currentUser}
+          enrollments={enrollments}
+          onUploadMaterial={onUploadMaterial}
+          onDeleteMaterial={onDeleteMaterial}
+          onIncrementDownload={onIncrementDownload}
+        />
+      )}
+
       {/* FEES (faculty collection) */}
       {currentTab === "fees" && (
         <FacultyFeesTab
@@ -2428,6 +2472,11 @@ export function StudentDashboard(props: {
   onDeleteDocument: (id: number) => void;
   onUpdateProfile: (d: { phone?: string; avatarUrl?: string }) => void;
   onSaveAdmission: (d: Partial<AdmissionInfo>) => void;
+  courses?: Course[];
+  courseMaterials?: CourseMaterial[];
+  onUploadMaterial?: (m: Partial<CourseMaterial>) => void;
+  onDeleteMaterial?: (id: number) => void;
+  onIncrementDownload?: (id: number) => void;
 }) {
   const {
     currentTab,
@@ -2454,6 +2503,11 @@ export function StudentDashboard(props: {
     onDeleteDocument,
     onUpdateProfile,
     onSaveAdmission,
+    courses = [],
+    courseMaterials = [],
+    onUploadMaterial = () => {},
+    onDeleteMaterial = () => {},
+    onIncrementDownload = () => {},
   } = props;
 
   // leave request form
@@ -2935,6 +2989,19 @@ export function StudentDashboard(props: {
 
       {/* ACADEMIC HISTORY (student) */}
       {currentTab === "history" && <StudentHistoryTab grades={grades} currentUser={currentUser} />}
+
+      {/* COURSE MATERIALS (student) */}
+      {currentTab === "materials" && (
+        <DigitalCourseMaterialsTab
+          courses={courses}
+          materials={courseMaterials}
+          currentUser={currentUser}
+          enrollments={enrollments}
+          onUploadMaterial={onUploadMaterial}
+          onDeleteMaterial={onDeleteMaterial}
+          onIncrementDownload={onIncrementDownload}
+        />
+      )}
 
       {/* submission modal */}
       {submitAsg && (
