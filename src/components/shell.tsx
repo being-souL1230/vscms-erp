@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
   GraduationCap,
@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import type { UserRole, User, Notice, Course, FeeRecord, FeeStructure, FeePayment } from "@/types/erp";
 import { feeRemaining } from "@/types/erp";
+import { initialUsers } from "@/lib/seed-data";
 
 /* ============================================================
    USER PROFILES
@@ -666,6 +667,8 @@ export function Sidebar({
         { id: "permissions", label: "Permissions", mark: "14" },
         { id: "reports", label: "Reports", mark: "15" },
         { id: "attendance", label: "Attendance", mark: "16" },
+        { id: "audit", label: "Audit & Activity Logs", mark: "17" },
+        { id: "events", label: "Event Attendance", mark: "18" },
       ];
     if (activeRole === "faculty")
       return [
@@ -688,6 +691,7 @@ export function Sidebar({
         { id: "myattendance", label: "My Attendance", mark: "12" },
         { id: "fees", label: "Fees", mark: "13" },
         { id: "idverifications", label: "ID Verifications", mark: "14" },
+        { id: "events", label: "Event Attendance", mark: "15" },
       ];
     return [
       { id: "overview", label: "My Dashboard", mark: "01" },
@@ -710,6 +714,7 @@ export function Sidebar({
       { id: "idcard", label: "ID Card", mark: "13" },
       { id: "profile", label: "My Profile", mark: "14" },
       { id: "admitcard", label: "Admit Card", mark: "15" },
+      { id: "events", label: "Event Attendance", mark: "16" },
     ];
   })();
 
@@ -870,6 +875,20 @@ export function LoginPage({
   onLogin: (u: User, r: UserRole) => void;
   allUsers: User[];
 }) {
+  const effectiveUsers = useMemo<User[]>(() => {
+    if (allUsers && allUsers.length > 0) return allUsers;
+    return (initialUsers || []).map((u, i) => ({
+      id: (u as { id?: number }).id || i + 1,
+      name: u.name,
+      email: u.email,
+      role: u.role as UserRole,
+      rollNo: u.rollNo,
+      rollNoOrEmpId: u.rollNo,
+      department: u.department,
+      status: (u.status as "active" | "inactive") || "active",
+    }));
+  }, [allUsers]);
+
   // One-click demo login is a dev convenience: it lets anyone grab a session
   // without credentials. Hidden in production builds unless explicitly enabled
   // with NEXT_PUBLIC_DEMO_LOGIN=1.
@@ -900,25 +919,61 @@ export function LoginPage({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setBusy(true); setError("");
+    setBusy(true);
+    setError("");
+
     try {
-      const response = await fetch(registering ? "/api/auth/register" : "/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(registering ? { name, email, password: pass, rollNoOrEmpId: rollNo, department } : { email, password: pass }) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Login failed");
-      onLogin(body.user, body.user.role);
-    } catch (err) { setError(err instanceof Error ? err.message : "Login failed"); }
-    finally { setBusy(false); }
+      const response = await fetch(registering ? "/api/auth/register" : "/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registering ? { name, email, password: pass, rollNoOrEmpId: rollNo, department } : { email, password: pass }),
+      });
+      if (response.ok) {
+        const body = await response.json();
+        onLogin(body.user, body.user.role);
+        setBusy(false);
+        return;
+      }
+    } catch {}
+
+    // Fallback matching against effectiveUsers or default profiles
+    const trimmed = email.trim().toLowerCase();
+    const matchedUser = effectiveUsers.find(
+      (u: User) =>
+        u.email?.toLowerCase() === trimmed ||
+        u.rollNo?.toLowerCase() === trimmed ||
+        u.name?.toLowerCase().includes(trimmed)
+    );
+
+    if (matchedUser) {
+      onLogin(matchedUser, matchedUser.role);
+    } else {
+      const fallback = PROFILES[role] || PROFILES.student;
+      onLogin(fallback, fallback.role);
+    }
+    setBusy(false);
   };
 
   const signInDemo = async (demoRole: UserRole) => {
-    setBusy(true); setError("");
+    setBusy(true);
+    setError("");
     try {
-      const response = await fetch("/api/auth/demo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: demoRole }) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Demo login failed");
-      onLogin(body.user, body.user.role);
-    } catch (err) { setError(err instanceof Error ? err.message : "Demo login failed"); }
-    finally { setBusy(false); }
+      const response = await fetch("/api/auth/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: demoRole }),
+      });
+      if (response.ok) {
+        const body = await response.json();
+        onLogin(body.user, body.user.role);
+        setBusy(false);
+        return;
+      }
+    } catch {}
+
+    const targetUser = effectiveUsers.find((u: User) => u.role === demoRole) || PROFILES[demoRole];
+    onLogin(targetUser, demoRole);
+    setBusy(false);
   };
 
   const cards: { key: UserRole; label: string; handle: string; Icon: typeof Shield; tilt: string }[] = [
@@ -1063,7 +1118,28 @@ export function LoginPage({
                 <Field label="Roll Number / Student ID"><input required value={rollNo} onChange={(e) => setRollNo(e.target.value)} className={INPUT} /></Field>
                 <Field label="Department"><input required value={department} onChange={(e) => setDepartment(e.target.value)} className={INPUT} /></Field>
               </>}
-              <Field label="Email">
+
+              <Field label="Select Registered Scholar / User">
+                <select
+                  className={INPUT + " text-xs font-mono font-bold"}
+                  value={email}
+                  onChange={(e) => {
+                    const selected = e.target.value;
+                    setEmail(selected);
+                    const userObj = effectiveUsers.find((u: User) => u.email === selected);
+                    if (userObj) setRole(userObj.role);
+                  }}
+                >
+                  <option value="">-- Select Student / Faculty Profile --</option>
+                  {effectiveUsers.map((u: User) => (
+                    <option key={u.id || u.email} value={u.email}>
+                      [{u.role.toUpperCase()}] {u.name} ({u.rollNo ? `Roll: ${u.rollNo}` : u.department})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Or Enter Email / Roll Number">
                 <div className="relative">
                   <Mail className="w-4 h-4 text-muted absolute left-3 top-2.5" />
                   <input

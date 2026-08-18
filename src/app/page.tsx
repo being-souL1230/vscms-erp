@@ -27,8 +27,17 @@ import type {
   PermissionRow,
   FacultyAttendance,
   CourseMaterial,
+  AuditLogRecord,
+  CampusEvent,
+  EventRegistration,
 } from "@/types/erp";
-import { initialCourseMaterials } from "@/lib/seed-data";
+import {
+  initialCourseMaterials,
+  initialAuditLogs,
+  initialCampusEvents,
+  initialEventRegistrations,
+  initialUsers,
+} from "@/lib/seed-data";
 import {
   Navbar,
   Sidebar,
@@ -281,6 +290,14 @@ export default function VscmsErpApp() {
       return updated;
     });
     toast("success", "ID Card Verified", `Student ${student?.name || rollNo} is now officially verified.`);
+    addAuditLog(
+      "Approved Student ID Verification",
+      "ID Verification",
+      `${student?.name || rollNo} (${rollNo})`,
+      "Status: Pending Sign-off",
+      `Status: Institutionally Verified (by ${facultyName})`,
+      "info"
+    );
   };
 
   const rejectStudentVerification = (rollNo: string, reason: string) => {
@@ -300,6 +317,194 @@ export default function VscmsErpApp() {
       return updated;
     });
     toast("info", "Verification Flagged", `ID verification status for ${rollNo} updated.`);
+    addAuditLog(
+      "Flagged Student ID Card",
+      "ID Verification",
+      `${student?.name || rollNo} (${rollNo})`,
+      "Status: Pending / Verified",
+      `Status: Flagged (${reason})`,
+      "warning"
+    );
+  };
+
+  const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>(initialAuditLogs);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vscms_audit_logs");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setAuditLogs(parsed);
+        }
+      } catch {}
+    }
+  }, []);
+
+  const addAuditLog = (
+    action: string,
+    moduleName: string,
+    record: string,
+    oldValue: string,
+    newValue: string,
+    severity: "info" | "warning" | "critical" = "info"
+  ) => {
+    const newLog: AuditLogRecord = {
+      id: Date.now(),
+      user: user?.name ? `${user.name} (${user.role === "admin" ? "Admin" : user.role === "faculty" ? "Faculty" : "Student"})` : "System Administrator",
+      userRole: user?.role || "system",
+      action,
+      module: moduleName,
+      record,
+      timestamp: new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      ipAddress: "192.168.1.42 (Chrome 127 · Windows 11)",
+      oldValue,
+      newValue,
+      severity,
+    };
+    setAuditLogs((prev) => {
+      const updated = [newLog, ...prev];
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_audit_logs", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+  };
+
+  const clearAuditLogs = () => {
+    setAuditLogs([]);
+    if (typeof window !== "undefined") {
+      try { localStorage.removeItem("vscms_audit_logs"); } catch {}
+    }
+    toast("info", "Audit Logs Reset", "Audit trail logs cleared successfully.");
+  };
+
+  const [campusEvents, setCampusEvents] = useState<CampusEvent[]>(initialCampusEvents);
+  const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>(initialEventRegistrations);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const rawE = localStorage.getItem("vscms_campus_events");
+        if (rawE) setCampusEvents(JSON.parse(rawE));
+        const rawR = localStorage.getItem("vscms_event_registrations");
+        if (rawR) setEventRegistrations(JSON.parse(rawR));
+      } catch {}
+    }
+  }, []);
+
+  const addCampusEvent = (e: Partial<CampusEvent>) => {
+    const newId = Date.now();
+    const newEvt: CampusEvent = {
+      id: newId,
+      title: e.title || "Campus Event",
+      code: e.code || "EVT-2026",
+      date: e.date || new Date().toISOString().slice(0, 10),
+      time: e.time || "10:00 AM - 04:00 PM",
+      venue: e.venue || "Main Auditorium",
+      department: e.department || "General",
+      createdBy: e.createdBy || user?.name || "Dr. Tanya Mishra",
+      coordinators: e.coordinators || ["101"],
+      description: e.description || "Campus Event",
+    };
+
+    setCampusEvents((prev) => {
+      const updated = [newEvt, ...prev];
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_campus_events", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+
+    // Auto-register scholars for event
+    const newRegs: EventRegistration[] = students.map((s, idx) => ({
+      id: Date.now() + idx,
+      eventId: newId,
+      studentId: s.id,
+      studentName: s.name,
+      rollNo: s.rollNo,
+      department: s.department,
+      registeredAt: new Date().toLocaleString(),
+      attendanceStatus: "not_scanned",
+    }));
+
+    setEventRegistrations((prev) => {
+      const updated = [...newRegs, ...prev];
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+
+    toast("success", "Event Created", `Event ${newEvt.title} created with ${newEvt.coordinators.length} assigned coordinators.`);
+    addAuditLog("Created Campus Event", "Event Governance", newEvt.title, "Events: Unscheduled", `Created Event (${newEvt.code})`, "info");
+  };
+
+  const updateEventCoordinators = (eventId: number, coordinators: string[]) => {
+    setCampusEvents((prev) => {
+      const updated = prev.map((evt) => (evt.id === eventId ? { ...evt, coordinators } : evt));
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_campus_events", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("info", "Coordinators Updated", "Student event coordinators list updated.");
+  };
+
+  const submitEventScanRequest = (eventId: number, studentRollNo: string, qrRound: string) => {
+    setEventRegistrations((prev) => {
+      const updated = prev.map((r) => {
+        if (r.eventId === eventId && (r.rollNo === studentRollNo || r.studentName === user?.name)) {
+          return {
+            ...r,
+            attendanceStatus: "pending_verification" as const,
+            qrRound,
+            registeredAt: new Date().toLocaleTimeString(),
+          };
+        }
+        return r;
+      });
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("info", "QR Scanned", "Attendance verification request submitted to Event Coordinator.");
+  };
+
+  const approveEventAttendance = (regId: number, verifierName: string) => {
+    let scholarName = "Scholar";
+    setEventRegistrations((prev) => {
+      const updated = prev.map((r) => {
+        if (r.id === regId) {
+          scholarName = r.studentName;
+          return {
+            ...r,
+            attendanceStatus: "present" as const,
+            verifiedBy: verifierName,
+            verifiedAt: new Date().toLocaleTimeString(),
+          };
+        }
+        return r;
+      });
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("success", "Attendance Verified", `Student ${scholarName} marked Present by Coordinator ${verifierName}.`);
+    addAuditLog("Approved Event Attendance", "Event Governance", scholarName, "Status: Pending Sign-off", `Status: Verified Present by ${verifierName}`, "info");
+  };
+
+  const rejectEventAttendance = (regId: number) => {
+    setEventRegistrations((prev) => {
+      const updated = prev.map((r) => (r.id === regId ? { ...r, attendanceStatus: "rejected" as const } : r));
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+    toast("error", "Scan Rejected", "Attendance request rejected by coordinator.");
   };
 
   const [loading, setLoading] = useState(true);
@@ -320,32 +525,32 @@ export default function VscmsErpApp() {
   // anonymously, so admin-only collections like users/permissions would stay
   // empty without this reload).
   const applyData = (data: AppData) => {
-    setStudents(data.students);
-    setFaculty(data.faculty);
-    setCourses(data.courses);
-    setAttendance(data.attendance);
-    setGrades(data.grades);
-    setFees(data.fees);
-    setFeeStructures(data.feeStructures);
-    setFeePayments(data.feePayments);
-    setNotices(data.notices);
-    setAssignments(data.assignments);
-    setSubmissions(data.submissions);
-    setTimetable(data.timetable);
-    setDepartments(data.departments);
-    setLeaves(data.leaves);
-    setAdmissions(data.admissions);
-    setDocuments(data.documents);
-    setSections(data.sections);
-    setSemesters(data.semesters);
-    setSessions(data.sessions);
-    setExams(data.exams);
-    setExamDefs(data.examDefs);
-    setInternalMarks(data.internalMarks);
-    setPermissions(data.permissions);
-    setAllUsers(data.allUsers);
-    setEnrollments(data.enrollments);
-    setFacultyAttendance(data.facultyAttendance);
+    if (data.students?.length) setStudents(data.students);
+    if (data.faculty?.length) setFaculty(data.faculty);
+    if (data.courses?.length) setCourses(data.courses);
+    if (data.attendance?.length) setAttendance(data.attendance);
+    if (data.grades?.length) setGrades(data.grades);
+    if (data.fees?.length) setFees(data.fees);
+    if (data.feeStructures?.length) setFeeStructures(data.feeStructures);
+    if (data.feePayments?.length) setFeePayments(data.feePayments);
+    if (data.notices?.length) setNotices(data.notices);
+    if (data.assignments?.length) setAssignments(data.assignments);
+    if (data.submissions?.length) setSubmissions(data.submissions);
+    if (data.timetable?.length) setTimetable(data.timetable);
+    if (data.departments?.length) setDepartments(data.departments);
+    if (data.leaves?.length) setLeaves(data.leaves);
+    if (data.admissions?.length) setAdmissions(data.admissions);
+    if (data.documents?.length) setDocuments(data.documents);
+    if (data.sections?.length) setSections(data.sections);
+    if (data.semesters?.length) setSemesters(data.semesters);
+    if (data.sessions?.length) setSessions(data.sessions);
+    if (data.exams?.length) setExams(data.exams);
+    if (data.examDefs?.length) setExamDefs(data.examDefs);
+    if (data.internalMarks?.length) setInternalMarks(data.internalMarks);
+    if (data.permissions?.length) setPermissions(data.permissions);
+    if (data.allUsers?.length) setAllUsers(data.allUsers);
+    if (data.enrollments?.length) setEnrollments(data.enrollments);
+    if (data.facultyAttendance?.length) setFacultyAttendance(data.facultyAttendance);
     
     let localSaved: CourseMaterial[] = [];
     if (typeof window !== "undefined") {
@@ -366,6 +571,20 @@ export default function VscmsErpApp() {
     let ignore = false;
     (async () => {
       try {
+        if (typeof window !== "undefined") {
+          try {
+            const rawSession = localStorage.getItem("vscms_session");
+            if (rawSession) {
+              const { user: savedUser, role: savedRole } = JSON.parse(rawSession);
+              if (savedUser && savedRole) {
+                setUser(savedUser);
+                setRole(savedRole);
+                setLoggedIn(true);
+              }
+            }
+          } catch {}
+        }
+
         const session = await fetch("/api/auth/me");
         if (session.ok) {
           const { user: signedInUser } = await session.json();
@@ -373,6 +592,9 @@ export default function VscmsErpApp() {
           setUser(signedInUser);
           setRole(signedInUser.role);
           setLoggedIn(true);
+          if (typeof window !== "undefined") {
+            try { localStorage.setItem("vscms_session", JSON.stringify({ user: signedInUser, role: signedInUser.role })); } catch {}
+          }
         }
         const data = await fetchAllData();
         if (ignore) return;
@@ -391,7 +613,11 @@ export default function VscmsErpApp() {
   const switchRole = (r: UserRole) => {
     setTab("overview");
     setRole(r);
-    setUser(PROFILES[r]);
+    const targetUser = (allUsers || []).find((u) => u.role === r) || PROFILES[r];
+    setUser(targetUser);
+    if (typeof window !== "undefined") {
+      try { localStorage.setItem("vscms_session", JSON.stringify({ user: targetUser, role: r })); } catch {}
+    }
     fetch("/api/auth/demo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -399,7 +625,12 @@ export default function VscmsErpApp() {
     })
       .then((res) => res.json())
       .then((body) => {
-        if (body?.user) setUser(body.user);
+        if (body?.user) {
+          setUser(body.user);
+          if (typeof window !== "undefined") {
+            try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: r })); } catch {}
+          }
+        }
       })
       .catch(() => {});
 
@@ -882,12 +1113,15 @@ export default function VscmsErpApp() {
     return (
       <>
         <LoginPage
-          allUsers={[...students, ...faculty]}
+          allUsers={allUsers.length > 0 ? allUsers : (students.length > 0 || faculty.length > 0 ? [...students, ...faculty] : initialUsers)}
           onLogin={async (u, r) => {
             setUser(u);
             setRole(r);
             setTab("overview");
             setLoggedIn(true);
+            if (typeof window !== "undefined") {
+              try { localStorage.setItem("vscms_session", JSON.stringify({ user: u, role: r })); } catch {}
+            }
             toast("success", "Welcome", `Hello ${u.name.split(" ")[0]}!`);
             // Reload everything with the fresh session: the mount fetch ran
             // anonymously (before login) so admin-only data would stay empty.
@@ -946,7 +1180,14 @@ export default function VscmsErpApp() {
         currentUser={user}
         activeRole={role}
         onRoleChange={switchRole}
-        onLogout={async () => { await fetch("/api/auth/logout", { method: "POST" }); setUser(null); setLoggedIn(false); }}
+        onLogout={async () => {
+          await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+          setUser(null);
+          setLoggedIn(false);
+          if (typeof window !== "undefined") {
+            try { localStorage.removeItem("vscms_session"); } catch {}
+          }
+        }}
         onResetSeed={reseed}
         isSeeding={seeding}
         canReset={user?.role === "admin"}
@@ -1057,6 +1298,15 @@ export default function VscmsErpApp() {
               onUploadMaterial={uploadCourseMaterial}
               onDeleteMaterial={deleteCourseMaterial}
               onIncrementDownload={incrementCourseMaterialDownload}
+              auditLogs={auditLogs}
+              onClearAuditLogs={clearAuditLogs}
+              events={campusEvents}
+              eventRegistrations={eventRegistrations}
+              onAddEvent={addCampusEvent}
+              onUpdateEventCoordinators={updateEventCoordinators}
+              onSubmitEventScanRequest={submitEventScanRequest}
+              onApproveEventAttendance={approveEventAttendance}
+              onRejectEventAttendance={rejectEventAttendance}
             />
           ) : role === "faculty" ? (
             <FacultyDashboard
@@ -1098,6 +1348,13 @@ export default function VscmsErpApp() {
               idVerifications={idVerifications}
               onApproveIdVerification={approveStudentVerification}
               onRejectIdVerification={rejectStudentVerification}
+              events={campusEvents}
+              eventRegistrations={eventRegistrations}
+              onAddEvent={addCampusEvent}
+              onUpdateEventCoordinators={updateEventCoordinators}
+              onSubmitEventScanRequest={submitEventScanRequest}
+              onApproveEventAttendance={approveEventAttendance}
+              onRejectEventAttendance={rejectEventAttendance}
             />
           ) : (
             <StudentDashboard
@@ -1132,6 +1389,13 @@ export default function VscmsErpApp() {
               onIncrementDownload={incrementCourseMaterialDownload}
               idVerifications={idVerifications}
               onRequestVerification={requestStudentVerification}
+              events={campusEvents}
+              eventRegistrations={eventRegistrations}
+              onAddEvent={addCampusEvent}
+              onUpdateEventCoordinators={updateEventCoordinators}
+              onSubmitEventScanRequest={submitEventScanRequest}
+              onApproveEventAttendance={approveEventAttendance}
+              onRejectEventAttendance={rejectEventAttendance}
             />
           )}
         </main>

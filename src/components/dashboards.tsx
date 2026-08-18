@@ -49,6 +49,9 @@ import type {
   PermissionRow,
   FacultyAttendance,
   CourseMaterial,
+  AuditLogRecord,
+  CampusEvent,
+  EventRegistration,
 } from "@/types/erp";
 import { feeRemaining, feeEffectiveStatus } from "@/types/erp";
 import {
@@ -97,6 +100,8 @@ import {
   DigitalCourseMaterialsTab,
   FacultyIdVerificationsTab,
   IdVerificationRecord,
+  AuditLogsTab,
+  VerifiedEventAttendanceTab,
 } from "@/components/features";
 
 /* ---------- shared UI components for dashboards ---------- */
@@ -283,6 +288,15 @@ export function AdminDashboard(props: {
   onUploadMaterial?: (m: Partial<CourseMaterial>) => void;
   onDeleteMaterial?: (id: number) => void;
   onIncrementDownload?: (id: number) => void;
+  auditLogs?: AuditLogRecord[];
+  onClearAuditLogs?: () => void;
+  events?: CampusEvent[];
+  eventRegistrations?: EventRegistration[];
+  onAddEvent?: (e: Partial<CampusEvent>) => void;
+  onUpdateEventCoordinators?: (eventId: number, coordinators: string[]) => void;
+  onSubmitEventScanRequest?: (eventId: number, studentRollNo: string, qrRound: string) => void;
+  onApproveEventAttendance?: (regId: number, verifierName: string) => void;
+  onRejectEventAttendance?: (regId: number) => void;
 }) {
   const {
     currentTab,
@@ -358,6 +372,15 @@ export function AdminDashboard(props: {
     onUploadMaterial = () => {},
     onDeleteMaterial = () => {},
     onIncrementDownload = () => {},
+    auditLogs = [],
+    onClearAuditLogs,
+    events = [],
+    eventRegistrations = [],
+    onAddEvent,
+    onUpdateEventCoordinators,
+    onSubmitEventScanRequest,
+    onApproveEventAttendance,
+    onRejectEventAttendance,
   } = props;
 
   const [q, setQ] = useState("");
@@ -1364,6 +1387,29 @@ export function AdminDashboard(props: {
         />
       )}
 
+      {/* AUDIT LOGS (admin) */}
+      {currentTab === "audit" && (
+        <AuditLogsTab
+          auditLogs={auditLogs}
+          onClearLogs={onClearAuditLogs}
+        />
+      )}
+
+      {/* VERIFIED EVENT ATTENDANCE SYSTEM (admin) */}
+      {currentTab === "events" && (
+        <VerifiedEventAttendanceTab
+          events={events}
+          registrations={eventRegistrations}
+          students={students}
+          currentUser={{ id: 1, name: "System Admin", role: "admin", email: "admin@vscms.edu", rollNoOrEmpId: "ADM001", rollNo: "ADM001", department: "Administration", status: "active" }}
+          onAddEvent={onAddEvent}
+          onUpdateCoordinators={onUpdateEventCoordinators}
+          onSubmitScanRequest={onSubmitEventScanRequest}
+          onApproveAttendance={onApproveEventAttendance}
+          onRejectAttendance={onRejectEventAttendance}
+        />
+      )}
+
       <StudentModal
         isOpen={stuOpen}
         onClose={() => setStuOpen(false)}
@@ -1559,6 +1605,13 @@ export function FacultyDashboard(props: {
   idVerifications?: Record<string, IdVerificationRecord>;
   onApproveIdVerification?: (rollNo: string, facultyName: string) => void;
   onRejectIdVerification?: (rollNo: string, reason: string) => void;
+  events?: CampusEvent[];
+  eventRegistrations?: EventRegistration[];
+  onAddEvent?: (e: Partial<CampusEvent>) => void;
+  onUpdateEventCoordinators?: (eventId: number, coordinators: string[]) => void;
+  onSubmitEventScanRequest?: (eventId: number, studentRollNo: string, qrRound: string) => void;
+  onApproveEventAttendance?: (regId: number, verifierName: string) => void;
+  onRejectEventAttendance?: (regId: number) => void;
 }) {
   const {
     currentTab,
@@ -1599,6 +1652,13 @@ export function FacultyDashboard(props: {
     idVerifications = {},
     onApproveIdVerification = () => {},
     onRejectIdVerification = () => {},
+    events = [],
+    eventRegistrations = [],
+    onAddEvent,
+    onUpdateEventCoordinators,
+    onSubmitEventScanRequest,
+    onApproveEventAttendance,
+    onRejectEventAttendance,
   } = props;
 
   // Faculty cannot review their own leave requests.
@@ -2343,6 +2403,21 @@ export function FacultyDashboard(props: {
           onRejectVerification={onRejectIdVerification || (() => {})}
         />
       )}
+
+      {/* VERIFIED EVENT ATTENDANCE SYSTEM (faculty) */}
+      {currentTab === "events" && (
+        <VerifiedEventAttendanceTab
+          events={events}
+          registrations={eventRegistrations}
+          students={students}
+          currentUser={currentUser}
+          onAddEvent={onAddEvent}
+          onUpdateCoordinators={onUpdateEventCoordinators}
+          onSubmitScanRequest={onSubmitEventScanRequest}
+          onApproveAttendance={onApproveEventAttendance}
+          onRejectAttendance={onRejectEventAttendance}
+        />
+      )}
     </div>
   );
 }
@@ -2498,6 +2573,13 @@ export function StudentDashboard(props: {
   onIncrementDownload?: (id: number) => void;
   idVerifications?: Record<string, IdVerificationRecord>;
   onRequestVerification?: (rollNo: string) => void;
+  events?: CampusEvent[];
+  eventRegistrations?: EventRegistration[];
+  onAddEvent?: (e: Partial<CampusEvent>) => void;
+  onUpdateEventCoordinators?: (eventId: number, coordinators: string[]) => void;
+  onSubmitEventScanRequest?: (eventId: number, studentRollNo: string, qrRound: string) => void;
+  onApproveEventAttendance?: (regId: number, verifierName: string) => void;
+  onRejectEventAttendance?: (regId: number) => void;
 }) {
   const {
     currentTab,
@@ -2531,6 +2613,13 @@ export function StudentDashboard(props: {
     onIncrementDownload = () => {},
     idVerifications = {},
     onRequestVerification = () => {},
+    events = [],
+    eventRegistrations = [],
+    onAddEvent,
+    onUpdateEventCoordinators,
+    onSubmitEventScanRequest,
+    onApproveEventAttendance,
+    onRejectEventAttendance,
   } = props;
 
   // leave request form
@@ -3025,6 +3114,21 @@ export function StudentDashboard(props: {
           onUploadMaterial={onUploadMaterial}
           onDeleteMaterial={onDeleteMaterial}
           onIncrementDownload={onIncrementDownload}
+        />
+      )}
+
+      {/* VERIFIED EVENT ATTENDANCE SYSTEM (student) */}
+      {currentTab === "events" && (
+        <VerifiedEventAttendanceTab
+          events={events}
+          registrations={eventRegistrations}
+          students={[]}
+          currentUser={currentUser}
+          onAddEvent={onAddEvent}
+          onUpdateCoordinators={onUpdateEventCoordinators}
+          onSubmitScanRequest={onSubmitEventScanRequest}
+          onApproveAttendance={onApproveEventAttendance}
+          onRejectAttendance={onRejectEventAttendance}
         />
       )}
 

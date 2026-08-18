@@ -344,3 +344,58 @@ export interface CourseMaterial {
   downloadCount: number;
   createdAt?: string;
 }
+
+export interface AuditLogRecord {
+  id: number | string;
+  user: string;
+  userRole: "admin" | "faculty" | "student" | "system";
+  action: string;
+  module: string;
+  record: string;
+  timestamp: string;
+  ipAddress: string;
+  oldValue: string;
+  newValue: string;
+  severity?: "info" | "warning" | "critical";
+}
+
+export interface CampusEvent {
+  id: number;
+  title: string;
+  code: string;
+  date: string;
+  time: string;
+  venue: string;
+  department: string;
+  createdBy: string;
+  coordinators: string[]; // array of student roll numbers or names
+  description?: string;
+}
+
+export interface EventRegistration {
+  id: number;
+  eventId: number;
+  studentId: number;
+  studentName: string;
+  rollNo: string;
+  department: string;
+  registeredAt: string;
+  attendanceStatus: "unregistered" | "not_scanned" | "pending_verification" | "present" | "rejected";
+  verifiedBy?: string | null;
+  verifiedAt?: string | null;
+  qrRound?: string | null;
+}
+
+export interface EventQrWindow {
+  id: string; // e.g. "QR-01"
+  eventId: number;
+  roundNumber: number;
+  durationMinutes: number;
+  startedAt: string;
+  expiresAt: string; // ISO string
+  isActive: boolean;
+  createdBy: string;
+  payload: string;
+}
+
+

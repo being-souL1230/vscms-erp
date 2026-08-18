@@ -1,12 +1,15 @@
 // VSCMS - College of Management Studies
 // Indian-style seed data: BCA, MBA, BBA scholars and faculty.
+import type { User } from "@/types/erp";
 
-export const initialUsers = [
+export const initialUsers: User[] = [
   {
+    id: 1,
     name: "Prof. (Dr.) Gauri Singh Gaur",
     email: "director@vscms.edu",
     role: "admin",
     rollNo: "1",
+    rollNoOrEmpId: "1",
     department: "Office of the Director",
     designation: "Director, College of Management Studies",
     phone: "+91 11 4011 9001",
@@ -15,10 +18,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 2,
     name: "Dr. Tanya Mishra",
     email: "tanya.m@vscms.edu",
     role: "faculty",
     rollNo: "2",
+    rollNoOrEmpId: "2",
     department: "BCA (CSJM)",
     designation: "Professor of Computer Science · HOD",
     phone: "+91 11 4011 9142",
@@ -27,10 +32,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 3,
     name: "Mr. Prakhar Tiwari",
     email: "prakhar.t@vscms.edu",
     role: "faculty",
     rollNo: "3",
+    rollNoOrEmpId: "3",
     department: "MBA",
     designation: "Associate Professor · Program Lead",
     phone: "+91 11 4011 9221",
@@ -39,10 +46,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 4,
     name: "Mr. Ayush Yadav",
     email: "ayush.y@vscms.edu",
     role: "faculty",
     rollNo: "4",
+    rollNoOrEmpId: "4",
     department: "BCA (MCU)",
     designation: "Professor of Data Science",
     phone: "+91 11 4011 9098",
@@ -51,10 +60,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 101,
     name: "Aarav Rao",
     email: "aarav.r@vscms.edu",
     role: "student",
     rollNo: "101",
+    rollNoOrEmpId: "101",
     department: "BCA (CSJM)",
     semester: 3,
     phone: "+91 98200 11431",
@@ -64,10 +75,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 102,
     name: "Priya Nair",
     email: "priya.n@vscms.edu",
     role: "student",
     rollNo: "102",
+    rollNoOrEmpId: "102",
     department: "BCA (MCU)",
     semester: 3,
     phone: "+91 98200 22718",
@@ -77,10 +90,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 103,
     name: "Rohan Das",
     email: "rohan.d@vscms.edu",
     role: "student",
     rollNo: "103",
+    rollNoOrEmpId: "103",
     department: "MBA",
     semester: 2,
     phone: "+91 98200 33007",
@@ -90,10 +105,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 104,
     name: "Meera Iyer",
     email: "meera.i@vscms.edu",
     role: "student",
     rollNo: "104",
+    rollNoOrEmpId: "104",
     department: "BBA",
     semester: 2,
     phone: "+91 98200 44012",
@@ -103,10 +120,12 @@ export const initialUsers = [
     status: "active",
   },
   {
+    id: 105,
     name: "Kabir Shah",
     email: "kabir.s@vscms.edu",
     role: "student",
     rollNo: "105",
+    rollNoOrEmpId: "105",
     department: "BCA (CSJM)",
     semester: 4,
     phone: "+91 98200 55044",
@@ -396,4 +415,235 @@ export const initialCourseMaterials = [
     facultyName: "Mr. Prakhar Tiwari",
     downloadCount: 19,
   },
+];
+
+export const initialAuditLogs = [
+  {
+    id: 1,
+    user: "Prof. (Dr.) Gauri Singh Gaur (Admin)",
+    userRole: "admin" as const,
+    action: "Updated Student Attendance",
+    module: "Attendance",
+    record: "Aarav Rao (2024-BCA-001)",
+    timestamp: "18 Aug 2026, 14:32:05",
+    ipAddress: "192.168.1.42 (Chrome 127 · Windows 11)",
+    oldValue: "Attendance: 72% (18/25 classes)",
+    newValue: "Attendance: 78% (20/25 classes)",
+    severity: "info" as const,
+  },
+  {
+    id: 2,
+    user: "Dr. Tanya Mishra (Faculty)",
+    userRole: "faculty" as const,
+    action: "Approved Student ID Card Verification",
+    module: "ID Verification",
+    record: "Aarav Rao (2024-BCA-001)",
+    timestamp: "18 Aug 2026, 10:30:12",
+    ipAddress: "192.168.1.18 (Safari 17 · macOS Sonoma)",
+    oldValue: "Status: Pending Faculty Sign-off",
+    newValue: "Status: Institutionally Verified",
+    severity: "info" as const,
+  },
+  {
+    id: 3,
+    user: "Prof. (Dr.) Gauri Singh Gaur (Admin)",
+    userRole: "admin" as const,
+    action: "Generated Batch Term Fee Invoices",
+    module: "Fees",
+    record: "BCA Semester 3 Batch (24 Scholars)",
+    timestamp: "17 Aug 2026, 16:45:00",
+    ipAddress: "192.168.1.42 (Chrome 127 · Windows 11)",
+    oldValue: "Unbilled ($0.00)",
+    newValue: "Billed ($12,500.00 total)",
+    severity: "warning" as const,
+  },
+  {
+    id: 4,
+    user: "Mr. Ayush Yadav (Faculty)",
+    userRole: "faculty" as const,
+    action: "Recorded Batch Internal Marks",
+    module: "Exams",
+    record: "BCA301 - Database Management Systems",
+    timestamp: "16 Aug 2026, 11:20:44",
+    ipAddress: "192.168.1.89 (Edge 126 · Windows 11)",
+    oldValue: "Draft Status",
+    newValue: "Published & Verified Marks",
+    severity: "info" as const,
+  },
+  {
+    id: 5,
+    user: "Prof. (Dr.) Gauri Singh Gaur (Admin)",
+    userRole: "admin" as const,
+    action: "Modified User Role & Permissions",
+    module: "System Admin",
+    record: "Dr. Tanya Mishra (HOD Computer Science)",
+    timestamp: "15 Aug 2026, 09:12:30",
+    ipAddress: "192.168.1.42 (Chrome 127 · Windows 11)",
+    oldValue: "Permissions: CanView=1, CanEdit=0",
+    newValue: "Permissions: CanView=1, CanEdit=1, CanApprove=1",
+    severity: "critical" as const,
+  },
+  {
+    id: 6,
+    user: "Dr. Tanya Mishra (Faculty)",
+    userRole: "faculty" as const,
+    action: "Uploaded Course Material Resource",
+    module: "Course Materials",
+    record: "FIN601_Corporate_Valuation_Manual.pdf",
+    timestamp: "14 Aug 2026, 15:05:19",
+    ipAddress: "192.168.1.18 (Safari 17 · macOS Sonoma)",
+    oldValue: "Resource: None",
+    newValue: "Resource Uploaded (2.4 MB PDF)",
+    severity: "info" as const,
+  },
+];
+
+export const initialCampusEvents = [
+  {
+    id: 1,
+    title: "VSCMS National FinTech & AI Summit 2026",
+    code: "EVT-2026-FIN",
+    date: "2026-08-25",
+    time: "10:00 AM - 04:00 PM",
+    venue: "Main Auditorium · Block A",
+    department: "Computer Applications & Management",
+    createdBy: "Dr. Tanya Mishra (Faculty HOD)",
+    coordinators: ["101", "102"], // Aarav Rao & Priya Nair assigned as Student Coordinators!
+    description: "Annual national conference on Artificial Intelligence in Financial Management and Algorithmic Trading.",
+  },
+  {
+    id: 2,
+    title: "Annual Industry Management Conclave",
+    code: "EVT-2026-MGT",
+    date: "2026-09-05",
+    time: "11:00 AM - 03:30 PM",
+    venue: "Seminar Hall 2 · Management Wing",
+    department: "MBA & BBA",
+    createdBy: "Mr. Prakhar Tiwari (Faculty Lead)",
+    coordinators: ["103"], // Rohan Das assigned as Coordinator!
+    description: "Panel discussion with corporate executives on ESG governance, leadership, and venture capital.",
+  },
+];
+
+export const initialEventRegistrations = [
+  {
+    id: 1,
+    eventId: 1,
+    studentId: 101,
+    studentName: "Aarav Rao",
+    rollNo: "101",
+    department: "BCA (CSJM)",
+    registeredAt: "2026-08-15 11:00 AM",
+    attendanceStatus: "present" as const,
+    verifiedBy: "Dr. Tanya Mishra (Faculty)",
+    verifiedAt: "2026-08-18 10:15 AM",
+    qrRound: "QR-01",
+  },
+  {
+    id: 2,
+    eventId: 1,
+    studentId: 102,
+    studentName: "Priya Nair",
+    rollNo: "102",
+    department: "BCA (MCU)",
+    registeredAt: "2026-08-15 11:15 AM",
+    attendanceStatus: "pending_verification" as const,
+    verifiedBy: null,
+    verifiedAt: null,
+    qrRound: "QR-01",
+  },
+  {
+    id: 3,
+    eventId: 1,
+    studentId: 103,
+    studentName: "Rohan Das",
+    rollNo: "103",
+    department: "MBA",
+    registeredAt: "2026-08-16 09:30 AM",
+    attendanceStatus: "not_scanned" as const,
+    verifiedBy: null,
+    verifiedAt: null,
+    qrRound: null,
+  },
+  {
+    id: 4,
+    eventId: 1,
+    studentId: 104,
+    studentName: "Meera Iyer",
+    rollNo: "104",
+    department: "BBA",
+    registeredAt: "2026-08-16 10:00 AM",
+    attendanceStatus: "not_scanned" as const,
+    verifiedBy: null,
+    verifiedAt: null,
+    qrRound: null,
+  },
+];
+
+export const initialAttendance = [
+  // Aarav Rao (101)
+  { id: 1, studentId: 101, studentName: "Aarav Rao", courseCode: "BCA101", date: "2026-08-10", status: "present" as const, period: 1 },
+  { id: 2, studentId: 101, studentName: "Aarav Rao", courseCode: "BCA201", date: "2026-08-11", status: "present" as const, period: 2 },
+  { id: 3, studentId: 101, studentName: "Aarav Rao", courseCode: "BCA301", date: "2026-08-12", status: "late" as const, period: 3 },
+  // Priya Nair (102)
+  { id: 4, studentId: 102, studentName: "Priya Nair", courseCode: "BCA101", date: "2026-08-10", status: "present" as const, period: 1 },
+  { id: 5, studentId: 102, studentName: "Priya Nair", courseCode: "BCA201", date: "2026-08-11", status: "present" as const, period: 2 },
+  { id: 6, studentId: 102, studentName: "Priya Nair", courseCode: "BCA301", date: "2026-08-12", status: "present" as const, period: 3 },
+  // Rohan Das (103)
+  { id: 7, studentId: 103, studentName: "Rohan Das", courseCode: "MBA101", date: "2026-08-10", status: "present" as const, period: 1 },
+  { id: 8, studentId: 103, studentName: "Rohan Das", courseCode: "MBA201", date: "2026-08-11", status: "present" as const, period: 2 },
+  // Meera Iyer (104)
+  { id: 9, studentId: 104, studentName: "Meera Iyer", courseCode: "BBA101", date: "2026-08-10", status: "present" as const, period: 1 },
+  { id: 10, studentId: 104, studentName: "Meera Iyer", courseCode: "BBA201", date: "2026-08-11", status: "present" as const, period: 2 },
+  // Kabir Shah (105)
+  { id: 11, studentId: 105, studentName: "Kabir Shah", courseCode: "BCA401", date: "2026-08-10", status: "present" as const, period: 1 },
+  { id: 12, studentId: 105, studentName: "Kabir Shah", courseCode: "BCA101", date: "2026-08-11", status: "late" as const, period: 2 },
+];
+
+export const initialInternalMarks = [
+  // Aarav Rao (101)
+  { id: 1, studentId: 101, studentName: "Aarav Rao", rollNo: "101", courseCode: "BCA101", courseName: "Intro to Programming", examType: "Mid-Term", marksObtained: "44", maxTotal: "50", gradeLetter: "A+", result: "pass" as const, status: "approved" },
+  { id: 2, studentId: 101, studentName: "Aarav Rao", rollNo: "101", courseCode: "BCA201", courseName: "Data Structures", examType: "Sessional", marksObtained: "42", maxTotal: "50", gradeLetter: "A", result: "pass" as const, status: "approved" },
+  // Priya Nair (102)
+  { id: 3, studentId: 102, studentName: "Priya Nair", rollNo: "102", courseCode: "BCA101", courseName: "Intro to Programming", examType: "Mid-Term", marksObtained: "48", maxTotal: "50", gradeLetter: "O", result: "pass" as const, status: "approved" },
+  { id: 4, studentId: 102, studentName: "Priya Nair", rollNo: "102", courseCode: "BCA201", courseName: "Data Structures", examType: "Sessional", marksObtained: "46", maxTotal: "50", gradeLetter: "A+", result: "pass" as const, status: "approved" },
+  // Rohan Das (103)
+  { id: 5, studentId: 103, studentName: "Rohan Das", rollNo: "103", courseCode: "MBA101", courseName: "Principles of Management", examType: "Mid-Term", marksObtained: "43", maxTotal: "50", gradeLetter: "A", result: "pass" as const, status: "approved" },
+  { id: 6, studentId: 103, studentName: "Rohan Das", rollNo: "103", courseCode: "MBA201", courseName: "Marketing Management", examType: "Sessional", marksObtained: "41", maxTotal: "50", gradeLetter: "A", result: "pass" as const, status: "approved" },
+  // Meera Iyer (104)
+  { id: 7, studentId: 104, studentName: "Meera Iyer", rollNo: "104", courseCode: "BBA101", courseName: "Business Communication", examType: "Mid-Term", marksObtained: "45", maxTotal: "50", gradeLetter: "A+", result: "pass" as const, status: "approved" },
+  { id: 8, studentId: 104, studentName: "Meera Iyer", rollNo: "104", courseCode: "BBA201", courseName: "Financial Accounting", examType: "Sessional", marksObtained: "42", maxTotal: "50", gradeLetter: "A", result: "pass" as const, status: "approved" },
+  // Kabir Shah (105)
+  { id: 9, studentId: 105, studentName: "Kabir Shah", rollNo: "105", courseCode: "BCA401", courseName: "Web Development", examType: "Mid-Term", marksObtained: "39", maxTotal: "50", gradeLetter: "B+", result: "pass" as const, status: "approved" },
+];
+
+export const initialFees = [
+  // Aarav Rao (101)
+  { id: 1, studentId: 101, studentName: "Aarav Rao", semester: "Sem 3", feeType: "Tuition Fee", totalAmount: 35000, paidAmount: 35000, dueDate: "2026-08-31", status: "paid" as const },
+  { id: 2, studentId: 101, studentName: "Aarav Rao", semester: "Sem 3", feeType: "Exam & Lab Fee", totalAmount: 5000, paidAmount: 0, dueDate: "2026-09-15", status: "pending" as const },
+  // Priya Nair (102)
+  { id: 3, studentId: 102, studentName: "Priya Nair", semester: "Sem 3", feeType: "Tuition Fee", totalAmount: 35000, paidAmount: 35000, dueDate: "2026-08-31", status: "paid" as const },
+  { id: 4, studentId: 102, studentName: "Priya Nair", semester: "Sem 3", feeType: "Exam & Lab Fee", totalAmount: 5000, paidAmount: 5000, dueDate: "2026-09-15", status: "paid" as const },
+  // Rohan Das (103)
+  { id: 5, studentId: 103, studentName: "Rohan Das", semester: "Sem 2", feeType: "MBA Tuition Fee", totalAmount: 55000, paidAmount: 55000, dueDate: "2026-08-31", status: "paid" as const },
+  // Meera Iyer (104)
+  { id: 6, studentId: 104, studentName: "Meera Iyer", semester: "Sem 2", feeType: "BBA Tuition Fee", totalAmount: 30000, paidAmount: 30000, dueDate: "2026-08-31", status: "paid" as const },
+  // Kabir Shah (105)
+  { id: 7, studentId: 105, studentName: "Kabir Shah", semester: "Sem 4", feeType: "Tuition Fee", totalAmount: 35000, paidAmount: 20000, dueDate: "2026-08-31", status: "partial" as const },
+];
+
+export const initialAdmissions = [
+  { id: 1, studentId: 101, studentName: "Aarav Rao", rollNo: "101", fatherName: "Rajesh Rao", motherName: "Sunita Rao", category: "General", address: "12/4 Avas Vikas, Kanpur", bloodGroup: "B+", dob: "2004-05-14", status: "confirmed" },
+  { id: 2, studentId: 102, studentName: "Priya Nair", rollNo: "102", fatherName: "K. V. Nair", motherName: "Lakshmi Nair", category: "General", address: "45 Civil Lines, Kanpur", bloodGroup: "O+", dob: "2004-09-21", status: "confirmed" },
+  { id: 3, studentId: 103, studentName: "Rohan Das", rollNo: "103", fatherName: "S. K. Das", motherName: "Anjali Das", category: "OBC", address: "78 Swaroop Nagar, Kanpur", bloodGroup: "A+", dob: "2003-11-05", status: "confirmed" },
+  { id: 4, studentId: 104, studentName: "Meera Iyer", rollNo: "104", fatherName: "R. Iyer", motherName: "Geeta Iyer", category: "General", address: "89 Kakadeo, Kanpur", bloodGroup: "AB+", dob: "2004-02-18", status: "confirmed" },
+  { id: 5, studentId: 105, studentName: "Kabir Shah", rollNo: "105", fatherName: "V. K. Shah", motherName: "Rekha Shah", category: "General", address: "23 Kidwai Nagar, Kanpur", bloodGroup: "O-", dob: "2003-07-29", status: "confirmed" },
+];
+
+export const initialDocuments = [
+  { id: 1, studentId: 101, title: "10th High School Marksheet", category: "Academic", fileName: "Aarav_10th_Marksheet.pdf", mimeType: "application/pdf", fileSize: 1024500, uploadedAt: "2024-07-15", verificationStatus: "verified" as const },
+  { id: 2, studentId: 102, title: "12th Intermediate Marksheet", category: "Academic", fileName: "Priya_12th_Marksheet.pdf", mimeType: "application/pdf", fileSize: 1145000, uploadedAt: "2024-07-16", verificationStatus: "verified" as const },
+  { id: 3, studentId: 103, title: "Graduation Degree Marksheet", category: "Academic", fileName: "Rohan_Degree.pdf", mimeType: "application/pdf", fileSize: 2048000, uploadedAt: "2025-07-10", verificationStatus: "verified" as const },
+  { id: 4, studentId: 104, title: "Class 12th Certificate", category: "Academic", fileName: "Meera_12th.pdf", mimeType: "application/pdf", fileSize: 980000, uploadedAt: "2025-07-12", verificationStatus: "verified" as const },
+  { id: 5, studentId: 105, title: "Transfer & Migration Certificate", category: "Official", fileName: "Kabir_TC.pdf", mimeType: "application/pdf", fileSize: 1450000, uploadedAt: "2024-07-20", verificationStatus: "verified" as const },
 ];

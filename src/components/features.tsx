@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import {
   FileText,
@@ -30,6 +30,13 @@ import {
   ChevronRight,
   CalendarDays,
   Search,
+  QrCode,
+  UserCheck,
+  RefreshCw,
+  Play,
+  UserPlus,
+  MapPin,
+  Calendar,
 } from "lucide-react";
 import type {
   User,
@@ -52,6 +59,10 @@ import type {
   FacultyAttendance,
   PermissionRow,
   LeaveRequest,
+  AuditLogRecord,
+  CampusEvent,
+  EventRegistration,
+  EventQrWindow,
 } from "@/types/erp";
 import { feeRemaining, feeEffectiveStatus } from "@/types/erp";
 import {
@@ -4246,3 +4257,968 @@ export function DigitalCourseMaterialsTab({
     </div>
   );
 }
+
+/* ============================================================
+   FEATURE 38: AUDIT & ACTIVITY LOGS TAB
+   ============================================================ */
+function AuditStatCard({
+  mark,
+  label,
+  value,
+  foot,
+  dark,
+  accent,
+  Icon,
+}: {
+  mark: string;
+  label: string;
+  value: string | number;
+  foot: string;
+  dark?: boolean;
+  accent?: boolean;
+  Icon: React.ElementType;
+}) {
+  return (
+    <div className={`lift border-2 border-ink hard p-4 space-y-2 ${dark ? "bg-ink text-paper" : accent ? "bg-paper-3 text-ink" : "bg-paper text-ink"}`}>
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-70">[{mark}] {label}</span>
+        <Icon className={`w-4 h-4 ${dark ? "text-blood" : "text-ink"}`} />
+      </div>
+      <div className="font-display text-2xl font-bold">{value}</div>
+      <div className="font-mono text-[10px] opacity-60 pt-1 border-t border-current/20">{foot}</div>
+    </div>
+  );
+}
+
+export function AuditLogsTab({
+  auditLogs = [],
+  onClearLogs,
+}: {
+  auditLogs: AuditLogRecord[];
+  onClearLogs?: () => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [moduleFilter, setModuleFilter] = useState("all");
+  const [severityFilter, setSeverityFilter] = useState("all");
+
+  const modules = useMemo(() => {
+    return Array.from(new Set(auditLogs.map((l) => l.module))).sort();
+  }, [auditLogs]);
+
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      if (moduleFilter !== "all" && log.module !== moduleFilter) return false;
+      if (severityFilter !== "all" && log.severity !== severityFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        return (
+          log.user.toLowerCase().includes(q) ||
+          log.action.toLowerCase().includes(q) ||
+          log.record.toLowerCase().includes(q) ||
+          log.module.toLowerCase().includes(q) ||
+          log.ipAddress.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [auditLogs, moduleFilter, severityFilter, searchQuery]);
+
+  const criticalCount = useMemo(
+    () => auditLogs.filter((l) => l.severity === "critical").length,
+    [auditLogs]
+  );
+  const warningCount = useMemo(
+    () => auditLogs.filter((l) => l.severity === "warning").length,
+    [auditLogs]
+  );
+  const adminUsersCount = useMemo(
+    () => new Set(auditLogs.map((l) => l.user)).size,
+    [auditLogs]
+  );
+
+  const handleExportCsv = () => {
+    if (filteredLogs.length === 0) return;
+    const headers = [
+      "ID",
+      "Timestamp",
+      "User",
+      "Role",
+      "Action",
+      "Module",
+      "Target Record",
+      "Old Value",
+      "New Value",
+      "IP/Device",
+      "Severity",
+    ];
+    const csvRows = [
+      headers.join(","),
+      ...filteredLogs.map((l) =>
+        [
+          l.id,
+          `"${l.timestamp}"`,
+          `"${l.user}"`,
+          `"${l.userRole}"`,
+          `"${l.action}"`,
+          `"${l.module}"`,
+          `"${l.record}"`,
+          `"${l.oldValue}"`,
+          `"${l.newValue}"`,
+          `"${l.ipAddress}"`,
+          `"${l.severity || "info"}"`,
+        ].join(",")
+      ),
+    ];
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `VSCMS_Audit_Logs_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="border-2 border-ink bg-paper hard p-4 sm:p-6 space-y-6">
+      <SectionTitle
+        index="38"
+        kicker="Security & Governance"
+        title="Audit & Activity"
+        accent="Logs"
+        sub="Complete immutable audit trail of system modifications, attendance updates, grade entries & administrative actions."
+        right={
+          <div className="flex flex-wrap gap-2">
+            <BrutalButton tone="ghost" onClick={handleExportCsv} disabled={filteredLogs.length === 0}>
+              <Download className="w-4 h-4" /> Export CSV
+            </BrutalButton>
+            {onClearLogs && (
+              <BrutalButton tone="blood" onClick={onClearLogs}>
+                <Trash2 className="w-4 h-4" /> Clear Logs
+              </BrutalButton>
+            )}
+          </div>
+        }
+      />
+
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <AuditStatCard mark="01" label="Total Events" value={auditLogs.length} foot="All time events" Icon={FileText} />
+        <AuditStatCard mark="02" label="Critical Events" value={criticalCount} foot={`${warningCount} warnings logged`} dark accent Icon={AlertTriangle} />
+        <AuditStatCard mark="03" label="Active Actors" value={adminUsersCount} foot="Unique log origins" Icon={Users} />
+        <AuditStatCard mark="04" label="Modules Tracked" value={modules.length} foot="System components" Icon={Shield} />
+      </div>
+
+      {/* Search & Filter Toolbar */}
+      <div className="border-2 border-ink bg-paper hard p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Field label="Search Logs">
+          <div className="relative">
+            <input
+              type="text"
+              className={INPUT + " pl-8"}
+              placeholder="Search user, action, record, or IP..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted" />
+          </div>
+        </Field>
+
+        <Field label="Filter by Module">
+          <select className={INPUT} value={moduleFilter} onChange={(e) => setModuleFilter(e.target.value)}>
+            <option value="all">All Modules ({auditLogs.length})</option>
+            {modules.map((m) => (
+              <option key={m} value={m}>
+                {m} ({auditLogs.filter((l) => l.module === m).length})
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Filter Severity">
+          <select className={INPUT} value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}>
+            <option value="all">All Severities</option>
+            <option value="info">Info / Standard ({auditLogs.filter((l) => l.severity === "info" || !l.severity).length})</option>
+            <option value="warning">Warning / Billing ({warningCount})</option>
+            <option value="critical">Critical / System ({criticalCount})</option>
+          </select>
+        </Field>
+      </div>
+
+      {/* Audit Log Data Stream Table */}
+      <div className="border-2 border-ink bg-paper hard overflow-x-auto">
+        {filteredLogs.length === 0 ? (
+          <div className="p-8 text-center">
+            <EmptyState label="No audit logs matched your query" hint="Try adjusting your search query or module filter." />
+          </div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-ink text-paper font-mono text-xs uppercase tracking-wider">
+                <th className="p-3 border-r border-paper/20">Timestamp & ID</th>
+                <th className="p-3 border-r border-paper/20">User & Role</th>
+                <th className="p-3 border-r border-paper/20">Action & Module</th>
+                <th className="p-3 border-r border-paper/20">Targeted Record</th>
+                <th className="p-3 border-r border-paper/20">Audit Delta (Old → New)</th>
+                <th className="p-3">Device & IP</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y-2 divide-ink/10 font-mono text-xs">
+              {filteredLogs.map((log) => {
+                const isCritical = log.severity === "critical";
+                const isWarning = log.severity === "warning";
+
+                return (
+                  <tr key={log.id} className="hover:bg-paper-2 transition-colors">
+                    <td className="p-3 text-muted">
+                      <span className="font-bold text-ink block">{log.timestamp}</span>
+                      <span className="text-[10px] text-muted">ID: #{log.id}</span>
+                    </td>
+
+                    <td className="p-3">
+                      <span className="font-serif font-bold text-ink block">{log.user}</span>
+                      <span className={`inline-block font-mono text-[9px] font-extrabold uppercase px-1.5 py-0.5 border border-ink mt-0.5 ${
+                        log.userRole === "admin"
+                          ? "bg-blood text-paper"
+                          : log.userRole === "faculty"
+                          ? "bg-ink text-paper"
+                          : "bg-paper-3 text-ink"
+                      }`}>
+                        {log.userRole}
+                      </span>
+                    </td>
+
+                    <td className="p-3">
+                      <span className="font-bold text-ink block">{log.action}</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blood">
+                        {isCritical ? (
+                          <AlertTriangle className="w-3 h-3 text-rose-700" />
+                        ) : isWarning ? (
+                          <Clock className="w-3 h-3 text-amber-700" />
+                        ) : (
+                          <Shield className="w-3 h-3 text-emerald-700" />
+                        )}
+                        {log.module}
+                      </span>
+                    </td>
+
+                    <td className="p-3">
+                      <span className="font-mono text-xs text-ink font-bold block">{log.record}</span>
+                    </td>
+
+                    <td className="p-3">
+                      <div className="bg-paper-2 border border-ink p-2 hard-sm space-y-1 max-w-xs">
+                        <div className="text-[10px] text-rose-800 line-through font-mono">
+                          <span className="font-bold text-muted">OLD:</span> {log.oldValue || "(None)"}
+                        </div>
+                        <div className="text-[11px] text-emerald-800 font-extrabold font-mono flex items-center gap-1">
+                          <span className="text-muted font-bold">NEW:</span> {log.newValue}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="p-3 text-muted text-[10px]">
+                      <span className="font-mono block text-ink">{log.ipAddress}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="border-2 border-ink bg-paper-2 p-3 flex items-center justify-between font-mono text-xs text-muted">
+        <span>Showing {filteredLogs.length} of {auditLogs.length} recorded audit events</span>
+        <span>VSCMS Security Compliance Standard v2.4</span>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   VERIFIED EVENT ATTENDANCE SYSTEM
+   ============================================================ */
+export function VerifiedEventAttendanceTab({
+  events = [],
+  registrations = [],
+  students = [],
+  currentUser,
+  onAddEvent,
+  onUpdateCoordinators,
+  onSubmitScanRequest,
+  onApproveAttendance,
+  onRejectAttendance,
+  onRegisterStudent,
+}: {
+  events: CampusEvent[];
+  registrations: EventRegistration[];
+  students: User[];
+  currentUser: User | null;
+  onAddEvent?: (e: Partial<CampusEvent>) => void;
+  onUpdateCoordinators?: (eventId: number, coordinators: string[]) => void;
+  onSubmitScanRequest?: (eventId: number, studentRollNo: string, qrRound: string) => void;
+  onApproveAttendance?: (regId: number, verifierName: string) => void;
+  onRejectAttendance?: (regId: number) => void;
+  onRegisterStudent?: (eventId: number, studentId: number) => void;
+}) {
+  const [selectedEventId, setSelectedEventId] = useState<number>(events[0]?.id || 1);
+  const [durationMinutes, setDurationMinutes] = useState<number>(3);
+  const [qrRoundCount, setQrRoundCount] = useState<number>(1);
+  const [activeQrWindow, setActiveQrWindow] = useState<EventQrWindow | null>(null);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(0);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const activeEvent = useMemo(
+    () => events.find((e) => e.id === selectedEventId) || events[0],
+    [events, selectedEventId]
+  );
+
+  const eventRegistrations = useMemo(
+    () => registrations.filter((r) => r.eventId === (activeEvent?.id || 1)),
+    [registrations, activeEvent]
+  );
+
+  // Check if current user is an Assigned Coordinator or Faculty/Admin
+  const isCoordinator = useMemo(() => {
+    if (!currentUser) return false;
+    if (currentUser.role === "admin" || currentUser.role === "faculty") return true;
+    if (!activeEvent) return false;
+    const coordList = activeEvent.coordinators || [];
+    return (
+      coordList.includes(currentUser.rollNo) ||
+      coordList.includes(currentUser.name) ||
+      coordList.includes(String(currentUser.id))
+    );
+  }, [currentUser, activeEvent]);
+
+  // Check current student's registration status
+  const currentStudentReg = useMemo(() => {
+    if (!currentUser || currentUser.role !== "student") return null;
+    return eventRegistrations.find(
+      (r) => r.studentId === currentUser.id || r.rollNo === currentUser.rollNo
+    );
+  }, [currentUser, eventRegistrations]);
+
+  // Live Timer Countdown Effect
+  useEffect(() => {
+    if (!activeQrWindow || !activeQrWindow.isActive) return;
+
+    const interval = setInterval(() => {
+      const expires = new Date(activeQrWindow.expiresAt).getTime();
+      const now = new Date().getTime();
+      const remaining = Math.max(0, Math.floor((expires - now) / 1000));
+
+      setTimeLeftSeconds(remaining);
+
+      if (remaining <= 0) {
+        setActiveQrWindow((prev) => (prev ? { ...prev, isActive: false } : null));
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeQrWindow]);
+
+  // Handler: Coordinator Starts New QR Window (QR-01, QR-02, etc.)
+  const handleStartQrWindow = () => {
+    if (!activeEvent) return;
+    const roundStr = `QR-${String(qrRoundCount).padStart(2, "0")}`;
+    const now = new Date();
+    const expires = new Date(now.getTime() + durationMinutes * 60 * 1000);
+
+    const newWindow: EventQrWindow = {
+      id: roundStr,
+      eventId: activeEvent.id,
+      roundNumber: qrRoundCount,
+      durationMinutes,
+      startedAt: now.toISOString(),
+      expiresAt: expires.toISOString(),
+      isActive: true,
+      createdBy: currentUser?.name || "Event Coordinator",
+      payload: `https://vscms.edu/event-verify?evt=${activeEvent.id}&round=${roundStr}&exp=${expires.getTime()}`,
+    };
+
+    setActiveQrWindow(newWindow);
+    setTimeLeftSeconds(durationMinutes * 60);
+    setQrRoundCount((prev) => prev + 1);
+  };
+
+  // Handler: Student Scans & Submits Attendance Request
+  const handleStudentScan = () => {
+    if (!activeEvent || !currentUser) return;
+    if (!activeQrWindow || !activeQrWindow.isActive || timeLeftSeconds <= 0) {
+      alert("This Attendance QR Window has expired! Please request your Event Coordinator to generate the Next Round QR Code.");
+      return;
+    }
+
+    if (onSubmitScanRequest) {
+      onSubmitScanRequest(activeEvent.id, currentUser.rollNo, activeQrWindow.id);
+    }
+  };
+
+  // New Event Form State
+  const [evtTitle, setEvtTitle] = useState("");
+  const [evtCode, setEvtCode] = useState("");
+  const [evtDate, setEvtDate] = useState("2026-08-25");
+  const [evtTime, setEvtTime] = useState("10:00 AM - 04:00 PM");
+  const [evtVenue, setEvtVenue] = useState("Main Auditorium · Block A");
+  const [evtDept, setEvtDept] = useState("Computer Applications & Management");
+  const [selectedCoordRolls, setSelectedCoordRolls] = useState<string[]>(["101"]);
+
+  const handleCreateEventSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!evtTitle || !evtCode) return;
+    if (onAddEvent) {
+      onAddEvent({
+        title: evtTitle,
+        code: evtCode,
+        date: evtDate,
+        time: evtTime,
+        venue: evtVenue,
+        department: evtDept,
+        createdBy: currentUser?.name || "Dr. Tanya Mishra",
+        coordinators: selectedCoordRolls,
+        description: "Official Campus Event with Verified QR Attendance.",
+      });
+    }
+    setShowCreateModal(false);
+    setEvtTitle("");
+    setEvtCode("");
+  };
+
+  // Export Verified Attendance CSV
+  const handleExportCsv = () => {
+    if (eventRegistrations.length === 0) return;
+    const headers = ["Roll No", "Student Name", "Course Area", "Registration Date", "Attendance Status", "QR Round", "Verified By", "Timestamp"];
+    const csvRows = [
+      headers.join(","),
+      ...eventRegistrations.map((r) =>
+        [
+          r.rollNo,
+          `"${r.studentName}"`,
+          `"${r.department}"`,
+          `"${r.registeredAt}"`,
+          `"${r.attendanceStatus}"`,
+          `"${r.qrRound || "-"}"`,
+          `"${r.verifiedBy || "-"}"`,
+          `"${r.verifiedAt || "-"}"`,
+        ].join(",")
+      ),
+    ];
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${activeEvent?.code || "EVENT"}_Attendance_Ledger.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredRegistrations = useMemo(() => {
+    return eventRegistrations.filter((r) => {
+      if (statusFilter !== "all" && r.attendanceStatus !== statusFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        return r.studentName.toLowerCase().includes(q) || r.rollNo.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [eventRegistrations, statusFilter, searchQuery]);
+
+  const pendingQueue = useMemo(
+    () => eventRegistrations.filter((r) => r.attendanceStatus === "pending_verification"),
+    [eventRegistrations]
+  );
+  const presentCount = useMemo(
+    () => eventRegistrations.filter((r) => r.attendanceStatus === "present").length,
+    [eventRegistrations]
+  );
+
+  return (
+    <div className="border-2 border-ink bg-paper hard p-4 sm:p-6 space-y-6">
+      <SectionTitle
+        index="37"
+        kicker="Event Governance"
+        title="Verified Event"
+        accent="Attendance System"
+        sub="Dynamic QR code attendance windows with physical cross-verification by assigned Student Coordinators."
+        right={
+          <div className="flex flex-wrap gap-2">
+            <select
+              className={INPUT + " !w-auto text-xs py-1.5 font-bold"}
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(Number(e.target.value))}
+            >
+              {events.map((evt) => (
+                <option key={evt.id} value={evt.id}>
+                  {evt.code} · {evt.title}
+                </option>
+              ))}
+            </select>
+            {(currentUser?.role === "admin" || currentUser?.role === "faculty") && (
+              <BrutalButton tone="blood" onClick={() => setShowCreateModal(true)}>
+                <Plus className="w-4 h-4" /> Create Event
+              </BrutalButton>
+            )}
+            <BrutalButton tone="ghost" onClick={handleExportCsv} disabled={eventRegistrations.length === 0}>
+              <Download className="w-4 h-4" /> Export CSV
+            </BrutalButton>
+          </div>
+        }
+      />
+
+      {/* Event Overview & Coordinators Banner */}
+      {activeEvent && (
+        <div className="border-2 border-ink bg-paper-2 hard p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b-2 border-ink/15 pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Stamp>{activeEvent.code}</Stamp>
+                <span className="font-mono text-xs text-blood font-bold">{activeEvent.department}</span>
+              </div>
+              <h3 className="font-display uppercase text-xl text-ink mt-1">{activeEvent.title}</h3>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="border border-ink bg-paper px-2.5 py-1 flex items-center gap-1 font-bold">
+                <Calendar className="w-3.5 h-3.5 text-blood" /> {activeEvent.date}
+              </span>
+              <span className="border border-ink bg-paper px-2.5 py-1 flex items-center gap-1 font-bold">
+                <MapPin className="w-3.5 h-3.5 text-blood" /> {activeEvent.venue}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-muted uppercase font-bold">Assigned Student Coordinators:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {(activeEvent.coordinators || []).map((cRoll) => {
+                  const studentObj = students.find((s) => s.rollNo === cRoll || s.name === cRoll);
+                  return (
+                    <span key={cRoll} className="bg-ink text-paper font-bold px-2 py-0.5 border border-ink text-[11px] uppercase flex items-center gap-1">
+                      <UserCheck className="w-3 h-3 text-blood" /> {studentObj?.name || `Roll: ${cRoll}`}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            {(currentUser?.role === "admin" || currentUser?.role === "faculty") && (
+              <button
+                type="button"
+                onClick={() => setShowAssignModal(true)}
+                className="font-mono text-xs text-blood font-bold underline hover:text-ink flex items-center gap-1"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Manage Coordinators
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* COORDINATOR CONTROL CONSOLE (If user is Coordinator or Faculty/Admin) */}
+      {isCoordinator ? (
+        <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 space-y-5">
+          <div className="flex items-center justify-between border-b-2 border-ink pb-3">
+            <div>
+              <span className="font-mono text-xs uppercase font-bold text-blood tracking-wider block">
+                Coordinator Console
+              </span>
+              <h4 className="font-display text-lg text-ink uppercase">
+                Attendance Window & QR Generator
+              </h4>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="font-mono text-xs font-bold text-ink">Window Duration:</label>
+              <select
+                className={INPUT + " !w-auto text-xs py-1 font-bold"}
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                disabled={activeQrWindow?.isActive}
+              >
+                <option value={2}>2 Minutes</option>
+                <option value={3}>3 Minutes (Default)</option>
+                <option value={4}>4 Minutes</option>
+                <option value={5}>5 Minutes</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+            {/* Left: QR Display Box & Countdown Timer */}
+            <div className="border-2 border-ink bg-paper-3 hard p-5 space-y-4 text-center">
+              {activeQrWindow && activeQrWindow.isActive ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-blood text-paper font-mono text-xs font-bold px-2 py-0.5 border border-ink uppercase">
+                      LIVE ROUND: {activeQrWindow.id}
+                    </span>
+                    <span className="font-mono text-xs text-emerald-800 font-bold flex items-center gap-1 animate-pulse">
+                      <Clock className="w-4 h-4" /> Window Active
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-paper border-2 border-ink inline-block mx-auto shadow-md">
+                    <StudentQrCode value={activeQrWindow.payload} size={160} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-mono text-2xl font-black text-blood">
+                      {Math.floor(timeLeftSeconds / 60)}:
+                      {String(timeLeftSeconds % 60).padStart(2, "0")}
+                    </div>
+                    <p className="font-mono text-[10px] text-muted uppercase">
+                      Timer expires in {durationMinutes} mins · Display QR to students
+                    </p>
+                  </div>
+
+                  <BrutalButton
+                    tone="blood"
+                    className="w-full"
+                    onClick={handleStartQrWindow}
+                  >
+                    <RefreshCw className="w-4 h-4" /> Invalidate & Generate Next Round (QR-0{qrRoundCount})
+                  </BrutalButton>
+                </div>
+              ) : (
+                <div className="space-y-4 py-4">
+                  <div className="w-16 h-16 border-2 border-ink bg-paper mx-auto flex items-center justify-center">
+                    <QrCode className="w-8 h-8 text-blood" />
+                  </div>
+                  <div>
+                    <h5 className="font-display uppercase text-base text-ink">No Active Attendance Window</h5>
+                    <p className="font-mono text-xs text-muted mt-1 max-w-xs mx-auto">
+                      Click below to generate a {durationMinutes}-minute dynamic QR code window for students to scan.
+                    </p>
+                  </div>
+
+                  <BrutalButton tone="ink" className="w-full" onClick={handleStartQrWindow}>
+                    <Play className="w-4 h-4" /> Start {durationMinutes}-Min Window & Generate QR-0{qrRoundCount}
+                  </BrutalButton>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Live Physical Verification Queue */}
+            <div className="border-2 border-ink bg-paper hard p-4 space-y-3">
+              <div className="flex items-center justify-between border-b-2 border-ink/15 pb-2">
+                <span className="font-mono text-xs uppercase font-bold text-ink">
+                  Pending Physical Verifications ({pendingQueue.length})
+                </span>
+                {pendingQueue.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onApproveAttendance) {
+                        pendingQueue.forEach((q) => onApproveAttendance(q.id, currentUser?.name || "Coordinator"));
+                      }
+                    }}
+                    className="font-mono text-[10px] font-bold text-blood underline hover:text-ink"
+                  >
+                    Approve All ({pendingQueue.length})
+                  </button>
+                )}
+              </div>
+
+              {pendingQueue.length === 0 ? (
+                <div className="p-6 text-center">
+                  <EmptyState label="No pending scan requests" hint="When students scan the live QR code, their verification requests will appear here in real-time." />
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {pendingQueue.map((item) => (
+                    <div key={item.id} className="border-2 border-ink bg-paper-2 p-3 hard-sm flex items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <span className="font-serif font-bold text-sm text-ink block">{item.studentName}</span>
+                        <span className="font-mono text-[11px] text-blood font-bold block">Roll: {item.rollNo} · {item.department}</span>
+                        <span className="font-mono text-[9px] text-muted block">Scanned: {item.registeredAt} ({item.qrRound || "QR-01"})</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {onApproveAttendance && (
+                          <BrutalButton
+                            tone="blood"
+                            className="!py-1 !px-2 !text-[11px]"
+                            onClick={() => onApproveAttendance(item.id, currentUser?.name || "Coordinator")}
+                          >
+                            <UserCheck className="w-3.5 h-3.5" /> Approve
+                          </BrutalButton>
+                        )}
+                        {onRejectAttendance && (
+                          <BrutalButton
+                            tone="ghost"
+                            className="!py-1 !px-1.5 !text-[11px]"
+                            onClick={() => onRejectAttendance(item.id)}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </BrutalButton>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* STUDENT VIEW (Scan QR Code for Attendance) */
+        <div className="border-2 border-ink bg-paper hard p-5 space-y-4 max-w-lg mx-auto text-center">
+          <div className="flex items-center justify-between border-b-2 border-ink/15 pb-3">
+            <span className="font-mono text-xs uppercase font-bold text-ink">
+              Student Attendance Portal
+            </span>
+            <span className={`font-mono text-[10px] font-bold uppercase px-2 py-0.5 border border-ink ${
+              currentStudentReg?.attendanceStatus === "present"
+                ? "bg-emerald-100 text-emerald-900"
+                : currentStudentReg?.attendanceStatus === "pending_verification"
+                ? "bg-amber-100 text-amber-900"
+                : "bg-paper-3 text-ink"
+            }`}>
+              {currentStudentReg?.attendanceStatus === "present"
+                ? "VERIFIED PRESENT"
+                : currentStudentReg?.attendanceStatus === "pending_verification"
+                ? "PENDING VERIFICATION"
+                : "NOT MARKED"}
+            </span>
+          </div>
+
+          {currentStudentReg?.attendanceStatus === "present" ? (
+            <div className="border-2 border-emerald-800 bg-emerald-50 p-5 hard-sm space-y-2">
+              <BadgeCheck className="w-10 h-10 text-emerald-700 mx-auto" />
+              <h4 className="font-display uppercase text-lg text-emerald-950">Attendance Verified & Recorded</h4>
+              <p className="font-mono text-xs text-emerald-900">
+                Verified by <strong className="font-bold">{currentStudentReg.verifiedBy}</strong> on {currentStudentReg.verifiedAt}.
+              </p>
+            </div>
+          ) : currentStudentReg?.attendanceStatus === "pending_verification" ? (
+            <div className="border-2 border-amber-800 bg-amber-50 p-5 hard-sm space-y-2">
+              <Clock className="w-10 h-10 text-amber-700 mx-auto animate-spin" />
+              <h4 className="font-display uppercase text-lg text-amber-950">Request Sent to Coordinator</h4>
+              <p className="font-mono text-xs text-amber-900">
+                Your QR scan request has been submitted. Please wait for the Event Coordinator to physically cross-verify and approve you.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="font-mono text-xs text-muted">
+                Scan the live QR code displayed on the Event Coordinator's screen during the active 2-5 minute window.
+              </p>
+
+              <BrutalButton tone="blood" className="w-full !py-3" onClick={handleStudentScan}>
+                <QrCode className="w-5 h-5" /> Scan QR & Submit Attendance Request
+              </BrutalButton>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FINAL VERIFIED ATTENDANCE LEDGER */}
+      <div className="border-2 border-ink bg-paper hard space-y-4 p-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h4 className="font-display uppercase text-lg text-ink">Verified Event Attendance Ledger</h4>
+            <p className="font-mono text-xs text-muted">
+              Live registration list for {activeEvent?.title || "selected event"}.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Tag tone="ink">{presentCount} Verified Present</Tag>
+            <Tag tone="blood">{pendingQueue.length} Pending</Tag>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Search Student">
+            <input
+              className={INPUT}
+              placeholder="Search by student name or roll number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </Field>
+          <Field label="Filter Status">
+            <select className={INPUT} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="all">All Registrations ({eventRegistrations.length})</option>
+              <option value="present">Verified Present ({presentCount})</option>
+              <option value="pending_verification">Pending Verification ({pendingQueue.length})</option>
+              <option value="not_scanned">Not Scanned</option>
+            </select>
+          </Field>
+        </div>
+
+        {/* Table */}
+        <div className="border-2 border-ink overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-ink text-paper font-mono text-xs uppercase tracking-wider">
+                <th className="p-3 border-r border-paper/20">Scholar Name</th>
+                <th className="p-3 border-r border-paper/20">Roll No</th>
+                <th className="p-3 border-r border-paper/20">Course</th>
+                <th className="p-3 border-r border-paper/20">Status</th>
+                <th className="p-3 border-r border-paper/20">QR Round</th>
+                <th className="p-3">Verified By / Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y-2 divide-ink/10 font-mono text-xs">
+              {filteredRegistrations.map((r) => {
+                const isPres = r.attendanceStatus === "present";
+                const isPend = r.attendanceStatus === "pending_verification";
+
+                return (
+                  <tr key={r.id} className="hover:bg-paper-2 transition-colors">
+                    <td className="p-3 font-serif font-bold text-ink">{r.studentName}</td>
+                    <td className="p-3 text-blood font-bold">{r.rollNo}</td>
+                    <td className="p-3 text-muted">{r.department}</td>
+                    <td className="p-3">
+                      {isPres ? (
+                        <span className="bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 border border-ink text-[10px] uppercase flex items-center gap-1 w-fit">
+                          <UserCheck className="w-3 h-3 text-emerald-700" /> Verified Present
+                        </span>
+                      ) : isPend ? (
+                        <span className="bg-amber-100 text-amber-900 font-extrabold px-2 py-0.5 border border-ink text-[10px] uppercase flex items-center gap-1 w-fit animate-pulse">
+                          <Clock className="w-3 h-3 text-amber-800" /> Pending Physical Sign-off
+                        </span>
+                      ) : (
+                        <span className="bg-paper-3 text-muted font-bold px-2 py-0.5 border border-ink text-[10px] uppercase">
+                          Not Scanned
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-blood font-bold">{r.qrRound || "-"}</td>
+                    <td className="p-3 text-muted text-[11px]">
+                      {isPres ? (
+                        <div>
+                          <span className="text-ink font-bold">{r.verifiedBy || "Coordinator"}</span>
+                          <span className="block text-[9px] text-muted">{r.verifiedAt || "Today"}</span>
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* CREATE EVENT MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleCreateEventSubmit} className="border-2 border-ink bg-paper hard p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
+              <h4 className="font-display uppercase text-lg text-ink">Create Campus Event</h4>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="p-1 text-muted hover:text-ink">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <Field label="Event Title">
+              <input className={INPUT} value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} required placeholder="e.g. VSCMS Tech Conclave 2026" />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Event Code">
+                <input className={INPUT} value={evtCode} onChange={(e) => setEvtCode(e.target.value)} required placeholder="e.g. EVT-2026-CS" />
+              </Field>
+              <Field label="Date">
+                <input type="date" className={INPUT} value={evtDate} onChange={(e) => setEvtDate(e.target.value)} required />
+              </Field>
+            </div>
+
+            <Field label="Venue">
+              <input className={INPUT} value={evtVenue} onChange={(e) => setEvtVenue(e.target.value)} required placeholder="e.g. Main Auditorium" />
+            </Field>
+
+            <Field label="Assign Student Coordinators">
+              <select
+                multiple
+                className={INPUT + " h-24 text-xs"}
+                value={selectedCoordRolls}
+                onChange={(e) => {
+                  const options = Array.from(e.target.selectedOptions, (o) => o.value);
+                  setSelectedCoordRolls(options);
+                }}
+              >
+                {students.map((s) => (
+                  <option key={s.id} value={s.rollNo}>
+                    {s.name} ({s.rollNo} · {s.department})
+                  </option>
+                ))}
+              </select>
+              <p className="font-mono text-[9px] text-muted mt-1">Hold Ctrl/Cmd to select multiple student coordinators.</p>
+            </Field>
+
+            <div className="flex justify-end gap-2 pt-2 border-t-2 border-ink/10">
+              <BrutalButton type="button" tone="ghost" onClick={() => setShowCreateModal(false)}>
+                Cancel
+              </BrutalButton>
+              <BrutalButton type="submit" tone="blood">
+                Create Event & Assign
+              </BrutalButton>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MANAGE COORDINATORS MODAL */}
+      {showAssignModal && activeEvent && (
+        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="border-2 border-ink bg-paper hard p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
+              <h4 className="font-display uppercase text-lg text-ink">Manage Student Coordinators</h4>
+              <button type="button" onClick={() => setShowAssignModal(false)} className="p-1 text-muted hover:text-ink">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="font-mono text-xs text-muted">
+              Select scholars to act as official Event Coordinators for <strong className="text-ink">{activeEvent.title}</strong>.
+            </p>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto border-2 border-ink p-2 bg-paper-2">
+              {students.map((s) => {
+                const isSelected = (activeEvent.coordinators || []).includes(s.rollNo);
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => {
+                      const current = activeEvent.coordinators || [];
+                      const updated = isSelected
+                        ? current.filter((c) => c !== s.rollNo)
+                        : [...current, s.rollNo];
+                      if (onUpdateCoordinators) onUpdateCoordinators(activeEvent.id, updated);
+                    }}
+                    className={`border p-2 cursor-pointer flex items-center justify-between text-xs font-mono transition-colors ${
+                      isSelected ? "border-ink bg-paper font-bold" : "border-ink/20 hover:bg-paper"
+                    }`}
+                  >
+                    <span>{s.name} ({s.rollNo})</span>
+                    {isSelected && <BadgeCheck className="w-4 h-4 text-blood" />}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <BrutalButton tone="ink" onClick={() => setShowAssignModal(false)}>
+                Done Managing
+              </BrutalButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
