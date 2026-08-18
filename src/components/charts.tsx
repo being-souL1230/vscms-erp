@@ -92,14 +92,15 @@ export function DonutChart({
                 r={r}
                 fill="none"
                 stroke={s.color ?? CHART_PALETTE[s.i % CHART_PALETTE.length]}
-                strokeWidth={active === s.i ? thickness + 5 : thickness}
+                strokeWidth={active === s.i ? thickness + 2 : thickness}
                 strokeLinecap="butt"
                 strokeDasharray={`${mounted ? s.len : 0} ${c}`}
                 strokeDashoffset={-s.start}
                 style={{
                   transition:
-                    "stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1), stroke-width 0.18s ease, opacity 0.18s ease",
-                  opacity: active === null || active === s.i ? 1 : 0.3,
+                    "stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1), stroke-width 0.18s ease, opacity 0.18s ease, filter 0.18s ease",
+                  opacity: active === null || active === s.i ? 1 : 0.35,
+                  filter: active === s.i ? "brightness(1.15)" : "none",
                   cursor: "pointer",
                 }}
                 onMouseEnter={() => setActive(s.i)}

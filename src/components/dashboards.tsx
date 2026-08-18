@@ -117,11 +117,11 @@ function Stat({
 }) {
   return (
     <div
-      className={`lift relative border-2 border-ink p-4 hard ${
+      className={`lift relative border-2 border-ink p-4 hard overflow-hidden ${
         dark ? "bg-ink text-paper" : "bg-paper text-ink"
       }`}
     >
-      <span className="hazard absolute top-0 right-0 h-3 w-3" />
+      <span className="hazard absolute top-0 right-0 h-3 w-3 rounded-bl-md rounded-tr-[10px]" />
       <div className="flex items-start justify-between">
         <span
           className={`font-mono text-[10px] uppercase tracking-[0.2em] ${dark ? "text-paper/55" : "text-muted"}`}
