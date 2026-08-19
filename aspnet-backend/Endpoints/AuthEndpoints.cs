@@ -67,17 +67,31 @@ public static class AuthEndpoints
             return Results.Json(new { error = "Demo login is disabled" }, statusCode: 403);
 
         Database.EnsureDatabase();
-        var role = body.Role;
-        if (role is not ("admin" or "faculty" or "student"))
-            return Results.Json(new { error = "Invalid demo role" }, statusCode: 400);
-
         using var conn = Database.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT id FROM users WHERE role = @role ORDER BY id LIMIT 1";
-        cmd.Parameters.AddWithValue("@role", role);
+        if (!string.IsNullOrWhiteSpace(body.Email))
+        {
+            cmd.CommandText = "SELECT id FROM users WHERE LOWER(email) = LOWER(@email) LIMIT 1";
+            cmd.Parameters.AddWithValue("@email", body.Email.Trim());
+        }
+        else if (!string.IsNullOrWhiteSpace(body.SubRole))
+        {
+            cmd.CommandText = "SELECT id FROM users WHERE sub_role = @subRole LIMIT 1";
+            cmd.Parameters.AddWithValue("@subRole", body.SubRole);
+        }
+        else if (!string.IsNullOrWhiteSpace(body.Role))
+        {
+            cmd.CommandText = "SELECT id FROM users WHERE role = @role OR sub_role = @role ORDER BY id LIMIT 1";
+            cmd.Parameters.AddWithValue("@role", body.Role);
+        }
+        else
+        {
+            cmd.CommandText = "SELECT id FROM users ORDER BY id LIMIT 1";
+        }
+
         var id = cmd.ExecuteScalar();
         if (id is null || id is DBNull)
-            return Results.Json(new { error = "Demo data is not ready" }, statusCode: 404);
+            return Results.Json(new { error = "Demo user not found" }, statusCode: 404);
 
         var userId = (long)id;
         var (token, expiresAt) = AuthService.CreateSession(conn, userId);
@@ -191,7 +205,7 @@ public static class AuthEndpoints
     // ---- request bodies ----
 
     public sealed record LoginRequest(string? Email, string? Password);
-    public sealed record DemoRequest(string? Role);
+    public sealed record DemoRequest(string? Role, string? SubRole = null, string? Email = null);
     public sealed record RegisterRequest(string? Name, string? Email, string? Password, string? RollNoOrEmpId, string? Department, long? Semester);
     public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
 }

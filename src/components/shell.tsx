@@ -1013,13 +1013,30 @@ export function LoginPage({
     setBusy(false);
   };
 
-  const signInDemoKey = (profileKey: string) => {
+  const signInDemoKey = async (profileKey: string) => {
     setBusy(true);
     setError("");
     const targetUser =
       PROFILES[profileKey] ||
       effectiveUsers.find((u: User) => u.subRole === profileKey || u.role === profileKey) ||
       PROFILES.student;
+
+    try {
+      const res = await fetch("/api/auth/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: targetUser.role, subRole: profileKey, email: targetUser.email }),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body?.user) {
+          onLogin(body.user, body.user.role);
+          setBusy(false);
+          return;
+        }
+      }
+    } catch {}
+
     onLogin(targetUser, targetUser.role);
     setBusy(false);
   };

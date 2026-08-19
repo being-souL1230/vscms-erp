@@ -533,38 +533,35 @@ export default function VscmsErpApp() {
   };
   const dismiss = (id: string) => setToasts((p) => p.filter((t) => t.id !== id));
 
-  // Pushes a fresh AppData snapshot into all the module states. Used both on
-  // initial mount and after login (login happens after the mount fetch ran
-  // anonymously, so admin-only collections like users/permissions would stay
   // empty without this reload).
   const applyData = (data: AppData) => {
-    if (data.students?.length) setStudents(data.students);
-    if (data.faculty?.length) setFaculty(data.faculty);
-    if (data.courses?.length) setCourses(data.courses);
-    if (data.attendance?.length) setAttendance(data.attendance);
-    if (data.grades?.length) setGrades(data.grades);
-    if (data.fees?.length) setFees(data.fees);
-    if (data.feeStructures?.length) setFeeStructures(data.feeStructures);
-    if (data.feePayments?.length) setFeePayments(data.feePayments);
-    if (data.notices?.length) setNotices(data.notices);
-    if (data.assignments?.length) setAssignments(data.assignments);
-    if (data.submissions?.length) setSubmissions(data.submissions);
-    if (data.timetable?.length) setTimetable(data.timetable);
-    if (data.departments?.length) setDepartments(data.departments);
-    if (data.leaves?.length) setLeaves(data.leaves);
-    if (data.admissions?.length) setAdmissions(data.admissions);
-    if (data.documents?.length) setDocuments(data.documents);
-    if (data.sections?.length) setSections(data.sections);
-    if (data.semesters?.length) setSemesters(data.semesters);
-    if (data.sessions?.length) setSessions(data.sessions);
-    if (data.exams?.length) setExams(data.exams);
-    if (data.examDefs?.length) setExamDefs(data.examDefs);
-    if (data.internalMarks?.length) setInternalMarks(data.internalMarks);
-    if (data.permissions?.length) setPermissions(data.permissions);
-    if (data.allUsers?.length) setAllUsers(data.allUsers);
-    if (data.enrollments?.length) setEnrollments(data.enrollments);
-    if (data.facultyAttendance?.length) setFacultyAttendance(data.facultyAttendance);
-    
+    if (Array.isArray(data.students)) setStudents(data.students);
+    if (Array.isArray(data.faculty)) setFaculty(data.faculty);
+    if (Array.isArray(data.courses)) setCourses(data.courses);
+    if (Array.isArray(data.attendance)) setAttendance(data.attendance);
+    if (Array.isArray(data.grades)) setGrades(data.grades);
+    if (Array.isArray(data.fees)) setFees(data.fees);
+    if (Array.isArray(data.feeStructures)) setFeeStructures(data.feeStructures);
+    if (Array.isArray(data.feePayments)) setFeePayments(data.feePayments);
+    if (Array.isArray(data.notices)) setNotices(data.notices);
+    if (Array.isArray(data.assignments)) setAssignments(data.assignments);
+    if (Array.isArray(data.submissions)) setSubmissions(data.submissions);
+    if (Array.isArray(data.timetable)) setTimetable(data.timetable);
+    if (Array.isArray(data.departments)) setDepartments(data.departments);
+    if (Array.isArray(data.leaves)) setLeaves(data.leaves);
+    if (Array.isArray(data.admissions)) setAdmissions(data.admissions);
+    if (Array.isArray(data.documents)) setDocuments(data.documents);
+    if (Array.isArray(data.sections)) setSections(data.sections);
+    if (Array.isArray(data.semesters)) setSemesters(data.semesters);
+    if (Array.isArray(data.sessions)) setSessions(data.sessions);
+    if (Array.isArray(data.exams)) setExams(data.exams);
+    if (Array.isArray(data.examDefs)) setExamDefs(data.examDefs);
+    if (Array.isArray(data.internalMarks)) setInternalMarks(data.internalMarks);
+    if (Array.isArray(data.permissions)) setPermissions(data.permissions);
+    if (Array.isArray(data.allUsers)) setAllUsers(data.allUsers);
+    if (Array.isArray(data.enrollments)) setEnrollments(data.enrollments);
+    if (Array.isArray(data.facultyAttendance)) setFacultyAttendance(data.facultyAttendance);
+
     let localSaved: CourseMaterial[] = [];
     if (typeof window !== "undefined") {
       try {
@@ -600,17 +597,15 @@ export default function VscmsErpApp() {
           } catch {}
         }
 
-        if (!hasSavedSession) {
-          const session = await fetch("/api/auth/me").catch(() => null);
-          if (session && session.ok) {
-            const body = await session.json().catch(() => null);
-            if (body?.user && !ignore) {
-              setUser(body.user);
-              setRole(body.user.role);
-              setLoggedIn(true);
-              if (typeof window !== "undefined") {
-                try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: body.user.role })); } catch {}
-              }
+        const session = await fetch("/api/auth/me").catch(() => null);
+        if (session && session.ok) {
+          const body = await session.json().catch(() => null);
+          if (body?.user && !ignore) {
+            setUser(body.user);
+            setRole(body.user.role);
+            setLoggedIn(true);
+            if (typeof window !== "undefined") {
+              try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: body.user.role })); } catch {}
             }
           }
         }
@@ -642,12 +637,14 @@ export default function VscmsErpApp() {
       body: JSON.stringify({ role: r }),
     })
       .then((res) => res.json())
-      .then((body) => {
+      .then(async (body) => {
         if (body?.user) {
           setUser(body.user);
           if (typeof window !== "undefined") {
             try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: r })); } catch {}
           }
+          const freshData = await fetchAllData().catch(() => null);
+          if (freshData) applyData(freshData);
         }
       })
       .catch(() => {});

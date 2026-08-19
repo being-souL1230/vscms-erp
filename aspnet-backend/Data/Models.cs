@@ -28,21 +28,21 @@ public class UserDto
 
     public static UserDto MapUser(DbDataReader r) => new()
     {
-        Id = (long)r["id"],
-        Name = (string)r["name"],
-        Email = (string)r["email"],
-        Role = (string)r["role"],
-        SubRole = HasColumn(r, "sub_role") && !(r["sub_role"] is DBNull) ? (string)r["sub_role"] : null,
-        RollNo = (string)r["roll_no_or_emp_id"],
-        RollNoOrEmpId = (string)r["roll_no_or_emp_id"],
-        Department = (string)r["department"],
-        Semester = r["semester"] is DBNull ? null : (long)r["semester"],
-        Designation = r["designation"] is DBNull ? null : (string)r["designation"],
-        Phone = r["phone"] is DBNull ? null : (string)r["phone"],
-        AvatarUrl = r["avatar_url"] is DBNull ? null : (string)r["avatar_url"],
-        Gpa = r["gpa"] is DBNull ? null : (string)r["gpa"],
-        Status = (string)r["status"],
-        CreatedAt = (string)r["created_at"],
+        Id = Convert.ToInt64(r["id"]),
+        Name = r["name"]?.ToString() ?? "",
+        Email = r["email"]?.ToString() ?? "",
+        Role = r["role"]?.ToString() ?? "student",
+        SubRole = HasColumn(r, "sub_role") && !(r["sub_role"] is DBNull) ? r["sub_role"]?.ToString() : null,
+        RollNo = r["roll_no_or_emp_id"]?.ToString() ?? "",
+        RollNoOrEmpId = r["roll_no_or_emp_id"]?.ToString() ?? "",
+        Department = r["department"]?.ToString() ?? "",
+        Semester = r["semester"] is DBNull || r["semester"] == null ? null : Convert.ToInt64(r["semester"]),
+        Designation = r["designation"] is DBNull || r["designation"] == null ? null : r["designation"]?.ToString(),
+        Phone = r["phone"] is DBNull || r["phone"] == null ? null : r["phone"]?.ToString(),
+        AvatarUrl = r["avatar_url"] is DBNull || r["avatar_url"] == null ? null : r["avatar_url"]?.ToString(),
+        Gpa = r["gpa"] is DBNull || r["gpa"] == null ? null : r["gpa"]?.ToString(),
+        Status = r["status"]?.ToString() ?? "active",
+        CreatedAt = r["created_at"] is DBNull || r["created_at"] == null ? "" : r["created_at"]?.ToString() ?? "",
     };
 
     private static bool HasColumn(DbDataReader r, string columnName)
