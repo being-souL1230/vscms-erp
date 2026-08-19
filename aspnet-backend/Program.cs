@@ -126,8 +126,8 @@ Console.WriteLine($"[db] connected to Postgres (DATABASE_URL set)");
 // signed-in user triggers the seed endpoint.
 try
 {
-    SeedLogic.SeedDatabase(force: false);
-    Console.WriteLine("[db] demo data ready");
+    var res = SeedLogic.SeedDatabase(force: true);
+    Console.WriteLine($"[db] demo data force seeded successfully on Postgres ({res.Count} users)");
 }
 catch (Exception ex)
 {

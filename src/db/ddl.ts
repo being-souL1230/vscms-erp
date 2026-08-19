@@ -9,6 +9,7 @@ export const DDL: string[] = [
   "name" TEXT NOT NULL,
   "email" TEXT NOT NULL UNIQUE,
   "role" TEXT NOT NULL DEFAULT 'student',
+  "sub_role" TEXT,
   "roll_no_or_emp_id" TEXT NOT NULL,
   "department" TEXT NOT NULL,
   "semester" INTEGER,

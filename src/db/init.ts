@@ -28,6 +28,16 @@ async function doEnsure(): Promise<EnsureResult> {
     );
   }
 
+  try {
+    const cols = client.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+    if (cols.length > 0 && !cols.some((c) => c.name === "sub_role")) {
+      client.exec(`ALTER TABLE "users" ADD COLUMN "sub_role" TEXT`);
+      console.log("[db] migrated users: added sub_role column");
+    }
+  } catch (err) {
+    console.error("[db] migration for users.sub_role failed:", err);
+  }
+
   // Migration: exam-marks approval workflow. Older databases created before
   // the `status` column existed keep their rows publishable, so existing
   // results stay visible to scholars after the upgrade.

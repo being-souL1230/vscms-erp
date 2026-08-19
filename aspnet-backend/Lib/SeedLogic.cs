@@ -51,6 +51,16 @@ public static class SeedLogic
 
         if (existingCount > 0 && !force)
         {
+            // Backfill sub_role for existing users
+            foreach (var u in SeedData.InitialUsers)
+            {
+                if (!string.IsNullOrEmpty(u.SubRole))
+                {
+                    Database.Exec(conn, "UPDATE users SET sub_role = @subRole WHERE email = @email AND (sub_role IS NULL OR sub_role = '')",
+                        ("@subRole", u.SubRole), ("@email", u.Email));
+                }
+            }
+
             // Database already has users backfill the newer modules
             // (documents, exams, permissions, …) that may postdate the DB.
             var permCount = ScalarLong(conn, "SELECT COUNT(*) FROM permissions");
@@ -123,12 +133,12 @@ public static class SeedLogic
         // ---- users ----
         foreach (var u in SeedData.InitialUsers)
             Database.Exec(conn, """
-                INSERT INTO users (name, email, role, roll_no_or_emp_id, department, semester,
+                INSERT INTO users (name, email, role, sub_role, roll_no_or_emp_id, department, semester,
                                    designation, phone, avatar_url, gpa, status, password_hash)
-                VALUES (@name, @email, @role, @rollNo, @department, @semester,
+                VALUES (@name, @email, @role, @subRole, @rollNo, @department, @semester,
                         @designation, @phone, @avatarUrl, @gpa, @status, @hash)
                 """,
-                ("@name", u.Name), ("@email", u.Email), ("@role", u.Role),
+                ("@name", u.Name), ("@email", u.Email), ("@role", u.Role), ("@subRole", (object?)u.SubRole ?? DBNull.Value),
                 ("@rollNo", u.RollNo), ("@department", u.Department), ("@semester", (object?)u.Semester ?? DBNull.Value),
                 ("@designation", (object?)u.Designation ?? DBNull.Value), ("@phone", u.Phone),
                 ("@avatarUrl", u.AvatarUrl), ("@gpa", (object?)u.Gpa ?? DBNull.Value),

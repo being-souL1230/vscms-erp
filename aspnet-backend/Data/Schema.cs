@@ -16,6 +16,7 @@ public static class Schema
           "name" TEXT NOT NULL,
           "email" TEXT NOT NULL UNIQUE,
           "role" TEXT NOT NULL DEFAULT 'student',
+          "sub_role" TEXT,
           "roll_no_or_emp_id" TEXT NOT NULL,
           "department" TEXT NOT NULL,
           "semester" BIGINT,
@@ -378,6 +379,9 @@ public static class Schema
           "download_count" BIGINT NOT NULL DEFAULT 0,
           "created_at" TEXT NOT NULL DEFAULT to_char(now(), 'YYYY-MM-DD HH:MM:SS')
         );
+        """,
+        """
+        ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "sub_role" TEXT;
         """,
     ];
 }

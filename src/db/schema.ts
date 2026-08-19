@@ -5,7 +5,7 @@ const id = () => integer("id").primaryKey({ autoIncrement: true });
 const createdAt = (name = "created_at") => text(name).default(sql`CURRENT_TIMESTAMP`).notNull();
 
 export const users = sqliteTable("users", {
-  id: id(), name: text("name").notNull(), email: text("email").notNull().unique(), role: text("role").notNull().default("student"), rollNo: text("roll_no_or_emp_id").notNull(), department: text("department").notNull(), semester: integer("semester"), designation: text("designation"), phone: text("phone"), avatarUrl: text("avatar_url"), gpa: text("gpa"), status: text("status").notNull().default("active"), passwordHash: text("password_hash").notNull().default(""), createdAt: createdAt(),
+  id: id(), name: text("name").notNull(), email: text("email").notNull().unique(), role: text("role").notNull().default("student"), subRole: text("sub_role"), rollNo: text("roll_no_or_emp_id").notNull(), department: text("department").notNull(), semester: integer("semester"), designation: text("designation"), phone: text("phone"), avatarUrl: text("avatar_url"), gpa: text("gpa"), status: text("status").notNull().default("active"), passwordHash: text("password_hash").notNull().default(""), createdAt: createdAt(),
 });
 export const sessions = sqliteTable("sessions", { id: id(), token: text("token").notNull().unique(), userId: integer("user_id").notNull(), expiresAt: integer("expires_at").notNull(), createdAt: createdAt() });
 export const departments = sqliteTable("departments", { id: id(), code: text("code").notNull().unique(), name: text("name").notNull(), headOfDepartment: text("head_of_department").notNull(), location: text("location"), studentCount: integer("student_count").default(0), facultyCount: integer("faculty_count").default(0) });

@@ -14,6 +14,7 @@ public class UserDto
     public string Name { get; set; } = "";
     public string Email { get; set; } = "";
     public string Role { get; set; } = "student";
+    public string? SubRole { get; set; }
     public string RollNo { get; set; } = "";
     public string RollNoOrEmpId { get; set; } = "";
     public string Department { get; set; } = "";
@@ -31,6 +32,7 @@ public class UserDto
         Name = (string)r["name"],
         Email = (string)r["email"],
         Role = (string)r["role"],
+        SubRole = HasColumn(r, "sub_role") && !(r["sub_role"] is DBNull) ? (string)r["sub_role"] : null,
         RollNo = (string)r["roll_no_or_emp_id"],
         RollNoOrEmpId = (string)r["roll_no_or_emp_id"],
         Department = (string)r["department"],
@@ -42,6 +44,14 @@ public class UserDto
         Status = (string)r["status"],
         CreatedAt = (string)r["created_at"],
     };
+
+    private static bool HasColumn(DbDataReader r, string columnName)
+    {
+        for (int i = 0; i < r.FieldCount; i++)
+            if (r.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
 }
 
 /// <summary>Minimal user row (id, password hash) used by the auth service.</summary>

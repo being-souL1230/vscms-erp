@@ -7,36 +7,38 @@ public static class SeedData
 {
     public sealed record SeedUser(
         string Name, string Email, string Role, string RollNo, string Department,
-        long? Semester, string? Designation, string Phone, string AvatarUrl, string? Gpa, string Status);
+        long? Semester, string? Designation, string Phone, string AvatarUrl, string? Gpa, string Status, string? SubRole = null);
 
     public static readonly SeedUser[] InitialUsers =
     [
-        // Director + Admin
+        // Director + Admin (Dean)
         new("Prof. (Dr.) Gauri Singh Gaur", "director@vscms.edu", "admin", "1", "Office of the Director", null,
-            "Director, VSCMS", "+91 11 4011 9001",
-            "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80", null, "active"),
-        // Core Faculty
+            "Director & Dean, VSCMS", "+91 11 4011 9001",
+            "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80", null, "active", "dean"),
+        // Core Faculty (HOD)
         new("Dr. Tanya Mishra", "tanya.m@vscms.edu", "faculty", "2", "MBA", null,
-            "Associate Professor, HR & Organizational Behaviour", "+91 11 4011 9142",
-            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "Associate Professor & HOD", "+91 11 4011 9142",
+            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80", null, "active", "hod"),
         new("Mrs. Shruti Agarwal", "shruti.a@vscms.edu", "faculty", "3", "BBA", null,
             "Associate Professor, Business Law & HR", "+91 11 4011 9221",
-            "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80", null, "active", "teacher"),
         new("Mr. Mohit Srivastava", "mohit.s@vscms.edu", "faculty", "4", "BCA (CSJM)", null,
             "Assistant Professor, IT", "+91 11 4011 9098",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80", null, "active", "teacher"),
         new("Mr. Shivam Kr. Singh", "shivam.k@vscms.edu", "faculty", "5", "BCA (CSJM)", null,
             "Assistant Professor, Computer Application", "+91 11 4011 9312",
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&auto=format&fit=crop&q=80", null, "active", "teacher"),
+        // Class Coordinator
         new("Mr. Prakhar Tiwari", "prakhar.t@vscms.edu", "faculty", "6", "MBA", null,
-            "Assistant Professor, Management", "+91 11 4011 9344",
-            "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "Assistant Professor & Class Coordinator", "+91 11 4011 9344",
+            "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=160&auto=format&fit=crop&q=80", null, "active", "coordinator"),
         new("Mrs. Alka Mishra", "alka.m@vscms.edu", "faculty", "7", "MBA", null,
             "Assistant Professor, Management", "+91 11 4011 9377",
-            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=160&auto=format&fit=crop&q=80", null, "active", "teacher"),
+        // Dedicated Teacher Demo Account
         new("Mr. Ayush Yadav", "ayush.y@vscms.edu", "faculty", "8", "BCA (MCU)", null,
-            "Assistant Professor, Computer Application", "+91 11 4011 9411",
-            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&auto=format&fit=crop&q=80", null, "active"),
+            "Assistant Professor & Subject Teacher", "+91 11 4011 9411",
+            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&auto=format&fit=crop&q=80", null, "active", "teacher"),
         new("Mr. Vishal Srivastava", "vishal.s@vscms.edu", "faculty", "9", "BCA (CSJM)", null,
             "Assistant Professor, Computer Application", "+91 11 4011 9445",
             "https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=160&auto=format&fit=crop&q=80", null, "active"),
