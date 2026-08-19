@@ -1,6 +1,6 @@
 # VSCMS ERP - System Architecture and Module Manual
 
-VSCMS ERP (Visual Student and Campus Management System) is an enterprise-grade university management system built with a decoupled architecture featuring a Next.js 16 frontend and an ASP.NET Core (.NET 10) backend.
+VSCMS ERP (Dr. Virendra Swarup College of Management Studies) is an enterprise-grade university management system built with a decoupled architecture featuring a Next.js 16 frontend and an ASP.NET Core (.NET 10) backend.
 
 The system manages academic governance, student records, fee collections, faculty registers, examination workflows, coursework submissions, document verification, and granular role-based security.
 
