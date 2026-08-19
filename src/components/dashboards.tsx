@@ -2299,6 +2299,14 @@ export function FacultyDashboard(props: {
               </div>
             }
           />
+          {!canAlterStudentRecords(currentUser) && (
+            <div className="border-2 border-amber-800 bg-amber-50 p-3 font-mono text-xs text-amber-950 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>
+                <strong>Teacher Read-Only View:</strong> Approving or rejecting student leave requests is restricted to <strong>Dean</strong>, <strong>HOD</strong>, or <strong>Class Coordinator</strong> authorization.
+              </span>
+            </div>
+          )}
           {reviewLeaves.length === 0 ? (
             <EmptyState label="No leave requests" hint="Student applications will appear here." />
           ) : (
@@ -2330,7 +2338,7 @@ export function FacultyDashboard(props: {
                         </p>
                       )}
                     </div>
-                    {l.status === "pending" && (
+                    {l.status === "pending" && canAlterStudentRecords(currentUser) && (
                       <div className="flex items-center gap-2 shrink-0">
                         <BrutalButton tone="ink" onClick={() => onReviewLeave(l.id, "approved", "Approved")}>
                           <Check className="w-4 h-4" /> Approve
