@@ -25,6 +25,10 @@ interface Message {
   mode?: "groq" | "offline";
 }
 
+function createBotMsgId(prefix: string): string {
+  return `${prefix}-${Date.now()}`;
+}
+
 export function CMSbot({
   currentUser,
   activeRole,
@@ -68,7 +72,11 @@ export function CMSbot({
   }, [activeRole]);
 
   // Initial welcome message based on active role
-  useEffect(() => {
+  const [welcomeRoleKey, setWelcomeRoleKey] = useState("");
+  const currentRoleKey = `${activeRole}-${currentUser?.name}-${keyStatus.hasActiveKey}`;
+
+  if (welcomeRoleKey !== currentRoleKey) {
+    setWelcomeRoleKey(currentRoleKey);
     const name = currentUser?.name || "there";
     let welcome = `Hi **${name}**! I am **CMSbot**. How can I help you today?`;
     if (activeRole === "student") {
@@ -88,7 +96,7 @@ export function CMSbot({
         mode: keyStatus.hasActiveKey ? "groq" : "offline",
       },
     ]);
-  }, [activeRole, currentUser?.name, keyStatus.hasActiveKey]);
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -126,7 +134,7 @@ export function CMSbot({
     if (!textToSend.trim() || loading) return;
 
     const userMsg: Message = {
-      id: `msg-${Date.now()}`,
+      id: createBotMsgId("msg"),
       sender: "user",
       text: textToSend.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -161,7 +169,7 @@ export function CMSbot({
 
       const data = await response.json();
       const botMsg: Message = {
-        id: `bot-${Date.now()}`,
+        id: createBotMsgId("bot"),
         sender: "bot",
         text: data.reply || "Sorry, I couldn't process that request right now.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -170,7 +178,7 @@ export function CMSbot({
       setMessages((prev) => [...prev, botMsg]);
     } catch {
       const errMsg: Message = {
-        id: `bot-err-${Date.now()}`,
+        id: createBotMsgId("bot-err"),
         sender: "bot",
         text: "Connected to local ERP engine. Ask me about attendance, fees, timetable, or grades!",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),

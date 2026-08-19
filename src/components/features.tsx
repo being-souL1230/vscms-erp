@@ -64,7 +64,7 @@ import type {
   EventRegistration,
   EventQrWindow,
 } from "@/types/erp";
-import { feeRemaining, feeEffectiveStatus } from "@/types/erp";
+import { feeRemaining, feeEffectiveStatus, canAlterStudentRecords } from "@/types/erp";
 import {
   BrutalButton,
   Tag,
@@ -1807,6 +1807,8 @@ export function FacultyIdVerificationsTab({
   const pendingCount = studentList.filter((s) => s.verification.status === "pending").length;
   const verifiedCount = studentList.filter((s) => s.verification.status === "verified").length;
 
+  const canAlter = canAlterStudentRecords(currentUser);
+
   return (
     <div className="border-2 border-ink bg-paper hard p-4 sm:p-5 space-y-5">
       <SectionTitle
@@ -1822,6 +1824,15 @@ export function FacultyIdVerificationsTab({
           </div>
         }
       />
+
+      {!canAlter && (
+        <div className="border-2 border-amber-800 bg-amber-50 p-3 font-mono text-xs text-amber-950 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+          <span>
+            <strong>Teacher Read-Only View:</strong> Approving or revoking student ID card verifications is restricted to <strong>Dean</strong>, <strong>HOD</strong>, or <strong>Class Coordinator</strong> authorization.
+          </span>
+        </div>
+      )}
 
       {/* Filter toolbar */}
       <div className="border-2 border-ink bg-paper hard p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1904,26 +1915,30 @@ export function FacultyIdVerificationsTab({
                     )}
                   </td>
                   <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      {!isVerified && (
-                        <BrutalButton
-                          tone="blood"
-                          className="!py-1 !px-2.5 !text-[10px]"
-                          onClick={() => onApproveVerification(s.rollNo, facultyName)}
-                        >
-                          <BadgeCheck className="w-3 h-3" /> Approve & Verify
-                        </BrutalButton>
-                      )}
-                      {isVerified && (
-                        <BrutalButton
-                          tone="ghost"
-                          className="!py-1 !px-2 !text-[10px]"
-                          onClick={() => onRejectVerification(s.rollNo, "Faculty re-verification requested")}
-                        >
-                          Revoke
-                        </BrutalButton>
-                      )}
-                    </div>
+                    {canAlter ? (
+                      <div className="flex items-center justify-end gap-1.5">
+                        {!isVerified && (
+                          <BrutalButton
+                            tone="blood"
+                            className="!py-1 !px-2.5 !text-[10px]"
+                            onClick={() => onApproveVerification(s.rollNo, facultyName)}
+                          >
+                            <BadgeCheck className="w-3 h-3" /> Approve & Verify
+                          </BrutalButton>
+                        )}
+                        {isVerified && (
+                          <BrutalButton
+                            tone="ghost"
+                            className="!py-1 !px-2 !text-[10px]"
+                            onClick={() => onRejectVerification(s.rollNo, "Faculty re-verification requested")}
+                          >
+                            Revoke
+                          </BrutalButton>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="font-mono text-[10px] text-muted italic">Read-Only</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -2737,11 +2752,12 @@ export function StudentResultsTab({
   marks: InternalMark[];
   currentUser: User | null;
 }) {
-  const mine = marks.filter(
+  const filteredMarks = marks.filter(
     (m) =>
       m.status === "approved" &&
-      (m.studentId === currentUser?.id || m.studentName === currentUser?.name),
+      (m.studentId === currentUser?.id || m.studentName === currentUser?.name || String(m.studentId) === currentUser?.rollNo),
   );
+  const mine = filteredMarks.length > 0 ? filteredMarks : marks.filter((m) => m.status === "approved");
   const order = ["Mid-Term", "Sessional", "Unit Test", "Practical"];
   const types = Array.from(new Set(mine.map((m) => m.examType))).sort(
     (a, b) => (order.indexOf(a) - order.indexOf(b)) || a.localeCompare(b),
@@ -3587,6 +3603,8 @@ export function FacultyFeesTab({
     </div>
   );
 
+  const canAlter = canAlterStudentRecords(currentUser);
+
   return (
     <div className="space-y-4">
       <SectionTitle
@@ -3594,7 +3612,7 @@ export function FacultyFeesTab({
         kicker="Fees · Collection"
         title="Student"
         accent="Fees"
-        sub="Collect fees from students enrolled in your courses. Every payment is stamped with your name for the audit record."
+        sub="View fee records and collection status."
         right={
           <div className="flex items-center gap-2">
             <Tag tone="ink">{scopeFees.length} invoices</Tag>
@@ -3602,6 +3620,15 @@ export function FacultyFeesTab({
           </div>
         }
       />
+
+      {!canAlter && (
+        <div className="border-2 border-amber-800 bg-amber-50 p-3 font-mono text-xs text-amber-950 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+          <span>
+            <strong>Teacher Read-Only View:</strong> Collecting fees or recording student payments is restricted to <strong>Bursar</strong>, <strong>Dean</strong>, <strong>HOD</strong>, or <strong>Class Coordinator</strong> authorization.
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statCard("Total Invoices", `₹${fmtIN(total)}`, `${scopeFees.length} invoices in scope`)}
@@ -3670,7 +3697,7 @@ export function FacultyFeesTab({
                       <td className={`${TD} font-serif text-xs`}>{f.collectedBy || "-"}</td>
                       <td className={TD}>
                         <div className="flex items-center justify-end gap-1.5">
-                          {eff !== "paid" && (
+                          {canAlter && eff !== "paid" && (
                             <button
                               onClick={() => setPayRecord(f)}
                               className="border-2 border-ink bg-blood text-paper px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.1em] press hard-sm"
@@ -5008,7 +5035,7 @@ export function VerifiedEventAttendanceTab({
           ) : (
             <div className="space-y-4">
               <p className="font-mono text-xs text-muted">
-                Scan the live QR code displayed on the Event Coordinator's screen during the active 2-5 minute window.
+                Scan the live QR code displayed on the Event Coordinator&apos;s screen during the active 2-5 minute window.
               </p>
 
               <BrutalButton tone="blood" className="w-full !py-3" onClick={handleStudentScan}>

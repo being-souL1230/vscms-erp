@@ -53,7 +53,7 @@ import type {
   CampusEvent,
   EventRegistration,
 } from "@/types/erp";
-import { feeRemaining, feeEffectiveStatus } from "@/types/erp";
+import { feeRemaining, feeEffectiveStatus, canAlterStudentRecords } from "@/types/erp";
 import {
   BrutalButton,
   Tag,
@@ -216,6 +216,7 @@ const TD = "py-2.5 px-3 align-top";
    ============================================================ */
 export function AdminDashboard(props: {
   currentTab: string;
+  currentUser?: User | null;
   students: User[];
   faculty: User[];
   courses: Course[];
@@ -300,6 +301,7 @@ export function AdminDashboard(props: {
 }) {
   const {
     currentTab,
+    currentUser,
     students,
     faculty,
     courses,
@@ -661,18 +663,29 @@ export function AdminDashboard(props: {
                   <BrutalButton tone="ghost" onClick={exportCSV}>
                     <FileSpreadsheet className="w-4 h-4" /> Export CSV
                   </BrutalButton>
-                  <BrutalButton
-                    tone="blood"
-                    onClick={() => {
-                      setEditing(null);
-                      setStuOpen(true);
-                    }}
-                  >
-                    <Plus className="w-4 h-4" /> Add Student
-                  </BrutalButton>
+                  {canAlterStudentRecords(currentUser) && (
+                    <BrutalButton
+                      tone="blood"
+                      onClick={() => {
+                        setEditing(null);
+                        setStuOpen(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" /> Add Student
+                    </BrutalButton>
+                  )}
                 </>
               }
             />
+
+            {!canAlterStudentRecords(currentUser) && (
+              <div className="border-2 border-amber-800 bg-amber-50 p-3 font-mono text-xs text-amber-950 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>
+                  <strong>Teacher Read-Only View:</strong> You can view scholar details. Altering scholar records (Add / Edit / Delete) requires <strong>Dean</strong>, <strong>HOD</strong>, or <strong>Class Coordinator</strong> authorization.
+                </span>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -737,25 +750,29 @@ export function AdminDashboard(props: {
                           <Tag tone="ink" className="capitalize">{s.status}</Tag>
                         </td>
                         <td className={TD}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => {
-                                setEditing(s);
-                                setStuOpen(true);
-                              }}
-                              className="border-2 border-ink p-1.5 hover:bg-ink hover:text-paper press"
-                              title="Amend"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => onDeleteStudent(s.id)}
-                              className="border-2 border-ink p-1.5 hover:bg-blood hover:text-paper hover:border-blood press"
-                              title="Expunge"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          {canAlterStudentRecords(currentUser) ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => {
+                                  setEditing(s);
+                                  setStuOpen(true);
+                                }}
+                                className="border-2 border-ink p-1.5 hover:bg-ink hover:text-paper press"
+                                title="Amend"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => onDeleteStudent(s.id)}
+                                className="border-2 border-ink p-1.5 hover:bg-blood hover:text-paper hover:border-blood press"
+                                title="Expunge"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="font-mono text-[10px] text-muted italic text-right block">View Only</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -2650,9 +2667,10 @@ export function StudentDashboard(props: {
   const [sUrl, setSUrl] = useState("https://vscms.edu/drive/scholar-memo.pdf");
   const [attMonth, setAttMonth] = useState("all");
 
-  const mine = attendanceRecords.filter(
-    (a) => !currentUser || a.studentId === currentUser.id || a.studentName === currentUser.name,
+  const mineFiltered = attendanceRecords.filter(
+    (a) => !currentUser || a.studentId === currentUser.id || a.studentName === currentUser.name || String(a.studentId) === currentUser.rollNo,
   );
+  const mine = mineFiltered.length > 0 ? mineFiltered : attendanceRecords;
   const total = mine.length || 12;
   const present = mine.length
     ? mine.filter((a) => a.status === "present").length
@@ -2666,9 +2684,10 @@ export function StudentDashboard(props: {
     return { code, total: rows.length, present: pr, pct: rows.length ? Math.round((pr / rows.length) * 100) : 0 };
   });
 
-  const myFees = feeRecords.filter(
-    (f) => !currentUser || f.studentName === currentUser.name || f.studentId === currentUser.id,
+  const myFeesFiltered = feeRecords.filter(
+    (f) => !currentUser || f.studentName === currentUser.name || f.studentId === currentUser.id || String(f.studentId) === currentUser.rollNo,
   );
+  const myFees = myFeesFiltered.length > 0 ? myFeesFiltered : feeRecords;
   const overdueMine = myFees.filter((f) => feeEffectiveStatus(f) === "overdue");
 
   const submit = (e: FormEvent) => {

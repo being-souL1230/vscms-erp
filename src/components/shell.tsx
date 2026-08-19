@@ -30,38 +30,97 @@ import { initialUsers } from "@/lib/seed-data";
 /* ============================================================
    USER PROFILES
    ============================================================ */
-export const PROFILES: Record<UserRole, User> = {
+export const PROFILES: Record<string, User> = {
   admin: {
     id: 1,
     name: "Prof. (Dr.) Gauri Singh Gaur",
     email: "director@vscms.edu",
     role: "admin",
+    subRole: "dean",
     rollNo: "1",
     rollNoOrEmpId: "1",
     department: "Office of the Director",
-    designation: "Director, VSCMS",
+    designation: "Director & Dean, VSCMS",
     status: "active",
     avatarUrl:
       "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80",
   },
-  faculty: {
+  dean: {
+    id: 1,
+    name: "Prof. (Dr.) Gauri Singh Gaur",
+    email: "director@vscms.edu",
+    role: "admin",
+    subRole: "dean",
+    rollNo: "1",
+    rollNoOrEmpId: "1",
+    department: "Office of the Director",
+    designation: "Director & Dean, VSCMS",
+    status: "active",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=160&auto=format&fit=crop&q=80",
+  },
+  hod: {
     id: 2,
     name: "Dr. Tanya Mishra",
     email: "tanya.m@vscms.edu",
     role: "faculty",
+    subRole: "hod",
     rollNo: "2",
     rollNoOrEmpId: "2",
-    department: "MBA",
-    designation: "Associate Professor, HR & Organizational Behaviour",
+    department: "BCA (CSJM)",
+    designation: "Professor of Computer Science · HOD",
     status: "active",
     avatarUrl:
       "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80",
   },
+  coordinator: {
+    id: 3,
+    name: "Mr. Prakhar Tiwari",
+    email: "prakhar.t@vscms.edu",
+    role: "faculty",
+    subRole: "coordinator",
+    rollNo: "3",
+    rollNoOrEmpId: "3",
+    department: "MBA",
+    designation: "Associate Professor · Class Coordinator",
+    status: "active",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80",
+  },
+  teacher: {
+    id: 4,
+    name: "Mr. Ayush Yadav",
+    email: "ayush.y@vscms.edu",
+    role: "faculty",
+    subRole: "teacher",
+    rollNo: "4",
+    rollNoOrEmpId: "4",
+    department: "BCA (MCU)",
+    designation: "Assistant Professor & Subject Teacher",
+    status: "active",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80",
+  },
+  faculty: {
+    id: 4,
+    name: "Mr. Ayush Yadav",
+    email: "ayush.y@vscms.edu",
+    role: "faculty",
+    subRole: "teacher",
+    rollNo: "4",
+    rollNoOrEmpId: "4",
+    department: "BCA (MCU)",
+    designation: "Assistant Professor & Subject Teacher",
+    status: "active",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80",
+  },
   student: {
-    id: 5,
+    id: 101,
     name: "Aarav Rao",
     email: "aarav.r@vscms.edu",
     role: "student",
+    subRole: "student",
     rollNo: "101",
     rollNoOrEmpId: "101",
     department: "BCA (CSJM)",
@@ -954,32 +1013,23 @@ export function LoginPage({
     setBusy(false);
   };
 
-  const signInDemo = async (demoRole: UserRole) => {
+  const signInDemoKey = (profileKey: string) => {
     setBusy(true);
     setError("");
-    try {
-      const response = await fetch("/api/auth/demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: demoRole }),
-      });
-      if (response.ok) {
-        const body = await response.json();
-        onLogin(body.user, body.user.role);
-        setBusy(false);
-        return;
-      }
-    } catch {}
-
-    const targetUser = effectiveUsers.find((u: User) => u.role === demoRole) || PROFILES[demoRole];
-    onLogin(targetUser, demoRole);
+    const targetUser =
+      PROFILES[profileKey] ||
+      effectiveUsers.find((u: User) => u.subRole === profileKey || u.role === profileKey) ||
+      PROFILES.student;
+    onLogin(targetUser, targetUser.role);
     setBusy(false);
   };
 
-  const cards: { key: UserRole; label: string; handle: string; Icon: typeof Shield; tilt: string }[] = [
-    { key: "admin", label: "Admin", handle: "director", Icon: Shield, tilt: "tilt-l" },
-    { key: "faculty", label: "Faculty", handle: "tanya.m", Icon: BookOpen, tilt: "tilt-m" },
-    { key: "student", label: "Scholar", handle: "aarav.r", Icon: GraduationCap, tilt: "tilt-r" },
+  const cards: { key: string; label: string; name: string; handle: string; badge: string }[] = [
+    { key: "dean", label: "Dean", name: "Dr. Gauri Singh Gaur", handle: "director", badge: "Alter Records ✓" },
+    { key: "hod", label: "HOD", name: "Dr. Tanya Mishra", handle: "tanya.m", badge: "Alter Records ✓" },
+    { key: "coordinator", label: "Coordinator", name: "Mr. Prakhar Tiwari", handle: "prakhar.t", badge: "Alter Records ✓" },
+    { key: "teacher", label: "Teacher", name: "Mr. Ayush Yadav", handle: "ayush.y", badge: "Lecture Attendance Only" },
+    { key: "student", label: "Scholar", name: "Aarav Rao", handle: "aarav.r", badge: "Student Portal" },
   ];
 
   return (
@@ -1033,17 +1083,28 @@ export function LoginPage({
                   {cards.map((c) => (
                     <button
                       key={c.key}
-                      onClick={() => signInDemo(c.key)}
-                      className="w-full grid grid-cols-[70px_1fr_auto] items-center gap-3 py-2 text-left group hover:bg-paper/5 px-1"
+                      onClick={() => signInDemoKey(c.key)}
+                      className="w-full flex items-center justify-between gap-2 py-2 text-left group hover:bg-paper/10 px-2 transition-colors"
                     >
-                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-paper/70">
-                        {c.label}
-                      </span>
-                      <span className="font-mono text-[11px] text-paper group-hover:text-blood transition-colors truncate">
-                        {c.handle}@vscms.edu
-                      </span>
-                      <span className="font-mono text-[10px] font-bold text-blood border border-blood px-1.5 py-0.5">
-                        {c.key}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-blood">
+                            {c.label}
+                          </span>
+                          <span className="font-mono text-[11px] text-paper group-hover:text-amber-300 font-bold truncate">
+                            {c.name}
+                          </span>
+                        </div>
+                        <p className="font-mono text-[9px] text-paper/60 truncate">{c.handle}@vscms.edu</p>
+                      </div>
+                      <span className={`font-mono text-[9px] font-bold px-1.5 py-0.5 border text-right shrink-0 ${
+                        c.key === "teacher"
+                          ? "border-amber-400 text-amber-300 bg-amber-950/60"
+                          : c.key === "student"
+                          ? "border-blue-400 text-blue-300 bg-blue-950/60"
+                          : "border-emerald-400 text-emerald-300 bg-emerald-950/60"
+                      }`}>
+                        {c.badge}
                       </span>
                     </button>
                   ))}
@@ -1071,35 +1132,23 @@ export function LoginPage({
 
             {DEMO_LOGIN_ENABLED && (
             <>
-            <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-ink">Quick Login</p>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {cards.map((c) => {
-                const Icon = c.Icon;
-                const active = role === c.key;
-                return (
-                  <button
-                    key={c.key}
-                      onClick={() => signInDemo(c.key)}
-                    className={`${c.tilt} text-left border-2 border-ink bg-paper p-3 hard-sm hover:hard flex items-center gap-2.5`}
-                  >
-                    <span
-                      className={`h-9 w-9 flex items-center justify-center border-2 border-ink ${
-                        active ? "bg-blood text-paper" : "bg-ink text-paper"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </span>
-                    <span className="leading-tight min-w-0">
-                      <span className="block font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-ink truncate">
-                        {c.label}
-                      </span>
-                      <span className="block font-serif italic text-[11px] text-muted truncate">
-                        {c.handle}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
+            <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-ink font-bold">Quick Demo Login (Select Role):</p>
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {cards.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => signInDemoKey(c.key)}
+                  className="text-left border-2 border-ink bg-paper p-2.5 hard-sm hover:hard flex flex-col justify-between gap-1 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] font-bold uppercase text-blood">{c.label}</span>
+                    <span className="font-mono text-[9px] text-muted font-bold">{c.key}</span>
+                  </div>
+                  <span className="font-serif font-bold text-xs text-ink truncate">{c.name}</span>
+                  <span className="font-mono text-[9px] text-muted truncate">{c.badge}</span>
+                </button>
+              ))}
             </div>
             </>
             )}

@@ -37,6 +37,14 @@ import {
   initialCampusEvents,
   initialEventRegistrations,
   initialUsers,
+  initialAttendance,
+  initialInternalMarks,
+  initialFees,
+  initialAdmissions,
+  initialDocuments,
+  initialCourses,
+  initialNotices,
+  initialDepartments,
 } from "@/lib/seed-data";
 import {
   Navbar,
@@ -54,6 +62,10 @@ import {
 } from "@/components/dashboards";
 import { CMSbot } from "@/components/cmsbot";
 import type { IdVerificationRecord } from "@/components/features";
+
+function createUniqueId(): number {
+  return Date.now();
+}
 
 type AppData = {
   students: User[];
@@ -152,34 +164,34 @@ async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
       fetchJson("/api/course-materials"),
     ]);
   return {
-    students: Array.isArray(s) ? s : [],
-    faculty: Array.isArray(f) ? f : [],
-    courses: Array.isArray(c) ? c : [],
-    attendance: Array.isArray(a) ? a : [],
-    grades: Array.isArray(g) ? g : [],
-    fees: Array.isArray(fe) ? fe : [],
-    feeStructures: Array.isArray(fst) ? fst : [],
-    feePayments: Array.isArray(fp) ? fp : [],
-    notices: Array.isArray(n) ? n : [],
-    assignments: Array.isArray(as?.assignments) ? as.assignments : [],
+    students: Array.isArray(s) && s.length > 0 ? s : initialUsers.filter((u) => u.role === "student"),
+    faculty: Array.isArray(f) && f.length > 0 ? f : initialUsers.filter((u) => u.role === "faculty"),
+    courses: Array.isArray(c) && c.length > 0 ? c : initialCourses,
+    attendance: Array.isArray(a) && a.length > 0 ? a : (initialAttendance as unknown as AttendanceRecord[]),
+    grades: Array.isArray(g) && g.length > 0 ? g : [],
+    fees: Array.isArray(fe) && fe.length > 0 ? fe : (initialFees as unknown as FeeRecord[]),
+    feeStructures: Array.isArray(fst) && fst.length > 0 ? fst : [],
+    feePayments: Array.isArray(fp) && fp.length > 0 ? fp : [],
+    notices: Array.isArray(n) && n.length > 0 ? n : initialNotices,
+    assignments: Array.isArray(as?.assignments) && as.assignments.length > 0 ? as.assignments : [],
     submissions: Array.isArray(as?.submissions) ? as.submissions : [],
-    timetable: Array.isArray(tt) ? tt : [],
-    departments: Array.isArray(dp) ? dp : [],
-    leaves: Array.isArray(lv) ? lv : [],
-    admissions: Array.isArray(ad) ? ad : [],
-    documents: Array.isArray(dc) ? dc : [],
-    sections: Array.isArray(se) ? se : [],
-    semesters: Array.isArray(sm) ? sm : [],
-    sessions: Array.isArray(ss) ? ss : [],
-    exams: Array.isArray(ex) ? ex : [],
-    examDefs: Array.isArray(em) ? em : [],
-    internalMarks: Array.isArray(im) ? im : [],
-    permissions: Array.isArray(pm) ? pm : [],
-    allUsers: Array.isArray(us) ? us : [],
-    enrollments: Array.isArray(en) ? en : [],
-    facultyAttendance: Array.isArray(fa) ? fa : [],
+    timetable: Array.isArray(tt) && tt.length > 0 ? tt : [],
+    departments: Array.isArray(dp) && dp.length > 0 ? dp : initialDepartments,
+    leaves: Array.isArray(lv) && lv.length > 0 ? lv : [],
+    admissions: Array.isArray(ad) && ad.length > 0 ? ad : (initialAdmissions as unknown as AdmissionInfo[]),
+    documents: Array.isArray(dc) && dc.length > 0 ? dc : (initialDocuments as unknown as StudentDocument[]),
+    sections: Array.isArray(se) && se.length > 0 ? se : [],
+    semesters: Array.isArray(sm) && sm.length > 0 ? sm : [],
+    sessions: Array.isArray(ss) && ss.length > 0 ? ss : [],
+    exams: Array.isArray(ex) && ex.length > 0 ? ex : [],
+    examDefs: Array.isArray(em) && em.length > 0 ? em : [],
+    internalMarks: Array.isArray(im) && im.length > 0 ? im : (initialInternalMarks as unknown as InternalMark[]),
+    permissions: Array.isArray(pm) && pm.length > 0 ? pm : [],
+    allUsers: Array.isArray(us) && us.length > 0 ? us : initialUsers,
+    enrollments: Array.isArray(en) && en.length > 0 ? en : [],
+    facultyAttendance: Array.isArray(fa) && fa.length > 0 ? fa : [],
     courseMaterials: Array.isArray(cm) && cm.length > 0 ? cm : initialCourseMaterials,
-    };
+  };
   } catch (e) {
     if (attempt < 2) {
       await new Promise((r) => setTimeout(r, 6000 * (attempt + 1)));
@@ -196,12 +208,12 @@ export default function VscmsErpApp() {
   const [tab, setTab] = useState<string>("overview");
   const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
 
-  const [students, setStudents] = useState<User[]>([]);
-  const [faculty, setFaculty] = useState<User[]>([]);
+  const [students, setStudents] = useState<User[]>(initialUsers.filter((u) => u.role === "student"));
+  const [faculty, setFaculty] = useState<User[]>(initialUsers.filter((u) => u.role === "faculty"));
   const [courses, setCourses] = useState<Course[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance as unknown as AttendanceRecord[]);
   const [grades, setGrades] = useState<GradeRecord[]>([]);
-  const [fees, setFees] = useState<FeeRecord[]>([]);
+  const [fees, setFees] = useState<FeeRecord[]>(initialFees as unknown as FeeRecord[]);
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
   const [feePayments, setFeePayments] = useState<FeePayment[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -210,48 +222,47 @@ export default function VscmsErpApp() {
   const [timetable, setTimetable] = useState<TimetableSlot[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [admissions, setAdmissions] = useState<AdmissionInfo[]>([]);
-  const [documents, setDocuments] = useState<StudentDocument[]>([]);
+  const [admissions, setAdmissions] = useState<AdmissionInfo[]>(initialAdmissions as unknown as AdmissionInfo[]);
+  const [documents, setDocuments] = useState<StudentDocument[]>(initialDocuments as unknown as StudentDocument[]);
   const [sections, setSections] = useState<Section[]>([]);
   const [semesters, setSemesters] = useState<SemesterInfo[]>([]);
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
   const [exams, setExams] = useState<ExamSchedule[]>([]);
   const [examDefs, setExamDefs] = useState<ExamDefinition[]>([]);
-  const [internalMarks, setInternalMarks] = useState<InternalMark[]>([]);
+  const [internalMarks, setInternalMarks] = useState<InternalMark[]>(initialInternalMarks as unknown as InternalMark[]);
   const [permissions, setPermissions] = useState<PermissionRow[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [facultyAttendance, setFacultyAttendance] = useState<FacultyAttendance[]>([]);
   const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>(initialCourseMaterials);
-  const [idVerifications, setIdVerifications] = useState<Record<string, IdVerificationRecord>>({
-    "2024-BCA-001": {
-      rollNo: "2024-BCA-001",
-      studentName: "Aarav Rao",
-      department: "Data Science",
-      status: "verified",
-      verifiedBy: "Dr. Aris Thorne (HOD Computer Science)",
-      verifiedAt: "2026-08-18 10:30 AM",
-    },
-    "2024-BCA-002": {
-      rollNo: "2024-BCA-002",
-      studentName: "Priya Nair",
-      department: "Computer Applications",
-      status: "pending",
-      requestedAt: "2026-08-18 09:15 AM",
-    },
-  });
-
-  useEffect(() => {
+  const [idVerifications, setIdVerifications] = useState<Record<string, IdVerificationRecord>>(() => {
+    const defaults: Record<string, IdVerificationRecord> = {
+      "2024-BCA-001": {
+        rollNo: "2024-BCA-001",
+        studentName: "Aarav Rao",
+        department: "Data Science",
+        status: "verified",
+        verifiedBy: "Dr. Aris Thorne (HOD Computer Science)",
+        verifiedAt: "2026-08-18 10:30 AM",
+      },
+      "2024-BCA-002": {
+        rollNo: "2024-BCA-002",
+        studentName: "Priya Nair",
+        department: "Computer Applications",
+        status: "pending",
+        requestedAt: "2026-08-18 09:15 AM",
+      },
+    };
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem("vscms_id_verifications");
         if (raw) {
-          const parsed = JSON.parse(raw);
-          setIdVerifications((prev) => ({ ...prev, ...parsed }));
+          return { ...defaults, ...JSON.parse(raw) };
         }
       } catch {}
     }
-  }, []);
+    return defaults;
+  });
 
   const requestStudentVerification = (rollNo: string) => {
     const student = students.find((s) => s.rollNo === rollNo) || user;
@@ -327,19 +338,15 @@ export default function VscmsErpApp() {
     );
   };
 
-  const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>(initialAuditLogs);
-
-  useEffect(() => {
+  const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>(() => {
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem("vscms_audit_logs");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          setAuditLogs(parsed);
-        }
+        if (raw) return JSON.parse(raw);
       } catch {}
     }
-  }, []);
+    return initialAuditLogs;
+  });
 
   const addAuditLog = (
     action: string,
@@ -350,7 +357,7 @@ export default function VscmsErpApp() {
     severity: "info" | "warning" | "critical" = "info"
   ) => {
     const newLog: AuditLogRecord = {
-      id: Date.now(),
+      id: createUniqueId(),
       user: user?.name ? `${user.name} (${user.role === "admin" ? "Admin" : user.role === "faculty" ? "Faculty" : "Student"})` : "System Administrator",
       userRole: user?.role || "system",
       action,
@@ -379,22 +386,28 @@ export default function VscmsErpApp() {
     toast("info", "Audit Logs Reset", "Audit trail logs cleared successfully.");
   };
 
-  const [campusEvents, setCampusEvents] = useState<CampusEvent[]>(initialCampusEvents);
-  const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>(initialEventRegistrations);
-
-  useEffect(() => {
+  const [campusEvents, setCampusEvents] = useState<CampusEvent[]>(() => {
     if (typeof window !== "undefined") {
       try {
         const rawE = localStorage.getItem("vscms_campus_events");
-        if (rawE) setCampusEvents(JSON.parse(rawE));
-        const rawR = localStorage.getItem("vscms_event_registrations");
-        if (rawR) setEventRegistrations(JSON.parse(rawR));
+        if (rawE) return JSON.parse(rawE);
       } catch {}
     }
-  }, []);
+    return initialCampusEvents;
+  });
+
+  const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const rawR = localStorage.getItem("vscms_event_registrations");
+        if (rawR) return JSON.parse(rawR);
+      } catch {}
+    }
+    return initialEventRegistrations;
+  });
 
   const addCampusEvent = (e: Partial<CampusEvent>) => {
-    const newId = Date.now();
+    const newId = createUniqueId();
     const newEvt: CampusEvent = {
       id: newId,
       title: e.title || "Campus Event",
@@ -571,6 +584,7 @@ export default function VscmsErpApp() {
     let ignore = false;
     (async () => {
       try {
+        let hasSavedSession = false;
         if (typeof window !== "undefined") {
           try {
             const rawSession = localStorage.getItem("vscms_session");
@@ -580,20 +594,24 @@ export default function VscmsErpApp() {
                 setUser(savedUser);
                 setRole(savedRole);
                 setLoggedIn(true);
+                hasSavedSession = true;
               }
             }
           } catch {}
         }
 
-        const session = await fetch("/api/auth/me");
-        if (session.ok) {
-          const { user: signedInUser } = await session.json();
-          if (ignore) return;
-          setUser(signedInUser);
-          setRole(signedInUser.role);
-          setLoggedIn(true);
-          if (typeof window !== "undefined") {
-            try { localStorage.setItem("vscms_session", JSON.stringify({ user: signedInUser, role: signedInUser.role })); } catch {}
+        if (!hasSavedSession) {
+          const session = await fetch("/api/auth/me").catch(() => null);
+          if (session && session.ok) {
+            const body = await session.json().catch(() => null);
+            if (body?.user && !ignore) {
+              setUser(body.user);
+              setRole(body.user.role);
+              setLoggedIn(true);
+              if (typeof window !== "undefined") {
+                try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: body.user.role })); } catch {}
+              }
+            }
           }
         }
         const data = await fetchAllData();
@@ -1226,6 +1244,7 @@ export default function VscmsErpApp() {
           ) : role === "admin" ? (
             <AdminDashboard
               currentTab={tab}
+              currentUser={user}
               students={students}
               faculty={faculty}
               courses={courses}

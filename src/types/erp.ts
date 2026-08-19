@@ -1,10 +1,12 @@
 export type UserRole = "admin" | "faculty" | "student";
+export type SubRole = "dean" | "hod" | "coordinator" | "teacher" | "student";
 
 export interface User {
   id: number;
   name: string;
   email: string;
   role: UserRole;
+  subRole?: SubRole;
   rollNo: string;
   rollNoOrEmpId?: string;
   department: string;
@@ -15,6 +17,21 @@ export interface User {
   gpa?: string | null;
   status: string;
   createdAt?: string;
+}
+
+export function canAlterStudentRecords(user: User | null | undefined): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  if (user.subRole === "dean" || user.subRole === "hod" || user.subRole === "coordinator") return true;
+  if (user.subRole === "teacher") return false;
+  if (user.role === "faculty") {
+    const des = (user.designation || "").toLowerCase();
+    if (des.includes("hod") || des.includes("director") || des.includes("coordinator") || des.includes("head") || des.includes("lead")) {
+      return true;
+    }
+    return false;
+  }
+  return false;
 }
 
 export interface Department {
