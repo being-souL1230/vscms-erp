@@ -163,35 +163,35 @@ async function fetchAllData(force = false, attempt = 0): Promise<AppData> {
       fetchJson("/api/fee-payments"),
       fetchJson("/api/course-materials"),
     ]);
-  return {
-    students: Array.isArray(s) && s.length > 0 ? s : initialUsers.filter((u) => u.role === "student"),
-    faculty: Array.isArray(f) && f.length > 0 ? f : initialUsers.filter((u) => u.role === "faculty"),
-    courses: Array.isArray(c) && c.length > 0 ? c : initialCourses,
-    attendance: Array.isArray(a) && a.length > 0 ? a : (initialAttendance as unknown as AttendanceRecord[]),
-    grades: Array.isArray(g) && g.length > 0 ? g : [],
-    fees: Array.isArray(fe) && fe.length > 0 ? fe : (initialFees as unknown as FeeRecord[]),
-    feeStructures: Array.isArray(fst) && fst.length > 0 ? fst : [],
-    feePayments: Array.isArray(fp) && fp.length > 0 ? fp : [],
-    notices: Array.isArray(n) && n.length > 0 ? n : initialNotices,
-    assignments: Array.isArray(as?.assignments) && as.assignments.length > 0 ? as.assignments : [],
-    submissions: Array.isArray(as?.submissions) ? as.submissions : [],
-    timetable: Array.isArray(tt) && tt.length > 0 ? tt : [],
-    departments: Array.isArray(dp) && dp.length > 0 ? dp : initialDepartments,
-    leaves: Array.isArray(lv) && lv.length > 0 ? lv : [],
-    admissions: Array.isArray(ad) && ad.length > 0 ? ad : (initialAdmissions as unknown as AdmissionInfo[]),
-    documents: Array.isArray(dc) && dc.length > 0 ? dc : (initialDocuments as unknown as StudentDocument[]),
-    sections: Array.isArray(se) && se.length > 0 ? se : [],
-    semesters: Array.isArray(sm) && sm.length > 0 ? sm : [],
-    sessions: Array.isArray(ss) && ss.length > 0 ? ss : [],
-    exams: Array.isArray(ex) && ex.length > 0 ? ex : [],
-    examDefs: Array.isArray(em) && em.length > 0 ? em : [],
-    internalMarks: Array.isArray(im) && im.length > 0 ? im : (initialInternalMarks as unknown as InternalMark[]),
-    permissions: Array.isArray(pm) && pm.length > 0 ? pm : [],
-    allUsers: Array.isArray(us) && us.length > 0 ? us : initialUsers,
-    enrollments: Array.isArray(en) && en.length > 0 ? en : [],
-    facultyAttendance: Array.isArray(fa) && fa.length > 0 ? fa : [],
-    courseMaterials: Array.isArray(cm) && cm.length > 0 ? cm : initialCourseMaterials,
-  };
+    return {
+      students: Array.isArray(s) && s.length > 0 ? s : initialUsers.filter((u) => u.role === "student"),
+      faculty: Array.isArray(f) && f.length > 0 ? f : initialUsers.filter((u) => u.role === "faculty"),
+      courses: Array.isArray(c) && c.length > 0 ? c : initialCourses,
+      attendance: Array.isArray(a) && a.length > 0 ? a : (initialAttendance as unknown as AttendanceRecord[]),
+      grades: Array.isArray(g) && g.length > 0 ? g : [],
+      fees: Array.isArray(fe) && fe.length > 0 ? fe : (initialFees as unknown as FeeRecord[]),
+      feeStructures: Array.isArray(fst) && fst.length > 0 ? fst : [],
+      feePayments: Array.isArray(fp) && fp.length > 0 ? fp : [],
+      notices: Array.isArray(n) && n.length > 0 ? n : initialNotices,
+      assignments: Array.isArray(as?.assignments) && as.assignments.length > 0 ? as.assignments : [],
+      submissions: Array.isArray(as?.submissions) ? as.submissions : [],
+      timetable: Array.isArray(tt) && tt.length > 0 ? tt : [],
+      departments: Array.isArray(dp) && dp.length > 0 ? dp : initialDepartments,
+      leaves: Array.isArray(lv) && lv.length > 0 ? lv : [],
+      admissions: Array.isArray(ad) && ad.length > 0 ? ad : (initialAdmissions as unknown as AdmissionInfo[]),
+      documents: Array.isArray(dc) && dc.length > 0 ? dc : (initialDocuments as unknown as StudentDocument[]),
+      sections: Array.isArray(se) && se.length > 0 ? se : [],
+      semesters: Array.isArray(sm) && sm.length > 0 ? sm : [],
+      sessions: Array.isArray(ss) && ss.length > 0 ? ss : [],
+      exams: Array.isArray(ex) && ex.length > 0 ? ex : [],
+      examDefs: Array.isArray(em) && em.length > 0 ? em : [],
+      internalMarks: Array.isArray(im) && im.length > 0 ? im : (initialInternalMarks as unknown as InternalMark[]),
+      permissions: Array.isArray(pm) && pm.length > 0 ? pm : [],
+      allUsers: Array.isArray(us) && us.length > 0 ? us : initialUsers,
+      enrollments: Array.isArray(en) && en.length > 0 ? en : [],
+      facultyAttendance: Array.isArray(fa) && fa.length > 0 ? fa : [],
+      courseMaterials: Array.isArray(cm) && cm.length > 0 ? cm : initialCourseMaterials,
+    };
   } catch (e) {
     if (attempt < 2) {
       await new Promise((r) => setTimeout(r, 6000 * (attempt + 1)));
@@ -259,7 +259,7 @@ export default function VscmsErpApp() {
         if (raw) {
           return { ...defaults, ...JSON.parse(raw) };
         }
-      } catch {}
+      } catch { }
     }
     return defaults;
   });
@@ -276,7 +276,7 @@ export default function VscmsErpApp() {
     setIdVerifications((prev) => {
       const updated = { ...prev, [rollNo]: newRecord };
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -296,7 +296,7 @@ export default function VscmsErpApp() {
     setIdVerifications((prev) => {
       const updated = { ...prev, [rollNo]: updatedRecord };
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -323,7 +323,7 @@ export default function VscmsErpApp() {
     setIdVerifications((prev) => {
       const updated = { ...prev, [rollNo]: updatedRecord };
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_id_verifications", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -343,7 +343,7 @@ export default function VscmsErpApp() {
       try {
         const raw = localStorage.getItem("vscms_audit_logs");
         if (raw) return JSON.parse(raw);
-      } catch {}
+      } catch { }
     }
     return initialAuditLogs;
   });
@@ -372,7 +372,7 @@ export default function VscmsErpApp() {
     setAuditLogs((prev) => {
       const updated = [newLog, ...prev];
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_audit_logs", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_audit_logs", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -381,7 +381,7 @@ export default function VscmsErpApp() {
   const clearAuditLogs = () => {
     setAuditLogs([]);
     if (typeof window !== "undefined") {
-      try { localStorage.removeItem("vscms_audit_logs"); } catch {}
+      try { localStorage.removeItem("vscms_audit_logs"); } catch { }
     }
     toast("info", "Audit Logs Reset", "Audit trail logs cleared successfully.");
   };
@@ -391,7 +391,7 @@ export default function VscmsErpApp() {
       try {
         const rawE = localStorage.getItem("vscms_campus_events");
         if (rawE) return JSON.parse(rawE);
-      } catch {}
+      } catch { }
     }
     return initialCampusEvents;
   });
@@ -401,7 +401,7 @@ export default function VscmsErpApp() {
       try {
         const rawR = localStorage.getItem("vscms_event_registrations");
         if (rawR) return JSON.parse(rawR);
-      } catch {}
+      } catch { }
     }
     return initialEventRegistrations;
   });
@@ -424,7 +424,7 @@ export default function VscmsErpApp() {
     setCampusEvents((prev) => {
       const updated = [newEvt, ...prev];
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_campus_events", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_campus_events", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -444,7 +444,7 @@ export default function VscmsErpApp() {
     setEventRegistrations((prev) => {
       const updated = [...newRegs, ...prev];
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -457,7 +457,7 @@ export default function VscmsErpApp() {
     setCampusEvents((prev) => {
       const updated = prev.map((evt) => (evt.id === eventId ? { ...evt, coordinators } : evt));
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_campus_events", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_campus_events", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -478,7 +478,7 @@ export default function VscmsErpApp() {
         return r;
       });
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -501,7 +501,7 @@ export default function VscmsErpApp() {
         return r;
       });
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -513,7 +513,7 @@ export default function VscmsErpApp() {
     setEventRegistrations((prev) => {
       const updated = prev.map((r) => (r.id === regId ? { ...r, attendanceStatus: "rejected" as const } : r));
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_event_registrations", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -567,7 +567,7 @@ export default function VscmsErpApp() {
       try {
         const raw = localStorage.getItem("vscms_course_materials");
         if (raw) localSaved = JSON.parse(raw);
-      } catch {}
+      } catch { }
     }
     const combined = [...(data.courseMaterials || []), ...localSaved];
     const uniqueMap = new Map<number, CourseMaterial>();
@@ -594,7 +594,7 @@ export default function VscmsErpApp() {
                 hasSavedSession = true;
               }
             }
-          } catch {}
+          } catch { }
         }
 
         const session = await fetch("/api/auth/me").catch(() => null);
@@ -605,7 +605,7 @@ export default function VscmsErpApp() {
             setRole(body.user.role);
             setLoggedIn(true);
             if (typeof window !== "undefined") {
-              try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: body.user.role })); } catch {}
+              try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: body.user.role })); } catch { }
             }
           }
         }
@@ -629,7 +629,7 @@ export default function VscmsErpApp() {
     const targetUser = (allUsers || []).find((u) => u.role === r) || PROFILES[r];
     setUser(targetUser);
     if (typeof window !== "undefined") {
-      try { localStorage.setItem("vscms_session", JSON.stringify({ user: targetUser, role: r })); } catch {}
+      try { localStorage.setItem("vscms_session", JSON.stringify({ user: targetUser, role: r })); } catch { }
     }
     fetch("/api/auth/demo", {
       method: "POST",
@@ -641,13 +641,13 @@ export default function VscmsErpApp() {
         if (body?.user) {
           setUser(body.user);
           if (typeof window !== "undefined") {
-            try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: r })); } catch {}
+            try { localStorage.setItem("vscms_session", JSON.stringify({ user: body.user, role: r })); } catch { }
           }
           const freshData = await fetchAllData().catch(() => null);
           if (freshData) applyData(freshData);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     toast(
       "info",
@@ -1090,7 +1090,7 @@ export default function VscmsErpApp() {
     setCourseMaterials((prev) => {
       const updated = [targetMaterial, ...prev.filter((p) => p.id !== targetMaterial.id)];
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_course_materials", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_course_materials", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -1100,11 +1100,11 @@ export default function VscmsErpApp() {
   const deleteCourseMaterial = async (id: number) => {
     try {
       await fetch(`/api/course-materials?id=${id}`, { method: "DELETE" });
-    } catch {}
+    } catch { }
     setCourseMaterials((prev) => {
       const updated = prev.filter((m) => m.id !== id);
       if (typeof window !== "undefined") {
-        try { localStorage.setItem("vscms_course_materials", JSON.stringify(updated)); } catch {}
+        try { localStorage.setItem("vscms_course_materials", JSON.stringify(updated)); } catch { }
       }
       return updated;
     });
@@ -1118,7 +1118,7 @@ export default function VscmsErpApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-    } catch {}
+    } catch { }
     setCourseMaterials((prev) =>
       prev.map((m) => (m.id === id ? { ...m, downloadCount: m.downloadCount + 1 } : m))
     );
@@ -1135,7 +1135,7 @@ export default function VscmsErpApp() {
             setTab("overview");
             setLoggedIn(true);
             if (typeof window !== "undefined") {
-              try { localStorage.setItem("vscms_session", JSON.stringify({ user: u, role: r })); } catch {}
+              try { localStorage.setItem("vscms_session", JSON.stringify({ user: u, role: r })); } catch { }
             }
             toast("success", "Welcome", `Hello ${u.name.split(" ")[0]}!`);
             // Reload everything with the fresh session: the mount fetch ran
@@ -1196,11 +1196,11 @@ export default function VscmsErpApp() {
         activeRole={role}
         onRoleChange={switchRole}
         onLogout={async () => {
-          await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+          await fetch("/api/auth/logout", { method: "POST" }).catch(() => { });
           setUser(null);
           setLoggedIn(false);
           if (typeof window !== "undefined") {
-            try { localStorage.removeItem("vscms_session"); } catch {}
+            try { localStorage.removeItem("vscms_session"); } catch { }
           }
         }}
         onResetSeed={reseed}
