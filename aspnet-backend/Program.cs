@@ -165,6 +165,7 @@ app.MapGroup("/api/users").MapUserEndpoints();
 app.MapGroup("/api/seed").MapSeedEndpoints();
 app.MapGroup("/api/chat").MapChatEndpoints();
 app.MapGroup("/api/course-materials").MapCourseMaterialEndpoints();
+app.MapGroup("/api/competitions").MapCompetitionEndpoints();
 
 app.Run();
 

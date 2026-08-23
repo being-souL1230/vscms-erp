@@ -416,3 +416,102 @@ export interface EventQrWindow {
 }
 
 
+
+
+export interface Competition {
+  id: number;
+  title: string;
+  description: string;
+  type: "Hackathon" | "Coding Contest" | "Quiz" | "Case Competition" | "Debate" | "Presentation" | "Business Plan" | "Technical Competition";
+  regStart: string;
+  regEnd: string;
+  compDate: string;
+  teamSizeMin: number;
+  teamSizeMax: number;
+  eligibilityDept: string;
+  rules?: string;
+  problemStatements?: string;
+  submissionDeadline: string;
+  evaluationCriteria?: string;
+  prizes?: string;
+  isLeaderboardPublished: number;
+  status: "draft" | "open" | "ongoing" | "judging" | "completed";
+  createdAt?: string;
+}
+
+export interface CompetitionTeamMember {
+  id: number;
+  teamId: number;
+  userId: number;
+  userName: string;
+  email: string;
+  roleInTeam: "captain" | "member";
+  status: "invited" | "accepted" | "declined";
+  joinedAt?: string;
+}
+
+export interface CompetitionTeam {
+  id: number;
+  competitionId: number;
+  teamName: string;
+  captainId: number;
+  captainName: string;
+  isLocked: number;
+  createdAt?: string;
+  members: CompetitionTeamMember[];
+}
+
+export interface CompetitionSubmission {
+  id: number;
+  competitionId: number;
+  teamId: number;
+  teamName: string;
+  projectTitle: string;
+  description: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  pptUrl?: string;
+  screenshotsUrl?: string;
+  videoUrl?: string;
+  isLocked: number;
+  submittedAt?: string;
+}
+
+export interface CompetitionEvaluation {
+  id: number;
+  competitionId: number;
+  teamId: number;
+  teamName?: string;
+  judgeId: number;
+  judgeName: string;
+  scoreInnovation: number;
+  scoreTech: number;
+  scoreUiUx: number;
+  scoreImpact: number;
+  scorePresentation: number;
+  totalScore: number;
+  remarks?: string;
+  evaluatedAt?: string;
+}
+
+export interface CompetitionCertificate {
+  id: number;
+  competitionId: number;
+  competitionTitle: string;
+  userId: number;
+  userName: string;
+  teamName?: string;
+  certType: "winner_1st" | "winner_2nd" | "winner_3rd" | "finalist" | "participant";
+  certCode: string;
+  qrPayload: string;
+  issuedAt: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  teamId: number;
+  teamName: string;
+  projectTitle: string;
+  score: number;
+  judgeCount: number;
+}

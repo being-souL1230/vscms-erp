@@ -11,6 +11,7 @@ public static class Row
     public static long? NL(DbDataReader r, string col) => r[col] is DBNull ? null : (long)r[col];
     public static string S(DbDataReader r, string col) => (string)r[col];
     public static string? NS(DbDataReader r, string col) => r[col] is DBNull ? null : (string)r[col];
+    public static double D(DbDataReader r, string col) => Convert.ToDouble(r[col]);
 }
 
 /// <summary>Lenient JSON helpers for request bodies that arrive as arrays or objects.</summary>
@@ -218,5 +219,192 @@ public class InternalMarkDto
         Status = Row.S(r, "status"),
         Remarks = Row.NS(r, "remarks"),
         CreatedAt = Row.S(r, "created_at"),
+    };
+}
+
+public class CompetitionDto
+{
+    public long Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string Type { get; set; } = "Hackathon";
+    public string RegStart { get; set; } = "";
+    public string RegEnd { get; set; } = "";
+    public string CompDate { get; set; } = "";
+    public long TeamSizeMin { get; set; } = 1;
+    public long TeamSizeMax { get; set; } = 4;
+    public string EligibilityDept { get; set; } = "All Departments";
+    public string? Rules { get; set; }
+    public string? ProblemStatements { get; set; }
+    public string SubmissionDeadline { get; set; } = "";
+    public string? EvaluationCriteria { get; set; }
+    public string? Prizes { get; set; }
+    public long IsLeaderboardPublished { get; set; } = 0;
+    public string Status { get; set; } = "open";
+    public string CreatedAt { get; set; } = "";
+
+    public static CompetitionDto Map(DbDataReader r) => new()
+    {
+        Id = Row.L(r, "id"),
+        Title = Row.S(r, "title"),
+        Description = Row.S(r, "description"),
+        Type = Row.S(r, "type"),
+        RegStart = Row.S(r, "reg_start"),
+        RegEnd = Row.S(r, "reg_end"),
+        CompDate = Row.S(r, "comp_date"),
+        TeamSizeMin = Row.L(r, "team_size_min"),
+        TeamSizeMax = Row.L(r, "team_size_max"),
+        EligibilityDept = Row.S(r, "eligibility_dept"),
+        Rules = Row.NS(r, "rules"),
+        ProblemStatements = Row.NS(r, "problem_statements"),
+        SubmissionDeadline = Row.S(r, "submission_deadline"),
+        EvaluationCriteria = Row.NS(r, "evaluation_criteria"),
+        Prizes = Row.NS(r, "prizes"),
+        IsLeaderboardPublished = Row.L(r, "is_leaderboard_published"),
+        Status = Row.S(r, "status"),
+        CreatedAt = Row.S(r, "created_at"),
+    };
+}
+
+public class CompetitionTeamDto
+{
+    public long Id { get; set; }
+    public long CompetitionId { get; set; }
+    public string TeamName { get; set; } = "";
+    public long CaptainId { get; set; }
+    public string CaptainName { get; set; } = "";
+    public long IsLocked { get; set; } = 0;
+    public string CreatedAt { get; set; } = "";
+    public List<CompetitionTeamMemberDto> Members { get; set; } = new();
+
+    public static CompetitionTeamDto Map(DbDataReader r) => new()
+    {
+        Id = Row.L(r, "id"),
+        CompetitionId = Row.L(r, "competition_id"),
+        TeamName = Row.S(r, "team_name"),
+        CaptainId = Row.L(r, "captain_id"),
+        CaptainName = Row.S(r, "captain_name"),
+        IsLocked = Row.L(r, "is_locked"),
+        CreatedAt = Row.S(r, "created_at"),
+    };
+}
+
+public class CompetitionTeamMemberDto
+{
+    public long Id { get; set; }
+    public long TeamId { get; set; }
+    public long UserId { get; set; }
+    public string UserName { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string RoleInTeam { get; set; } = "member";
+    public string Status { get; set; } = "accepted";
+    public string JoinedAt { get; set; } = "";
+
+    public static CompetitionTeamMemberDto Map(DbDataReader r) => new()
+    {
+        Id = Row.L(r, "id"),
+        TeamId = Row.L(r, "team_id"),
+        UserId = Row.L(r, "user_id"),
+        UserName = Row.S(r, "user_name"),
+        Email = Row.S(r, "email"),
+        RoleInTeam = Row.S(r, "role_in_team"),
+        Status = Row.S(r, "status"),
+        JoinedAt = Row.S(r, "joined_at"),
+    };
+}
+
+public class CompetitionSubmissionDto
+{
+    public long Id { get; set; }
+    public long CompetitionId { get; set; }
+    public long TeamId { get; set; }
+    public string TeamName { get; set; } = "";
+    public string ProjectTitle { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string? GithubUrl { get; set; }
+    public string? DemoUrl { get; set; }
+    public string? PptUrl { get; set; }
+    public string? ScreenshotsUrl { get; set; }
+    public string? VideoUrl { get; set; }
+    public long IsLocked { get; set; } = 0;
+    public string SubmittedAt { get; set; } = "";
+
+    public static CompetitionSubmissionDto Map(DbDataReader r) => new()
+    {
+        Id = Row.L(r, "id"),
+        CompetitionId = Row.L(r, "competition_id"),
+        TeamId = Row.L(r, "team_id"),
+        TeamName = Row.S(r, "team_name"),
+        ProjectTitle = Row.S(r, "project_title"),
+        Description = Row.S(r, "description"),
+        GithubUrl = Row.NS(r, "github_url"),
+        DemoUrl = Row.NS(r, "demo_url"),
+        PptUrl = Row.NS(r, "ppt_url"),
+        ScreenshotsUrl = Row.NS(r, "screenshots_url"),
+        VideoUrl = Row.NS(r, "video_url"),
+        IsLocked = Row.L(r, "is_locked"),
+        SubmittedAt = Row.S(r, "submitted_at"),
+    };
+}
+
+public class CompetitionEvaluationDto
+{
+    public long Id { get; set; }
+    public long CompetitionId { get; set; }
+    public long TeamId { get; set; }
+    public long JudgeId { get; set; }
+    public string JudgeName { get; set; } = "";
+    public long ScoreInnovation { get; set; }
+    public long ScoreTech { get; set; }
+    public long ScoreUiUx { get; set; }
+    public long ScoreImpact { get; set; }
+    public long ScorePresentation { get; set; }
+    public double TotalScore { get; set; }
+    public string? Remarks { get; set; }
+    public string EvaluatedAt { get; set; } = "";
+
+    public static CompetitionEvaluationDto Map(DbDataReader r) => new()
+    {
+        Id = Row.L(r, "id"),
+        CompetitionId = Row.L(r, "competition_id"),
+        TeamId = Row.L(r, "team_id"),
+        JudgeId = Row.L(r, "judge_id"),
+        JudgeName = Row.S(r, "judge_name"),
+        ScoreInnovation = Row.L(r, "score_innovation"),
+        ScoreTech = Row.L(r, "score_tech"),
+        ScoreUiUx = Row.L(r, "score_uiux"),
+        ScoreImpact = Row.L(r, "score_impact"),
+        ScorePresentation = Row.L(r, "score_presentation"),
+        TotalScore = Row.D(r, "total_score"),
+        Remarks = Row.NS(r, "remarks"),
+        EvaluatedAt = Row.S(r, "evaluated_at"),
+    };
+}
+
+public class CompetitionCertificateDto
+{
+    public long Id { get; set; }
+    public long CompetitionId { get; set; }
+    public string CompetitionTitle { get; set; } = "";
+    public long UserId { get; set; }
+    public string UserName { get; set; } = "";
+    public string? TeamName { get; set; }
+    public string CertType { get; set; } = "participant";
+    public string CertCode { get; set; } = "";
+    public string QrPayload { get; set; } = "";
+    public string IssuedAt { get; set; } = "";
+
+    public static CompetitionCertificateDto Map(DbDataReader r) => new()
+    {
+        Id = Row.L(r, "id"),
+        CompetitionId = Row.L(r, "competition_id"),
+        CompetitionTitle = Row.S(r, "competition_title"),
+        UserId = Row.L(r, "user_id"),
+        UserName = Row.S(r, "user_name"),
+        TeamName = Row.NS(r, "team_name"),
+        CertType = Row.S(r, "cert_type"),
+        CertCode = Row.S(r, "cert_code"),
+        QrPayload = Row.S(r, "qr_payload"),
+        IssuedAt = Row.S(r, "issued_at"),
     };
 }

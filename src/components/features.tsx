@@ -2113,6 +2113,45 @@ export function StudentProfileTab({
           <div className="flex justify-end"><BrutalButton type="submit" tone="blood"><Check className="w-4 h-4" /> Save Admission</BrutalButton></div>
         </form>
       </div>
+
+      {/* 🏆 COMPETITION ACHIEVEMENTS & HISTORY PORTFOLIO */}
+      <div className="border-2 border-ink bg-paper-3 hard p-5 space-y-4">
+        <div className="flex items-center justify-between border-b-2 border-ink pb-3">
+          <div>
+            <span className="font-mono text-[10px] uppercase font-bold text-blood tracking-widest block">Placement & Verified Honors</span>
+            <h4 className="font-display uppercase text-lg text-ink flex items-center gap-2">
+              🏆 Competition Achievements & History
+            </h4>
+          </div>
+          <Tag tone="ink">Career Portfolio Verified</Tag>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="border-2 border-amber-600 bg-amber-50 dark:bg-amber-950/20 p-3.5 hard-sm space-y-2">
+            <div className="flex justify-between items-start text-xs font-bold">
+              <span className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 uppercase font-mono text-[10px]">🥇 1st Place Winner</span>
+              <span className="font-mono text-[10px] text-amber-700">CodeBlitz Algorithmic Challenge 2026</span>
+            </div>
+            <p className="font-serif text-xs text-ink font-semibold">Individual Algorithmic & DS Battle</p>
+            <div className="text-[10px] font-mono text-muted border-t border-amber-600/30 pt-1.5 flex justify-between">
+              <span>Code: VSCMS-CERT-2026-CODEBLITZ-101</span>
+              <span className="font-bold text-emerald-600">✓ QR Verified</span>
+            </div>
+          </div>
+
+          <div className="border-2 border-slate-600 bg-slate-100 dark:bg-slate-800/40 p-3.5 hard-sm space-y-2">
+            <div className="flex justify-between items-start text-xs font-bold">
+              <span className="px-2 py-0.5 rounded bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-slate-100 uppercase font-mono text-[10px]">🥈 2nd Place Runner-Up</span>
+              <span className="font-mono text-[10px] text-slate-600 dark:text-slate-400">National Business Case 2026</span>
+            </div>
+            <p className="font-serif text-xs text-ink font-semibold">Team Strategy Squad</p>
+            <div className="text-[10px] font-mono text-muted border-t border-slate-600/30 pt-1.5 flex justify-between">
+              <span>Code: VSCMS-CERT-2026-CASE-101</span>
+              <span className="font-bold text-emerald-600">✓ QR Verified</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

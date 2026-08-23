@@ -107,6 +107,7 @@ public static class SeedLogic
             }
 
             SeedFeeModule(conn);
+            SeedCompetitions(conn);
 
             var passwordHash = HashPassword("demo12345", 12);
             Database.Exec(conn,
@@ -781,5 +782,52 @@ public static class SeedLogic
         cmd.Parameters.AddWithValue("@maxMarks", maxMarks);
         cmd.Parameters.AddWithValue("@faculty", facultyName);
         return (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
+        return (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
+    }
+
+    private static void SeedCompetitions(NpgsqlConnection conn)
+    {
+        var count = ScalarLong(conn, "SELECT COUNT(*) FROM competitions");
+        if (count > 0) return;
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO competitions (
+                title, description, type, reg_start, reg_end, comp_date,
+                team_size_min, team_size_max, eligibility_dept, rules,
+                problem_statements, submission_deadline, evaluation_criteria, prizes, is_leaderboard_published, status
+            ) VALUES (
+                'VSCMS National Hackathon 2026',
+                'Annual flagship 24-hour hackathon bringing together top student developers to build AI & ERP innovations.',
+                'Hackathon', '2026-03-01', '2026-03-25', '2026-03-28', 2, 4, 'All Departments',
+                '1. All code must be written during the hackathon window. 2. Open source libraries allowed.',
+                'Track 1: Smart Campus AI Assistant. Track 2: Automated Fee & Accounting Ledger.',
+                '2026-03-28 18:00', 'Innovation (20), Tech (20), UI/UX (20), Impact (20), Presentation (20)',
+                '1st Place: Rs. 50,000 | 2nd Place: Rs. 30,000 | 3rd Place: Rs. 15,000', 1, 'ongoing'
+            ) RETURNING id;";
+        var compId = Convert.ToInt64(cmd.ExecuteScalar());
+
+        using var t1 = conn.CreateCommand();
+        t1.CommandText = "INSERT INTO competition_teams (competition_id, team_name, captain_id, captain_name, is_locked) VALUES (@cid, 'Code Warriors', 1, 'Aman Verma', 1) RETURNING id;";
+        t1.Parameters.AddWithValue("@cid", compId);
+        var t1Id = Convert.ToInt64(t1.ExecuteScalar());
+
+        Database.Exec(conn, "INSERT INTO competition_team_members (team_id, user_id, user_name, email, role_in_team, status) VALUES (@tid, 1, 'Aman Verma', 'aman@vscms.edu', 'captain', 'accepted')", ("tid", t1Id));
+        Database.Exec(conn, "INSERT INTO competition_team_members (team_id, user_id, user_name, email, role_in_team, status) VALUES (@tid, 2, 'Priya Sharma', 'priya@vscms.edu', 'member', 'accepted')", ("tid", t1Id));
+
+        Database.Exec(conn, @"
+            INSERT INTO competition_submissions (competition_id, team_id, team_name, project_title, description, github_url, demo_url, ppt_url, is_locked)
+            VALUES (@cid, @tid, 'Code Warriors', 'AI Smart Campus ERP', 'Automated student grade predictor and interactive AI agent.', 'https://github.com/vscms/smart-campus', 'https://smart-campus-demo.vscms.edu', 'https://vscms.edu/docs/presentation.pdf', 1)",
+            ("cid", compId), ("tid", t1Id));
+
+        Database.Exec(conn, @"
+            INSERT INTO competition_evaluations (competition_id, team_id, judge_id, judge_name, score_innovation, score_tech, score_uiux, score_impact, score_presentation, total_score, remarks)
+            VALUES (@cid, @tid, 264, 'Mrs. Shruti Agarwal', 19, 18, 19, 18, 17, 91.0, 'Outstanding technical architecture and polished presentation!')",
+            ("cid", compId), ("tid", t1Id));
+
+        Database.Exec(conn, @"
+            INSERT INTO competition_certificates (competition_id, competition_title, user_id, user_name, team_name, cert_type, cert_code, qr_payload)
+            VALUES (@cid, 'VSCMS National Hackathon 2026', 1, 'Aman Verma', 'Code Warriors', 'winner_1st', 'VSCMS-CERT-2026-HACK-01', 'VERIFIED: Winner 1st Place - VSCMS National Hackathon 2026')",
+            ("cid", compId));
     }
 }

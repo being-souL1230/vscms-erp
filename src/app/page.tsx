@@ -1,4 +1,6 @@
 "use client";
+import { CompetitionsComponent } from "@/components/competitions";
+import { initialCompetitions, initialCompetitionTeams, initialLeaderboard, initialCertificates } from "@/lib/seed-data";
 import { useState, useEffect } from "react";
 import type {
   UserRole,
@@ -30,6 +32,13 @@ import type {
   AuditLogRecord,
   CampusEvent,
   EventRegistration,
+  Competition,
+  CompetitionTeam,
+  CompetitionTeamMember,
+  CompetitionSubmission,
+  CompetitionEvaluation,
+  CompetitionCertificate,
+  LeaderboardEntry,
 } from "@/types/erp";
 import {
   initialCourseMaterials,
@@ -520,6 +529,11 @@ export default function VscmsErpApp() {
     toast("error", "Scan Rejected", "Attendance request rejected by coordinator.");
   };
 
+  const [competitions, setCompetitions] = useState<Competition[]>(initialCompetitions);
+  const [competitionTeams, setCompetitionTeams] = useState<CompetitionTeam[]>(initialCompetitionTeams);
+  const [competitionSubmissions, setCompetitionSubmissions] = useState<CompetitionSubmission[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(initialLeaderboard);
+  const [certificates, setCertificates] = useState<CompetitionCertificate[]>(initialCertificates);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -618,6 +632,7 @@ export default function VscmsErpApp() {
         if (!ignore) setLoading(false);
       }
     })();
+
     return () => {
       ignore = true;
     };
@@ -1124,6 +1139,242 @@ export default function VscmsErpApp() {
     );
   };
 
+  const handleCreateCompetition = async (compData: Partial<Competition>) => {
+    try {
+      const res = await fetch("/api/competitions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(compData),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const newComp: Competition = {
+          id: result.id || Date.now(),
+          title: compData.title || "Untitled Competition",
+          description: compData.description || "",
+          type: compData.type || "Hackathon",
+          regStart: compData.regStart || new Date().toISOString().slice(0, 10),
+          regEnd: compData.regEnd || new Date().toISOString().slice(0, 10),
+          compDate: compData.compDate || new Date().toISOString().slice(0, 10),
+          teamSizeMin: compData.teamSizeMin || 1,
+          teamSizeMax: compData.teamSizeMax || 4,
+          eligibilityDept: compData.eligibilityDept || "All Departments",
+          rules: compData.rules,
+          problemStatements: compData.problemStatements,
+          submissionDeadline: compData.submissionDeadline || compData.compDate || "",
+          prizes: compData.prizes,
+          isLeaderboardPublished: 0,
+          status: "open",
+        };
+        setCompetitions((prev) => [newComp, ...prev]);
+        toast("success", "Competition Created", `Published "${newComp.title}" successfully.`);
+        addAuditLog("Created Competition Event", "Competitions", newComp.title, "Unscheduled", "Status: Open", "info");
+      }
+    } catch {
+      const newComp: Competition = {
+        id: Date.now(),
+        title: compData.title || "Untitled Competition",
+        description: compData.description || "",
+        type: compData.type || "Hackathon",
+        regStart: compData.regStart || new Date().toISOString().slice(0, 10),
+        regEnd: compData.regEnd || new Date().toISOString().slice(0, 10),
+        compDate: compData.compDate || new Date().toISOString().slice(0, 10),
+        teamSizeMin: compData.teamSizeMin || 1,
+        teamSizeMax: compData.teamSizeMax || 4,
+        eligibilityDept: compData.eligibilityDept || "All Departments",
+        rules: compData.rules,
+        problemStatements: compData.problemStatements,
+        submissionDeadline: compData.submissionDeadline || compData.compDate || "",
+        prizes: compData.prizes,
+        isLeaderboardPublished: 0,
+        status: "open",
+      };
+      setCompetitions((prev) => [newComp, ...prev]);
+      toast("success", "Competition Created", `Published "${newComp.title}" successfully.`);
+    }
+  };
+
+  const handleCreateTeam = async (compId: number, teamName: string, memberIds: number[]) => {
+    try {
+      const res = await fetch(`/api/competitions/${compId}/teams`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamName, memberIds }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const newTeam: CompetitionTeam = {
+          id: result.id || Date.now(),
+          competitionId: compId,
+          teamName,
+          captainId: user?.id || 101,
+          captainName: user?.name || "Aarav Rao",
+          isLocked: 0,
+          members: [
+            { id: Date.now(), teamId: result.id || Date.now(), userId: user?.id || 101, userName: user?.name || "Aarav Rao", email: user?.email || "student@vscms.edu", roleInTeam: "captain", status: "accepted" },
+            ...memberIds.map((mId, i) => {
+              const memObj = students.find((s) => s.id === mId);
+              return {
+                id: Date.now() + i + 1,
+                teamId: result.id || Date.now(),
+                userId: mId,
+                userName: memObj?.name || `Member ${mId}`,
+                email: memObj?.email || "member@vscms.edu",
+                roleInTeam: "member" as const,
+                status: "invited" as const,
+              };
+            }),
+          ],
+        };
+        setCompetitionTeams((prev) => [newTeam, ...prev]);
+        toast("success", "Team Formed", `Team "${teamName}" created and invites sent.`);
+      }
+    } catch {
+      const newTeam: CompetitionTeam = {
+        id: Date.now(),
+        competitionId: compId,
+        teamName,
+        captainId: user?.id || 101,
+        captainName: user?.name || "Aarav Rao",
+        isLocked: 0,
+        members: [
+          { id: Date.now(), teamId: Date.now(), userId: user?.id || 101, userName: user?.name || "Aarav Rao", email: user?.email || "student@vscms.edu", roleInTeam: "captain", status: "accepted" },
+        ],
+      };
+      setCompetitionTeams((prev) => [newTeam, ...prev]);
+      toast("success", "Team Formed", `Team "${teamName}" created.`);
+    }
+  };
+
+  const handleRespondInvite = async (teamId: number, accept: boolean) => {
+    try {
+      await fetch(`/api/competitions/teams/${teamId}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accept }),
+      });
+    } catch { }
+    setCompetitionTeams((prev) =>
+      prev.map((t) => {
+        if (t.id === teamId) {
+          return {
+            ...t,
+            members: (t.members || []).map((m: CompetitionTeamMember) =>
+              m.userId === user?.id ? { ...m, status: accept ? "accepted" : "declined" } : m
+            ),
+          };
+        }
+        return t;
+      })
+    );
+    toast(accept ? "success" : "info", "Invite Responded", `You ${accept ? "accepted" : "declined"} the team invitation.`);
+  };
+
+  const handleLockTeam = async (teamId: number) => {
+    try {
+      await fetch(`/api/competitions/teams/${teamId}/lock`, { method: "POST" });
+    } catch { }
+    setCompetitionTeams((prev) =>
+      prev.map((t) => (t.id === teamId ? { ...t, isLocked: 1 } : t))
+    );
+    toast("success", "Team Roster Locked", "No further member changes permitted for this team.");
+  };
+
+  const handleSubmitProject = async (sub: Partial<CompetitionSubmission>) => {
+    try {
+      const res = await fetch(`/api/competitions/${sub.competitionId}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const newSub: CompetitionSubmission = {
+          id: result.id || Date.now(),
+          competitionId: sub.competitionId || 1,
+          teamId: sub.teamId || 1,
+          teamName: sub.teamName || "Team",
+          projectTitle: sub.projectTitle || "Project",
+          description: sub.description || "",
+          githubUrl: sub.githubUrl,
+          demoUrl: sub.demoUrl,
+          pptUrl: sub.pptUrl,
+          screenshotsUrl: sub.screenshotsUrl,
+          videoUrl: sub.videoUrl,
+          isLocked: 1,
+          submittedAt: new Date().toLocaleString(),
+        };
+        setCompetitionSubmissions((prev) => [newSub, ...prev.filter((s) => s.teamId !== newSub.teamId)]);
+        toast("success", "Project Submitted", `"${newSub.projectTitle}" submitted and locked into competition vault.`);
+      }
+    } catch {
+      const newSub: CompetitionSubmission = {
+        id: Date.now(),
+        competitionId: sub.competitionId || 1,
+        teamId: sub.teamId || 1,
+        teamName: sub.teamName || "Team",
+        projectTitle: sub.projectTitle || "Project",
+        description: sub.description || "",
+        githubUrl: sub.githubUrl,
+        demoUrl: sub.demoUrl,
+        pptUrl: sub.pptUrl,
+        screenshotsUrl: sub.screenshotsUrl,
+        videoUrl: sub.videoUrl,
+        isLocked: 1,
+        submittedAt: new Date().toLocaleString(),
+      };
+      setCompetitionSubmissions((prev) => [newSub, ...prev.filter((s) => s.teamId !== newSub.teamId)]);
+      toast("success", "Project Submitted", `"${newSub.projectTitle}" submitted & locked.`);
+    }
+  };
+
+  const handleEvaluateCompetition = async (evalData: Partial<CompetitionEvaluation>) => {
+    try {
+      const res = await fetch(`/api/competitions/${evalData.competitionId}/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(evalData),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        toast("success", "Evaluation Recorded", `Scored ${result.totalScore || evalData.totalScore} / 100.`);
+      }
+    } catch {
+      toast("success", "Evaluation Saved", `Recorded total score: ${evalData.totalScore} / 100.`);
+    }
+  };
+
+  const handleCheckInCompetition = async (compId: number) => {
+    try {
+      await fetch(`/api/competitions/${compId}/checkin`, { method: "POST" });
+    } catch { }
+    toast("success", "Venue Check-in Verified", "Verified physical QR attendance recorded for competition.");
+  };
+
+  const handleToggleLeaderboard = async (compId: number, published: boolean) => {
+    try {
+      await fetch(`/api/competitions/${compId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLeaderboardPublished: published ? 1 : 0 }),
+      });
+    } catch { }
+    setCompetitions((prev) =>
+      prev.map((c) => (c.id === compId ? { ...c, isLeaderboardPublished: published ? 1 : 0 } : c))
+    );
+    toast(published ? "success" : "info", published ? "Leaderboard Published" : "Leaderboard Hidden", published ? "Public leaderboard rankings are now visible to all students." : "Leaderboard reverted to draft mode.");
+  };
+
+  const handleFinalizeWinners = async (compId: number) => {
+    try {
+      await fetch(`/api/competitions/${compId}/finalize`, { method: "POST" });
+    } catch { }
+    setCompetitions((prev) =>
+      prev.map((c) => (c.id === compId ? { ...c, status: "completed", isLeaderboardPublished: 1 } : c))
+    );
+    toast("success", "Winners Declared", "Winners declared and digital QR certificates auto-generated.");
+  };
+
   if (!loggedIn) {
     return (
       <>
@@ -1138,8 +1389,6 @@ export default function VscmsErpApp() {
               try { localStorage.setItem("vscms_session", JSON.stringify({ user: u, role: r })); } catch { }
             }
             toast("success", "Welcome", `Hello ${u.name.split(" ")[0]}!`);
-            // Reload everything with the fresh session: the mount fetch ran
-            // anonymously (before login) so admin-only data would stay empty.
             try {
               const data = await fetchAllData();
               applyData(data);
@@ -1184,6 +1433,7 @@ export default function VscmsErpApp() {
       idcard: "ID Card",
       profile: "My Profile",
       admitcard: "Admit Card",
+      competitions: "Competitions",
     };
     return labels[tab] || "Dashboard";
   })();
@@ -1238,6 +1488,25 @@ export default function VscmsErpApp() {
                 Getting students, courses and fee records from local storage.
               </p>
             </div>
+          ) : tab === "competitions" ? (
+            <CompetitionsComponent
+              currentUser={user!}
+              students={students}
+              competitions={competitions}
+              teams={competitionTeams}
+              submissions={competitionSubmissions}
+              leaderboard={leaderboard}
+              certificates={certificates}
+              onCreateCompetition={handleCreateCompetition}
+              onCreateTeam={handleCreateTeam}
+              onRespondInvite={handleRespondInvite}
+              onLockTeam={handleLockTeam}
+              onSubmitProject={handleSubmitProject}
+              onEvaluate={handleEvaluateCompetition}
+              onCheckIn={handleCheckInCompetition}
+              onToggleLeaderboard={handleToggleLeaderboard}
+              onFinalizeWinners={handleFinalizeWinners}
+            />
           ) : role === "admin" ? (
             <AdminDashboard
               currentTab={tab}

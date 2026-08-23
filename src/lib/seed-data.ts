@@ -1,6 +1,6 @@
 // VSCMS - College of Management Studies
 // Indian-style seed data: BCA, MBA, BBA scholars and faculty.
-import type { User } from "@/types/erp";
+import type { User, Competition, CompetitionTeam, CompetitionSubmission, CompetitionEvaluation, CompetitionCertificate, LeaderboardEntry } from "@/types/erp";
 
 export const initialUsers: User[] = [
   {
@@ -651,4 +651,163 @@ export const initialDocuments = [
   { id: 3, studentId: 103, title: "Graduation Degree Marksheet", category: "Academic", fileName: "Rohan_Degree.pdf", mimeType: "application/pdf", fileSize: 2048000, uploadedAt: "2025-07-10", verificationStatus: "verified" as const },
   { id: 4, studentId: 104, title: "Class 12th Certificate", category: "Academic", fileName: "Meera_12th.pdf", mimeType: "application/pdf", fileSize: 980000, uploadedAt: "2025-07-12", verificationStatus: "verified" as const },
   { id: 5, studentId: 105, title: "Transfer & Migration Certificate", category: "Official", fileName: "Kabir_TC.pdf", mimeType: "application/pdf", fileSize: 1450000, uploadedAt: "2024-07-20", verificationStatus: "verified" as const },
+];
+
+export const initialCompetitions: Competition[] = [
+  {
+    id: 1,
+    title: "VSCMS National Hackathon 2026",
+    description: "Annual flagship 24-hour hackathon bringing together student developers & innovators to solve campus and industry problems.",
+    type: "Hackathon",
+    regStart: "2026-03-01",
+    regEnd: "2026-03-25",
+    compDate: "2026-03-28",
+    teamSizeMin: 2,
+    teamSizeMax: 4,
+    eligibilityDept: "All Departments",
+    rules: "1. Build original working software during hackathon window.\n2. GitHub repository must be public.\n3. Plagiarism leads to instant disqualification.",
+    problemStatements: "Track 1: AI ERP Copilot & Smart Assistant\nTrack 2: Blockchain Verified Student Records\nTrack 3: Real-Time Attendance & Access Gate",
+    submissionDeadline: "2026-03-28 18:00",
+    evaluationCriteria: "Innovation (20), Technical (20), UI/UX (20), Impact (20), Presentation (20)",
+    prizes: "🥇 1st: ₹50,000 | 🥈 2nd: ₹30,000 | 🥉 3rd: ₹15,000",
+    isLeaderboardPublished: 1,
+    status: "ongoing",
+    createdAt: "2026-03-01 10:00:00"
+  },
+  {
+    id: 2,
+    title: "CodeBlitz Algorithmic Challenge 2026",
+    description: "High-speed competitive coding battle testing speed, logic, and data structure optimizations.",
+    type: "Coding Contest",
+    regStart: "2026-02-10",
+    regEnd: "2026-02-20",
+    compDate: "2026-02-22",
+    teamSizeMin: 1,
+    teamSizeMax: 1,
+    eligibilityDept: "BCA (CSJM), BCA (MCU)",
+    rules: "Individual contest. Standard competitive coding environment rules.",
+    problemStatements: "5 Algorithmic challenges ranging from Graph Algorithms to Dynamic Programming.",
+    submissionDeadline: "2026-02-22 17:00",
+    evaluationCriteria: "Automated test cases passed + Execution time efficiency",
+    prizes: "🥇 1st: ₹10,000 + Medal | 🥈 2nd: ₹5,000",
+    isLeaderboardPublished: 1,
+    status: "completed",
+    createdAt: "2026-02-10 09:00:00"
+  },
+  {
+    id: 3,
+    title: "National Business Case Competition 2026",
+    description: "Formulate strategic marketing & financial turnarounds for real-world enterprise case studies.",
+    type: "Case Competition",
+    regStart: "2026-04-01",
+    regEnd: "2026-04-15",
+    compDate: "2026-04-20",
+    teamSizeMin: 2,
+    teamSizeMax: 4,
+    eligibilityDept: "MBA, BBA",
+    rules: "Executive presentation decks required in PDF format.",
+    problemStatements: "Corporate Valuation & ESG Transformation Strategy for Tech Logistics.",
+    submissionDeadline: "2026-04-20 12:00",
+    evaluationCriteria: "Financial Analysis (30), Innovation (30), Pitch Presentation (40)",
+    prizes: "🥇 1st: ₹25,000 + Internship Interview",
+    isLeaderboardPublished: 0,
+    status: "open",
+    createdAt: "2026-04-01 08:00:00"
+  }
+];
+
+export const initialCompetitionTeams: CompetitionTeam[] = [
+  {
+    id: 1,
+    competitionId: 1,
+    teamName: "Code Warriors",
+    captainId: 101,
+    captainName: "Aarav Rao",
+    isLocked: 1,
+    createdAt: "2026-03-05 14:20:00",
+    members: [
+      { id: 1, teamId: 1, userId: 101, userName: "Aarav Rao", email: "aarav.r@vscms.edu", roleInTeam: "captain", status: "accepted" },
+      { id: 2, teamId: 1, userId: 102, userName: "Priya Nair", email: "priya.n@vscms.edu", roleInTeam: "member", status: "accepted" },
+      { id: 3, teamId: 1, userId: 103, userName: "Rohan Das", email: "rohan.d@vscms.edu", roleInTeam: "member", status: "invited" }
+    ]
+  },
+  {
+    id: 2,
+    competitionId: 1,
+    teamName: "Tech Titans",
+    captainId: 104,
+    captainName: "Meera Iyer",
+    isLocked: 1,
+    createdAt: "2026-03-06 11:10:00",
+    members: [
+      { id: 4, teamId: 2, userId: 104, userName: "Meera Iyer", email: "meera.i@vscms.edu", roleInTeam: "captain", status: "accepted" },
+      { id: 5, teamId: 2, userId: 105, userName: "Kabir Shah", email: "kabir.s@vscms.edu", roleInTeam: "member", status: "accepted" }
+    ]
+  }
+];
+
+export const initialCompetitionSubmissions: CompetitionSubmission[] = [
+  {
+    id: 1,
+    competitionId: 1,
+    teamId: 1,
+    teamName: "Code Warriors",
+    projectTitle: "Smart Campus AI ERP Copilot",
+    description: "An autonomous AI assistant integrated into college ERP for instant attendance queries, automated grading, and financial ledger breakdown.",
+    githubUrl: "https://github.com/vscms-org/smart-campus-ai",
+    demoUrl: "https://ai-erp.vscms.edu",
+    pptUrl: "https://vscms.edu/docs/code-warriors-deck.pdf",
+    screenshotsUrl: "https://vscms.edu/assets/demo-ui.png",
+    videoUrl: "https://youtube.com/watch?v=demo_warriors",
+    isLocked: 1,
+    submittedAt: "2026-03-28 16:45:00"
+  },
+  {
+    id: 2,
+    competitionId: 1,
+    teamId: 2,
+    teamName: "Tech Titans",
+    projectTitle: "Placement Predictor & Career Vault",
+    description: "Machine learning platform analyzing student academic performance, hackathons, and certifications to predict campus placement readiness.",
+    githubUrl: "https://github.com/vscms-org/career-vault",
+    demoUrl: "https://placement.vscms.edu",
+    pptUrl: "https://vscms.edu/docs/tech-titans-presentation.pdf",
+    screenshotsUrl: "https://vscms.edu/assets/titans-screen.png",
+    videoUrl: "https://youtube.com/watch?v=demo_titans",
+    isLocked: 1,
+    submittedAt: "2026-03-28 17:30:00"
+  }
+];
+
+export const initialLeaderboard: LeaderboardEntry[] = [
+  { rank: 1, teamId: 1, teamName: "Code Warriors", projectTitle: "Smart Campus AI ERP Copilot", score: 91.4, judgeCount: 3 },
+  { rank: 2, teamId: 2, teamName: "Tech Titans", projectTitle: "Placement Predictor & Career Vault", score: 86.8, judgeCount: 3 },
+  { rank: 3, teamId: 3, teamName: "ByteForce", projectTitle: "Blockchain Verified Ledger", score: 82.5, judgeCount: 2 }
+];
+
+export const initialCertificates: CompetitionCertificate[] = [
+  {
+    id: 1,
+    competitionId: 2,
+    competitionTitle: "CodeBlitz Algorithmic Challenge 2026",
+    userId: 101,
+    userName: "Aarav Rao",
+    teamName: "Code Warriors",
+    certType: "winner_1st",
+    certCode: "VSCMS-CERT-2026-CODEBLITZ-101",
+    qrPayload: "VERIFIED: 1st Place Winner - CodeBlitz Algorithmic Challenge 2026 - Aarav Rao | Cert: VSCMS-CERT-2026-CODEBLITZ-101",
+    issuedAt: "2026-02-23 10:00:00"
+  },
+  {
+    id: 2,
+    competitionId: 2,
+    competitionTitle: "National Business Case Competition 2026",
+    userId: 101,
+    userName: "Aarav Rao",
+    teamName: "Strategy Squad",
+    certType: "winner_2nd",
+    certCode: "VSCMS-CERT-2026-CASE-101",
+    qrPayload: "VERIFIED: 2nd Place Runner-Up - National Business Case Competition 2026 - Aarav Rao | Cert: VSCMS-CERT-2026-CASE-101",
+    issuedAt: "2026-01-15 14:30:00"
+  }
 ];

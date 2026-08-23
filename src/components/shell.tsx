@@ -728,6 +728,7 @@ export function Sidebar({
         { id: "attendance", label: "Attendance", mark: "16" },
         { id: "audit", label: "Audit & Activity Logs", mark: "17" },
         { id: "events", label: "Event Attendance", mark: "18" },
+        { id: "competitions", label: "Competitions", mark: "19" },
       ];
     if (activeRole === "faculty")
       return [
@@ -751,6 +752,7 @@ export function Sidebar({
         { id: "fees", label: "Fees", mark: "13" },
         { id: "idverifications", label: "ID Verifications", mark: "14" },
         { id: "events", label: "Event Attendance", mark: "15" },
+        { id: "competitions", label: "Competitions", mark: "16" },
       ];
     return [
       { id: "overview", label: "My Dashboard", mark: "01" },
@@ -774,6 +776,7 @@ export function Sidebar({
       { id: "profile", label: "My Profile", mark: "14" },
       { id: "admitcard", label: "Admit Card", mark: "15" },
       { id: "events", label: "Event Attendance", mark: "16" },
+      { id: "competitions", label: "Competitions", mark: "17" },
     ];
   })();
 
