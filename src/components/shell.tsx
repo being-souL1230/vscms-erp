@@ -1031,16 +1031,6 @@ export function LoginPage({
                 College of Management Studies official administrative portal. Access student records, governance, competitions, and system settings.
               </p>
             </div>
-
-            <div className="mt-8 border-2 border-paper/30 bg-white/5 p-4 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Shield className="w-6 h-6 text-emerald-400 shrink-0" />
-                <div>
-                  <p className="font-mono text-xs font-bold text-paper uppercase tracking-wider">Super Admin Console</p>
-                  <p className="font-sans text-[11px] text-paper/70">Single administrative account for institution control</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* RIGHT - login form */}
