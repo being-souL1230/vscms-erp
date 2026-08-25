@@ -431,7 +431,7 @@ export function AdminUsersTab({
         kicker="Identity Office"
         title="User &"
         accent="Role Management"
-        sub="Change roles, activate accounts and reset passwords."
+        sub="Manage roles and activate or suspend user accounts."
         right={
           <div className="flex gap-2">
             <Tag tone="blood">{users.filter((u) => u.role === "admin").length} admins</Tag>
@@ -445,7 +445,7 @@ export function AdminUsersTab({
       </Field>
       <div className="border-2 border-ink overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr><th className={TH}>User</th><th className={TH}>Department</th><th className={TH}>Role</th><th className={TH}>Status</th><th className={TH}>Reset Password</th></tr></thead>
+          <thead><tr><th className={TH}>User</th><th className={TH}>Department</th><th className={TH}>Role</th><th className={TH}>Status</th></tr></thead>
           <tbody>
             {filtered.map((u) => (
               <tr key={u.id} className="border-b-2 border-ink/10">
@@ -480,31 +480,9 @@ export function AdminUsersTab({
                     {u.status}
                   </button>
                 </td>
-                <td className={TD}>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="password"
-                      placeholder="new password"
-                      className={`${INPUT} !w-36`}
-                      value={pw[u.id] || ""}
-                      onChange={(e) => setPw({ ...pw, [u.id]: e.target.value })}
-                    />
-                    <button
-                      onClick={() => {
-                        if (!pw[u.id] || pw[u.id].length < 6) return;
-                        onUpdateUser({ id: u.id, password: pw[u.id] });
-                        setPw({ ...pw, [u.id]: "" });
-                      }}
-                      disabled={!pw[u.id] || pw[u.id].length < 6}
-                      className="border-2 border-ink p-1.5 hover:bg-ink hover:text-paper press disabled:opacity-40"
-                    >
-                      <KeyRound className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={5}><div className="p-6"><EmptyState label="No users found" /></div></td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={4}><div className="p-6"><EmptyState label="No users found" /></div></td></tr>}
           </tbody>
         </table>
       </div>
