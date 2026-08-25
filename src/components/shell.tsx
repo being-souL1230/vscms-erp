@@ -23,7 +23,7 @@ import {
   Printer,
   Menu,
 } from "lucide-react";
-import type { UserRole, User, Notice, Course, FeeRecord, FeeStructure, FeePayment } from "@/types/erp";
+import type { UserRole, SubRole, User, Notice, Course, FeeRecord, FeeStructure, FeePayment } from "@/types/erp";
 import { feeRemaining } from "@/types/erp";
 import { initialUsers } from "@/lib/seed-data";
 
@@ -1501,29 +1501,44 @@ export function FacultyModal({
   const [email, setEmail] = useState(initialData?.email || "");
   const [empId, setEmpId] = useState(initialData?.rollNoOrEmpId || "");
   const [dept, setDept] = useState(initialData?.department || "BCA (CSJM)");
-  const [designation, setDesignation] = useState(initialData?.designation || "Assistant Professor");
+  const [subRole, setSubRole] = useState<SubRole>(initialData?.subRole || "teacher");
+  const [designation, setDesignation] = useState(initialData?.designation || "Assistant Professor & Subject Teacher");
   const [phone, setPhone] = useState(initialData?.phone || "+91 11 4011 9000");
 
   if (!isOpen) return null;
+
+  const handleSubRoleChange = (newSubRole: SubRole) => {
+    setSubRole(newSubRole);
+    if (!initialData) {
+      if (newSubRole === "hod") setDesignation("Professor & HOD");
+      else if (newSubRole === "coordinator") setDesignation("Associate Professor & Class Coordinator");
+      else setDesignation("Assistant Professor & Subject Teacher");
+    }
+  };
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit({
       id: initialData?.id,
       name,
       email,
+      role: "faculty",
+      subRole,
       rollNoOrEmpId: empId.trim() || `FAC-${Math.floor(100 + Math.random() * 900)}`,
       department: dept,
       designation,
       phone,
     });
   };
+
   return (
     <Overlay onClose={onClose}>
-      <ModalHeader title={initialData ? "Edit Teacher" : "Add Teacher"} tag="FORM - TCH-03" onClose={onClose} />
+      <ModalHeader title={initialData ? "Edit Faculty Member" : "Register New Faculty"} tag="FORM - TCH-03" onClose={onClose} />
       <form onSubmit={submit} className="p-5 space-y-3.5">
         <Field label="Full Name">
           <input className={INPUT} value={name} onChange={(e) => setName(e.target.value)} required />
         </Field>
+
         <div className="grid grid-cols-2 gap-3">
           <Field label="Email">
             <input type="email" className={INPUT} value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -1532,23 +1547,37 @@ export function FacultyModal({
             <input className={INPUT} value={empId} onChange={(e) => setEmpId(e.target.value)} placeholder="auto e.g. FAC-102" />
           </Field>
         </div>
-        <Field label="Department">
-          <select className={INPUT} value={dept} onChange={(e) => setDept(e.target.value)}>
-            <option>BCA (CSJM)</option>
-            <option>BCA (MCU)</option>
-            <option>MBA</option>
-            <option>BBA</option>
+
+        <Field label="Faculty Role & Authorization Level">
+          <select className={INPUT + " font-mono font-bold text-xs"} value={subRole} onChange={(e) => handleSubRoleChange(e.target.value as SubRole)}>
+            <option value="teacher">Subject Teacher - Lecture Attendance & Course Materials Only</option>
+            <option value="coordinator">Class Coordinator - Batch Management & Attendance Supervision</option>
+            <option value="hod">Head of Department (HOD) - Department Governance & Record Altering</option>
           </select>
         </Field>
-        <Field label="Designation">
-          <input className={INPUT} value={designation} onChange={(e) => setDesignation(e.target.value)} />
-        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Department">
+            <select className={INPUT} value={dept} onChange={(e) => setDept(e.target.value)}>
+              <option>BCA (CSJM)</option>
+              <option>BCA (MCU)</option>
+              <option>MBA</option>
+              <option>BBA</option>
+            </select>
+          </Field>
+
+          <Field label="Official Designation">
+            <input className={INPUT} value={designation} onChange={(e) => setDesignation(e.target.value)} required />
+          </Field>
+        </div>
+
         <Field label="Phone Number">
           <input className={INPUT} value={phone} onChange={(e) => setPhone(e.target.value)} />
         </Field>
+
         <div className="flex justify-end gap-2 pt-2 border-t-2 border-dashed border-ink/30">
           <BrutalButton tone="ghost" onClick={onClose}>Cancel</BrutalButton>
-          <BrutalButton type="submit" tone="blood">{initialData ? "Update" : "Add Teacher"}</BrutalButton>
+          <BrutalButton type="submit" tone="blood">{initialData ? "Update Authorization" : "Register Faculty"}</BrutalButton>
         </div>
       </form>
     </Overlay>
