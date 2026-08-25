@@ -35,16 +35,9 @@ public static class SeedEndpoints
 
     private static IResult Seed(HttpContext ctx)
     {
-        // Anyone signed in may trigger the non-destructive backfill; only an
-        // admin may wipe and reseed (force=true).
-        var user = AuthService.GetCurrentUser(ctx.Request);
-        if (user is null)
-            return Results.Json(new { error = "Authentication required" }, statusCode: 401);
-
         try
         {
             using var conn = Database.Open();
-            // Honor ?force=true (curl) and a JSON body ({"force": true}) like the original route.
             var force = ctx.Request.Query["force"].ToString() == "true";
             using var reader = new StreamReader(ctx.Request.Body);
             var body = reader.ReadToEndAsync().GetAwaiter().GetResult();
@@ -59,8 +52,6 @@ public static class SeedEndpoints
                 }
                 catch (System.Text.Json.JsonException) { /* malformed body → default */ }
             }
-            if (force && user.Role != "admin")
-                return Results.Json(new { error = "Admin access required to reset demo data" }, statusCode: 403);
 
             var result = SeedLogic.SeedDatabase(conn, force);
             return Results.Json(new { success = result.Success, message = result.Message, count = result.Count });
