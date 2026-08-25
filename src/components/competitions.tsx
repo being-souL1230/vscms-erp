@@ -302,46 +302,13 @@ export function CompetitionsComponent({
   const [scorePresentation, setScorePresentation] = useState(17);
   const [judgeRemarks, setJudgeRemarks] = useState("Outstanding architecture, clean execution & real-world utility!");
 
-  const [evaluations, setEvaluations] = useState<CompetitionEvaluation[]>([
-    {
-      id: 1,
-      competitionId: 1,
-      teamId: 1,
-      teamName: "Code Warriors",
-      judgeId: currentUser.id,
-      judgeName: currentUser.name || "Dr. Aris Thorne",
-      scoreInnovation: 19,
-      scoreTech: 19,
-      scoreUiUx: 18,
-      scoreImpact: 18,
-      scorePresentation: 18,
-      totalScore: 92,
-      remarks: "Exceptional architecture with robust real-time synchronization!",
-      evaluatedAt: "2026-08-23 02:30 PM"
-    },
-    {
-      id: 2,
-      competitionId: 1,
-      teamId: 2,
-      teamName: "Tech Titans",
-      judgeId: currentUser.id,
-      judgeName: currentUser.name || "Dr. Aris Thorne",
-      scoreInnovation: 18,
-      scoreTech: 17,
-      scoreUiUx: 18,
-      scoreImpact: 17,
-      scorePresentation: 17,
-      totalScore: 87,
-      remarks: "Solid presentation and great practical utility across departments.",
-      evaluatedAt: "2026-08-23 03:15 PM"
-    }
-  ]);
+  const [evaluations, setEvaluations] = useState<CompetitionEvaluation[]>([]);
   const [showEvalSuccessModal, setShowEvalSuccessModal] = useState<CompetitionEvaluation | null>(null);
 
   const isStaff = currentUser.role === "admin" || currentUser.role === "faculty";
   const isStudent = currentUser.role === "student";
 
-  const [checkedInTeamIds, setCheckedInTeamIds] = useState<number[]>([1]);
+  const [checkedInTeamIds, setCheckedInTeamIds] = useState<number[]>([]);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
 
   // Filter competitions
