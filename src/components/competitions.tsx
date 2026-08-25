@@ -339,6 +339,7 @@ export function CompetitionsComponent({
   const [showEvalSuccessModal, setShowEvalSuccessModal] = useState<CompetitionEvaluation | null>(null);
 
   const isStaff = currentUser.role === "admin" || currentUser.role === "faculty";
+  const isStudent = currentUser.role === "student";
 
   // Filter competitions
   const filteredCompetitions = competitions.filter((c) => {
@@ -390,7 +391,7 @@ export function CompetitionsComponent({
 
   const handleCreateTeamSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim() || !selectedComp) return;
+    if (!newTeamName.trim() || !selectedComp || !isStudent) return;
     onCreateTeam?.(selectedComp.id, newTeamName, selectedMemberIds);
     setShowCreateTeamModal(false);
     setNewTeamName("");
@@ -399,7 +400,7 @@ export function CompetitionsComponent({
 
   const handleSubmitProjectForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projTitle.trim() || !selectedComp) return;
+    if (!projTitle.trim() || !selectedComp || !isStudent) return;
     const targetTeam = myTeam || teams[0];
     onSubmitProject?.({
       competitionId: selectedComp.id,
@@ -494,8 +495,8 @@ export function CompetitionsComponent({
         <Stat mark="04" label="QR Certificates" value={certificates.length} foot="Issued Honors" Icon={Award} />
       </div>
 
-      {/* Pending Invites Banner (Rectangular) */}
-      {myPendingInvites.length > 0 && (
+      {/* Pending Invites Banner (Rectangular) - Only for Students */}
+      {isStudent && myPendingInvites.length > 0 && (
         <div className="border-2 border-blood bg-paper-3 hard p-4 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-none">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-blood shrink-0" />
@@ -620,17 +621,21 @@ export function CompetitionsComponent({
                 accent="Details"
                 sub={`Registration Deadline: ${selectedComp.regEnd} | Submission Deadline: ${selectedComp.submissionDeadline}`}
                 right={
-                  !myTeam ? (
-                    <RectButton tone="blood" onClick={() => setShowCreateTeamModal(true)}>
-                      Form Team & Register
-                    </RectButton>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <RectTag tone="ink">Team: {myTeam.teamName}</RectTag>
-                      <RectButton tone="blood" onClick={() => setShowSubmitModal(true)}>
-                        Submit Project
+                  isStudent ? (
+                    !myTeam ? (
+                      <RectButton tone="blood" onClick={() => setShowCreateTeamModal(true)}>
+                        Form Team & Register
                       </RectButton>
-                    </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <RectTag tone="ink">Team: {myTeam.teamName}</RectTag>
+                        <RectButton tone="blood" onClick={() => setShowSubmitModal(true)}>
+                          Submit Project
+                        </RectButton>
+                      </div>
+                    )
+                  ) : (
+                    <RectTag tone="ink">Judge / Organizer Mode</RectTag>
                   )
                 }
               />
@@ -669,9 +674,9 @@ export function CompetitionsComponent({
             kicker="Roster Governance"
             title="Registered"
             accent="Teams"
-            sub="Create teams, dispatch member invites, & lock team rosters."
+            sub="Student team rosters, member invitations, & locked rosters."
             right={
-              selectedComp ? (
+              isStudent && selectedComp ? (
                 <RectButton tone="blood" onClick={() => setShowCreateTeamModal(true)}>
                   + Form New Team
                 </RectButton>
@@ -732,11 +737,13 @@ export function CompetitionsComponent({
             kicker="Code & Artifact Vault"
             title="Project"
             accent="Submissions"
-            sub="Submit GitHub repository, live demo, presentation deck, & video walkthroughs."
+            sub="Submitted GitHub repository, live demo, presentation deck, & video walkthroughs."
             right={
-              <RectButton tone="blood" onClick={() => setShowSubmitModal(true)}>
-                + Submit Project Deck
-              </RectButton>
+              isStudent ? (
+                <RectButton tone="blood" onClick={() => setShowSubmitModal(true)}>
+                  + Submit Project Deck
+                </RectButton>
+              ) : undefined
             }
           />
 
