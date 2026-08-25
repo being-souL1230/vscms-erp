@@ -491,28 +491,6 @@ export function Navbar({
             </div>
           </div>
 
-          {/* Role segmented switch */}
-          <div className="hidden lg:flex items-center border-2 border-ink bg-paper-2 p-1 hard-sm">
-            {roles.map((r) => {
-              const active = activeRole === r.key;
-              const Icon = r.Icon;
-              return (
-                <button
-                  key={r.key}
-                  onClick={() => onRoleChange(r.key)}
-                  className={`flex items-center gap-2 px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] border-2 transition-colors ${
-                    active
-                      ? "bg-ink text-paper border-ink"
-                      : "bg-transparent text-ink border-transparent hover:bg-paper"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {r.label}
-                </button>
-              );
-            })}
-          </div>
-
           {/* Right cluster */}
           <div className="flex items-center gap-2">
 
@@ -588,23 +566,6 @@ export function Navbar({
                     <p className="font-mono text-[10px] text-muted truncate">{currentUser?.email}</p>
                     <p className="font-mono text-[10px] text-blood mt-0.5">{currentUser?.rollNoOrEmpId}</p>
                   </div>
-                  <div className="lg:hidden py-1 border-b-2 border-ink">
-                     <p className="px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-                       Switch view
-                     </p>
-                    {roles.map((r) => (
-                      <button
-                        key={r.key}
-                        onClick={() => {
-                          onRoleChange(r.key);
-                          setMenu(false);
-                        }}
-                        className="w-full text-left px-3 py-1.5 font-mono text-[11px] text-ink hover:bg-ink hover:text-paper"
-                      >
-                        {r.label} console
-                      </button>
-                    ))}
-                  </div>
                   <button
                     onClick={() => {
                       setMenu(false);
@@ -621,7 +582,7 @@ export function Navbar({
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-blood hover:bg-blood hover:text-paper"
                   >
-                     <LogOut className="w-3.5 h-3.5" /> Sign out
+                    <LogOut className="w-3.5 h-3.5" /> Sign out
                   </button>
                 </div>
               )}
@@ -854,34 +815,6 @@ export function Sidebar({
                 </button>
               )}
             </div>
-
-            {onRoleChange && (
-              <div className="p-3 border-b-2 border-paper/15 space-y-1.5 shrink-0 bg-paper/5">
-                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-paper/60 px-1">Console View</p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { key: "admin", label: "Admin" },
-                    { key: "faculty", label: "Teacher" },
-                    { key: "student", label: "Scholar" },
-                  ].map((r) => (
-                    <button
-                      key={r.key}
-                      onClick={() => {
-                        onRoleChange(r.key as UserRole);
-                        onCloseMobile?.();
-                      }}
-                      className={`py-1.5 px-1 text-center font-mono text-[10px] font-bold uppercase border-2 transition-colors ${
-                        activeRole === r.key
-                          ? "bg-blood text-paper border-paper"
-                          : "bg-paper/10 text-paper/80 border-paper/20 hover:bg-paper hover:text-ink"
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto min-h-0">
               {nav.map((item) => {
