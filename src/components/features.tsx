@@ -610,8 +610,88 @@ export function AdminPermissionsTab({
         })}
       </div>
 
-      <div className="border-2 border-ink overflow-x-auto">
-        <table className="w-full text-sm">
+      {/* MOBILE CARD VIEW (Phone screens < md) */}
+      <div className="space-y-3.5 md:hidden">
+        {modules.map((m) => {
+          const subLabel =
+            m === "documents" ? "Uploads & verification" :
+            m === "exams" ? "Schedule & marks" :
+            m === "notices" ? "Announcements" :
+            m === "fees" ? "Payments & receipts" :
+            m === "timetable" ? "Class schedule" :
+            m === "attendance" ? "Present / absent records" :
+            m === "leaves" ? "Leave requests" :
+            m === "students" ? "Scholar records" :
+            m === "faculty" ? "Staff records" :
+            m === "courses" ? "Subjects & classes" :
+            m === "departments" ? "Institute units" :
+            m === "reports" ? "Analytics & exports" :
+            m === "grades" ? "Marks & results" :
+            m === "assignments" ? "Tasks & submissions" : "Module data";
+
+          return (
+            <div key={m} className="border-2 border-ink bg-paper p-3.5 space-y-3 hard-sm">
+              <div className="border-b-2 border-ink/20 pb-2">
+                <span className="font-mono text-[10px] uppercase font-bold text-blood tracking-widest block">Module</span>
+                <div className="flex items-baseline justify-between gap-2">
+                  <h4 className="font-display uppercase text-base text-ink font-bold">{m}</h4>
+                  <span className="font-mono text-[10px] text-muted">{subLabel}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {roles.map((r) => {
+                  const p = draft.find((x) => x.role === r && x.module === m);
+                  const locked = r === "admin";
+                  return (
+                    <div key={r} className="border border-ink/30 bg-paper-2 p-2.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[11px] font-bold uppercase text-ink flex items-center gap-1.5">
+                          {ROLE_META[r]?.label || r}
+                          <span className="font-normal text-[9px] text-muted">({ROLE_META[r]?.desc})</span>
+                        </span>
+                        {locked && (
+                          <span className="font-mono text-[9px] font-bold text-blood border border-blood px-1.5 py-0.5 uppercase flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" /> Full Access
+                          </span>
+                        )}
+                      </div>
+
+                      {p && (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(["canView", "canCreate", "canEdit", "canDelete"] as PermKey[]).map((k) => {
+                            const on = Boolean(p[k]);
+                            const meta = PERM_META[k];
+                            return (
+                              <button
+                                key={k}
+                                disabled={locked}
+                                onClick={() => toggle(r, m, k)}
+                                className={`flex items-center justify-center gap-1 border-2 px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wide press disabled:opacity-100 ${
+                                  on
+                                    ? "bg-ink border-ink text-paper"
+                                    : "bg-paper border-ink/30 text-muted hover:border-ink hover:text-ink"
+                                }`}
+                              >
+                                {on ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />} {meta.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        {modules.length === 0 && <EmptyState label="No modules configured" />}
+      </div>
+
+      {/* DESKTOP TABLE VIEW (Screens >= md) */}
+      <div className="hidden md:block border-2 border-ink overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr>
               <th className={TH}>Module</th>
@@ -674,10 +754,10 @@ export function AdminPermissionsTab({
           </tbody>
         </table>
       </div>
-      <p className="font-mono text-[10px] text-muted flex items-center gap-3">
+      <p className="font-mono text-[10px] text-muted flex flex-wrap items-center gap-3">
         <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-ink border border-ink" /> Allowed role can do this</span>
         <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 bg-paper border-2 border-ink/30" /> Denied role cannot do this</span>
-        <span className="ml-auto">Admin (locked) is always fully allowed.</span>
+        <span className="sm:ml-auto">Admin (locked) is always fully allowed.</span>
       </p>
     </div>
   );
