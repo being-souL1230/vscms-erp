@@ -341,6 +341,9 @@ export function CompetitionsComponent({
   const isStaff = currentUser.role === "admin" || currentUser.role === "faculty";
   const isStudent = currentUser.role === "student";
 
+  const [checkedInTeamIds, setCheckedInTeamIds] = useState<number[]>([1]);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+
   // Filter competitions
   const filteredCompetitions = competitions.filter((c) => {
     if (selectedTypeFilter !== "all" && c.type !== selectedTypeFilter) return false;
@@ -516,21 +519,21 @@ export function CompetitionsComponent({
         </div>
       )}
 
-      {/* Navigation Tabs (Rectangular) */}
-      <div className="flex items-center gap-2 border-b-2 border-ink overflow-x-auto pb-1 text-xs">
+      {/* Navigation Tabs (100% Rectangular & Perfectly Uniform) */}
+      <div className="flex items-center gap-2 border-b-2 border-ink overflow-x-auto pb-1 text-xs no-scrollbar">
         {[
           { id: "browse", label: "Browse Competitions" },
           { id: "teams", label: "Team & Invites" },
           { id: "submit", label: "Project Submissions" },
           ...(isStaff ? [{ id: "judge", label: "Judge Dashboard" }] : []),
           { id: "leaderboard", label: "Live Leaderboard" },
-          { id: "attendance", label: "Verified Attendance & Certs" }
+          { id: "attendance", label: "Attendance & Certs" }
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={
-              "px-4 py-2 font-mono font-bold uppercase tracking-wider border-2 border-ink transition rounded-none " +
+              "px-3.5 py-2 font-mono font-bold uppercase tracking-wider border-2 border-ink transition rounded-none whitespace-nowrap shrink-0 " +
               (activeTab === tab.id ? "bg-ink text-paper hard-sm" : "bg-paper text-ink hover:bg-paper-2")
             }
           >
@@ -1086,8 +1089,8 @@ export function CompetitionsComponent({
               accent="Pipeline"
               sub="Registration ≠ Attendance ≠ Submission ≠ Winner (State Separation)"
               right={
-                selectedComp ? (
-                  <RectButton tone="blood" onClick={() => onCheckIn?.(selectedComp.id)}>
+                isStaff && selectedComp ? (
+                  <RectButton tone="blood" onClick={() => setShowCheckInModal(true)}>
                     Verify Venue Check-in
                   </RectButton>
                 ) : undefined
@@ -1407,6 +1410,78 @@ export function CompetitionsComponent({
               <div className="flex justify-end pt-2">
                 <RectButton tone="blood" onClick={() => setShowEvalSuccessModal(null)}>
                   Done & Continue Judging
+                </RectButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: VENUE PHYSICAL ATTENDANCE & QR SCANNER MODAL */}
+      {showCheckInModal && selectedComp && isStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/70 backdrop-blur-[2px]">
+          <div className="pop-in bg-paper border-2 border-ink hard-lg w-full max-w-lg rounded-none overflow-hidden text-left space-y-0">
+            <Hazard className="h-2" />
+            <div className="flex items-center justify-between px-5 py-3 border-b-2 border-ink bg-ink text-paper">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-blood" />
+                <h3 className="font-display uppercase text-base text-paper">Venue Attendance & QR Scanner</h3>
+              </div>
+              <button onClick={() => setShowCheckInModal(false)} className="text-paper hover:text-blood">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 font-mono text-xs">
+              <div className="border-2 border-ink bg-paper-3 p-3 flex items-center justify-between rounded-none">
+                <div>
+                  <span className="text-[10px] text-muted block uppercase font-bold">Event Roster</span>
+                  <strong className="text-ink font-display text-base uppercase">{selectedComp.title}</strong>
+                </div>
+                <RectTag tone="blood">{checkedInTeamIds.length} / {teams.length} Teams Checked-In</RectTag>
+              </div>
+
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                {teams.map((t) => {
+                  const isCheckedIn = checkedInTeamIds.includes(t.id);
+                  return (
+                    <div key={t.id} className="border-2 border-ink bg-paper p-3 flex items-center justify-between gap-3 rounded-none">
+                      <div>
+                        <strong className="font-display text-sm text-ink uppercase block">{t.teamName}</strong>
+                        <span className="text-[10px] text-muted">Captain: {t.captainName} ({t.members?.length || 1} Members)</span>
+                      </div>
+
+                      {isCheckedIn ? (
+                        <div className="flex items-center gap-1.5 text-blood font-bold text-[11px]">
+                          <CheckCircle2 className="w-4 h-4" /> Checked-In at Venue
+                        </div>
+                      ) : (
+                        <RectButton
+                          tone="blood"
+                          className="!py-1 !px-2.5 !text-[10px]"
+                          onClick={() => {
+                            setCheckedInTeamIds((prev) => [...prev, t.id]);
+                            onCheckIn?.(selectedComp.id);
+                          }}
+                        >
+                          Mark Checked-In
+                        </RectButton>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="p-3 border-2 border-dashed border-ink/40 bg-paper-3 text-center space-y-1 rounded-none">
+                <QrCode className="w-8 h-8 text-ink mx-auto opacity-70" />
+                <p className="font-serif italic text-xs text-muted">
+                  QR Scanner active. Physical venue gates automatically sync with ERP gate ledger.
+                </p>
+              </div>
+
+              <div className="flex justify-end pt-2 border-t-2 border-dashed border-ink/20">
+                <RectButton tone="blood" onClick={() => setShowCheckInModal(false)}>
+                  Done & Save Roster
                 </RectButton>
               </div>
             </div>
