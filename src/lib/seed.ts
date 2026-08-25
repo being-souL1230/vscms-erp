@@ -129,84 +129,47 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     .values(initialUsers.map((user) => ({ ...user, passwordHash })))
     .returning();
 
-  await db.insert(departments).values(initialDepartments);
+  if (initialDepartments.length > 0) {
+    await db.insert(departments).values(initialDepartments);
+  }
 
-  // Wire course ownership: each course's faculty_name is resolved to the
-  // real faculty user id so faculty can only edit their assigned subjects.
+  let insertedCourses: (typeof courses.$inferSelect)[] = [];
   const facultyByName = new Map(
     insertedUsers
       .filter((u) => u.role === "faculty")
       .map((u) => [u.name, u.id] as const),
   );
-  const insertedCourses = await db
-    .insert(courses)
-    .values(
-      initialCourses.map((c) => ({
-        ...c,
-        facultyId: facultyByName.get(c.facultyName || "") ?? null,
-      })),
-    )
-    .returning();
+  if (initialCourses.length > 0) {
+    insertedCourses = await db
+      .insert(courses)
+      .values(
+        initialCourses.map((c) => ({
+          ...c,
+          facultyId: facultyByName.get(c.facultyName || "") ?? null,
+        })),
+      )
+      .returning();
+  }
 
-  await db.insert(notices).values(initialNotices);
+  if (initialNotices.length > 0) {
+    await db.insert(notices).values(initialNotices);
+  }
 
-  await db.insert(timetable).values([
-    {
-      courseCode: "BCA101",
-      courseName: "Introduction to Programming",
-      department: "BCA (CSJM)",
-      semester: 1,
-      dayOfWeek: "Monday",
-      startTime: "09:00 AM",
-      endTime: "10:30 AM",
-      room: "Lab 1 · LT-101",
-      facultyName: "Dr. Tanya Mishra",
-    },
-    {
-      courseCode: "BCA201",
-      courseName: "Data Structures & Algorithms",
-      department: "BCA (CSJM)",
-      semester: 2,
-      dayOfWeek: "Tuesday",
-      startTime: "09:00 AM",
-      endTime: "10:30 AM",
-      room: "Lab 2 · LT-202",
-      facultyName: "Dr. Tanya Mishra",
-    },
-    {
-      courseCode: "BCA301",
-      courseName: "Database Management Systems",
-      department: "BCA (CSJM)",
-      semester: 3,
-      dayOfWeek: "Wednesday",
-      startTime: "11:00 AM",
-      endTime: "12:30 PM",
-      room: "Lab 1 · LT-101",
-      facultyName: "Mr. Ayush Yadav",
-    },
-    {
-      courseCode: "MBA101",
-      courseName: "Principles of Management",
-      department: "MBA",
-      semester: 1,
-      dayOfWeek: "Thursday",
-      startTime: "11:00 AM",
-      endTime: "12:30 PM",
-      room: "Hall 1 · MH-101",
-      facultyName: "Mr. Prakhar Tiwari",
-    },
-    {
-      courseCode: "BBA101",
-      courseName: "Business Communication",
-      department: "BBA",
-      semester: 1,
-      dayOfWeek: "Friday",
-      startTime: "09:00 AM",
-      endTime: "10:30 AM",
-      room: "Hall 1 · MH-101",
-      facultyName: "Mrs. Shruti Agarwal",
-    },
-  ]);
+  if (insertedCourses.length > 0) {
+    await db.insert(timetable).values([
+      {
+        courseCode: "BCA101",
+        courseName: "Introduction to Programming",
+        department: "BCA (CSJM)",
+        semester: 1,
+        dayOfWeek: "Monday",
+        startTime: "09:00 AM",
+        endTime: "10:30 AM",
+        room: "Lab 1 · LT-101",
+        facultyName: "Dr. Tanya Mishra",
+      },
+    ]);
+  }
 
   const studentsList = insertedUsers.filter((u) => u.role === "student");
   const dates = [
@@ -369,31 +332,24 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     }
   }
 
-  const insertedAssignments = await db
-    .insert(assignments)
-    .values([
-      {
-        courseId: insertedCourses[0].id,
-        courseName: `${insertedCourses[0].name} (${insertedCourses[0].code})`,
-        title: "Python Assignment - Loops & Functions",
-        description:
-          "Write a Python program that uses loops and functions to solve a basic problem. Submit your .py file.",
-        dueDate: "2026-03-28",
-        maxMarks: 50,
-        facultyName: "Dr. Tanya Mishra",
-      },
-      {
-        courseId: insertedCourses[2].id,
-        courseName: `${insertedCourses[2].name} (${insertedCourses[2].code})`,
-        title: "Database Design Assignment",
-        description:
-          "Design a simple database for a library system. Submit the SQL schema and a short explanation.",
-        dueDate: "2026-04-05",
-        maxMarks: 50,
-        facultyName: "Mr. Ayush Yadav",
-      },
-    ])
-    .returning();
+  let insertedAssignments: (typeof assignments.$inferSelect)[] = [];
+  if (insertedCourses.length > 0) {
+    insertedAssignments = await db
+      .insert(assignments)
+      .values([
+        {
+          courseId: insertedCourses[0].id,
+          courseName: `${insertedCourses[0].name} (${insertedCourses[0].code})`,
+          title: "Python Assignment - Loops & Functions",
+          description:
+            "Write a Python program that uses loops and functions to solve a basic problem. Submit your .py file.",
+          dueDate: "2026-03-28",
+          maxMarks: 50,
+          facultyName: "Dr. Tanya Mishra",
+        },
+      ])
+      .returning();
+  }
 
   if (studentsList.length > 0 && insertedAssignments.length > 0) {
     await db.insert(assignmentSubmissions).values({

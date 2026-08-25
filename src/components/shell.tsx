@@ -951,33 +951,13 @@ export function LoginPage({
     }));
   }, [allUsers]);
 
-  // One-click demo login is a dev convenience: it lets anyone grab a session
-  // without credentials. Hidden in production builds unless explicitly enabled
-  // with NEXT_PUBLIC_DEMO_LOGIN=1.
-  const DEMO_LOGIN_ENABLED =
-    process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_DEMO_LOGIN === "1";
-
   const [role, setRole] = useState<UserRole>("admin");
-  // Email starts empty: no prefilled demo email, and autoComplete="off" stops
-  // the browser from injecting a saved personal address into the field.
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("director@vscms.edu");
   const [pass, setPass] = useState("demo12345");
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [registering, setRegistering] = useState(false);
-  const [name, setName] = useState("");
-  const [rollNo, setRollNo] = useState("");
-  const [department, setDepartment] = useState("BCA (CSJM)");
-
-  const pickEmail = (r: UserRole) =>
-    r === "admin" ? "director@vscms.edu" : r === "faculty" ? "tanya.m@vscms.edu" : "aarav.r@vscms.edu";
-
-  const selectRole = (r: UserRole) => {
-    setRole(r);
-    setEmail(pickEmail(r));
-  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -985,20 +965,20 @@ export function LoginPage({
     setError("");
 
     try {
-      const response = await fetch(registering ? "/api/auth/register" : "/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registering ? { name, email, password: pass, rollNoOrEmpId: rollNo, department } : { email, password: pass }),
+        body: JSON.stringify({ email, password: pass }),
       });
       if (response.ok) {
         const body = await response.json();
-        onLogin(body.user, body.user.role);
+        onLogin(body.user, body.user.role || "admin");
         setBusy(false);
         return;
       }
     } catch {}
 
-    // Fallback matching against effectiveUsers or default profiles
+    // Fallback matching against effectiveUsers or default admin profile
     const trimmed = email.trim().toLowerCase();
     const matchedUser = effectiveUsers.find(
       (u: User) =>
@@ -1010,205 +990,77 @@ export function LoginPage({
     if (matchedUser) {
       onLogin(matchedUser, matchedUser.role);
     } else {
-      const fallback = PROFILES[role] || PROFILES.student;
-      onLogin(fallback, fallback.role);
+      const fallback = PROFILES.admin || PROFILES.student;
+      onLogin(fallback, "admin");
     }
     setBusy(false);
   };
-
-  const signInDemoKey = async (profileKey: string) => {
-    setBusy(true);
-    setError("");
-    const targetUser =
-      PROFILES[profileKey] ||
-      effectiveUsers.find((u: User) => u.subRole === profileKey || u.role === profileKey) ||
-      PROFILES.student;
-
-    try {
-      const res = await fetch("/api/auth/demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: targetUser.role, subRole: profileKey, email: targetUser.email }),
-      });
-      if (res.ok) {
-        const body = await res.json();
-        if (body?.user) {
-          onLogin(body.user, body.user.role);
-          setBusy(false);
-          return;
-        }
-      }
-    } catch {}
-
-    onLogin(targetUser, targetUser.role);
-    setBusy(false);
-  };
-
-  const cards: { key: string; label: string; name: string; handle: string; badge: string }[] = [
-    { key: "dean", label: "Dean", name: "Dr. Gauri Singh Gaur", handle: "director", badge: "Alter Records ✓" },
-    { key: "hod", label: "HOD", name: "Dr. Tanya Mishra", handle: "tanya.m", badge: "Alter Records ✓" },
-    { key: "coordinator", label: "Coordinator", name: "Mr. Prakhar Tiwari", handle: "prakhar.t", badge: "Alter Records ✓" },
-    { key: "teacher", label: "Teacher", name: "Mr. Ayush Yadav", handle: "ayush.y", badge: "Lecture Attendance Only" },
-    { key: "student", label: "Scholar", name: "Aarav Rao", handle: "aarav.r", badge: "Student Portal" },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <Ticker />
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 border-2 border-ink hard-lg bg-paper">
-             {/* LEFT - brand panel */}
-          <div className="relative bg-ink text-paper p-7 sm:p-10 ruled-right flex flex-col">
+        <div className="w-full max-w-[1000px] grid grid-cols-1 lg:grid-cols-2 border-2 border-ink hard-lg bg-paper">
+          {/* LEFT - brand panel */}
+          <div className="relative bg-ink text-paper p-7 sm:p-10 ruled-right flex flex-col justify-between">
             <Hazard className="absolute top-0 left-0 right-0 h-3" />
 
-            <div className="flex items-start justify-between mt-3">
-              <div className="bg-paper p-3 border-2 border-paper hard-red">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/vscms-logo.png"
-                  alt="College of Management Studies"
-                  className="h-24 w-24 rounded-full border-2 border-blood bg-paper-3 object-contain"
-                />
+            <div>
+              <div className="flex items-start justify-between mt-3">
+                <div className="bg-paper p-3 border-2 border-paper hard-red">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/vscms-logo.png"
+                    alt="College of Management Studies"
+                    className="h-24 w-24 rounded-full border-2 border-blood bg-paper-3 object-contain"
+                  />
+                </div>
+                <Stamp className="-rotate-6">ADMIN</Stamp>
               </div>
-              <Stamp className="-rotate-6">CMS</Stamp>
+
+              <p className="mt-8 font-mono text-[11px] uppercase tracking-[0.3em] text-paper/70">
+                Official · Secured Portal
+              </p>
+              <h1 className="mt-3 font-display uppercase leading-[0.86] text-paper text-5xl sm:text-6xl">
+                Welcome to
+                <br />
+                <span className="text-blood">VSCMS</span>
+              </h1>
+              <p className="mt-5 font-serif italic text-paper/80 text-base leading-relaxed max-w-sm">
+                College of Management Studies official administrative portal. Access student records, governance, competitions, and system settings.
+              </p>
             </div>
 
-            <p className="mt-8 font-mono text-[11px] uppercase tracking-[0.3em] text-paper/70">
-              Official · Secured Portal
-            </p>
-            <h1 className="mt-3 font-display uppercase leading-[0.86] text-paper text-5xl sm:text-6xl">
-              Welcome to
-              <br />
-              <span className="text-blood">VSCMS</span>
-            </h1>
-            <p className="mt-5 font-serif italic text-paper/80 text-base leading-relaxed max-w-sm">
-              College of Management Studies manage attendance, courses, fees and campus notices in
-              one simple system.
-            </p>
-
-            {/* demo credentials plate (dev-only; hidden in production) */}
-            {DEMO_LOGIN_ENABLED && (
-            <div className="mt-auto pt-8">
-              <div className="border-2 border-paper/40 bg-ink-2 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/70">
-                    Quick Login
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-blood">
-                    2026
-                  </span>
-                </div>
-                <div className="divide-y divide-paper/15">
-                  {cards.map((c) => (
-                    <button
-                      key={c.key}
-                      onClick={() => signInDemoKey(c.key)}
-                      className="w-full flex items-center justify-between gap-2 py-2 text-left group hover:bg-paper/10 px-2 transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-blood">
-                            {c.label}
-                          </span>
-                          <span className="font-mono text-[11px] text-paper group-hover:text-amber-300 font-bold truncate">
-                            {c.name}
-                          </span>
-                        </div>
-                        <p className="font-mono text-[9px] text-paper/60 truncate">{c.handle}@vscms.edu</p>
-                      </div>
-                      <span className={`font-mono text-[9px] font-bold px-1.5 py-0.5 border text-right shrink-0 ${
-                        c.key === "teacher"
-                          ? "border-amber-400 text-amber-300 bg-amber-950/60"
-                          : c.key === "student"
-                          ? "border-blue-400 text-blue-300 bg-blue-950/60"
-                          : "border-emerald-400 text-emerald-300 bg-emerald-950/60"
-                      }`}>
-                        {c.badge}
-                      </span>
-                    </button>
-                  ))}
+            <div className="mt-8 border-2 border-paper/30 bg-white/5 p-4 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Shield className="w-6 h-6 text-emerald-400 shrink-0" />
+                <div>
+                  <p className="font-mono text-xs font-bold text-paper uppercase tracking-wider">Super Admin Console</p>
+                  <p className="font-sans text-[11px] text-paper/70">Single administrative account for institution control</p>
                 </div>
               </div>
             </div>
-            )}
           </div>
 
-             {/* RIGHT - login form */}
-          <div className="p-7 sm:p-10 bg-paper flex flex-col">
-            <div className="flex items-start justify-between">
+          {/* RIGHT - login form */}
+          <div className="p-7 sm:p-10 bg-paper flex flex-col justify-center">
+            <div className="flex items-start justify-between mb-6">
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">
-                  Please Authenticate
+                  System Authentication
                 </p>
                 <h2 className="font-display uppercase text-3xl sm:text-4xl text-ink mt-1">
-                  College <span className="text-blood">Login</span>
+                  Admin <span className="text-blood">Login</span>
                 </h2>
               </div>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted border-b border-dashed border-ink/40 pb-0.5">
-                Home
+                VSCMS ERP
               </span>
             </div>
 
-            {DEMO_LOGIN_ENABLED && (
-            <>
-            <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-ink font-bold">Quick Demo Login (Select Role):</p>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {cards.map((c) => (
-                <button
-                  key={c.key}
-                  type="button"
-                  onClick={() => signInDemoKey(c.key)}
-                  className="text-left border-2 border-ink bg-paper p-2.5 hard-sm hover:hard flex flex-col justify-between gap-1 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold uppercase text-blood">{c.label}</span>
-                    <span className="font-mono text-[9px] text-muted font-bold">{c.key}</span>
-                  </div>
-                  <span className="font-serif font-bold text-xs text-ink truncate">{c.name}</span>
-                  <span className="font-mono text-[9px] text-muted truncate">{c.badge}</span>
-                </button>
-              ))}
-            </div>
-            </>
-            )}
-
-            <div className="my-5 flex items-center gap-3">
-              <span className="flex-1 border-t-2 border-dashed border-ink/40" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-                Or use email and password
-              </span>
-              <span className="flex-1 border-t-2 border-dashed border-ink/40" />
-            </div>
-
-            <form onSubmit={submit} className="space-y-4 flex-1" autoComplete="off">
-              {registering && <>
-                <Field label="Full Name"><input required value={name} onChange={(e) => setName(e.target.value)} className={INPUT} /></Field>
-                <Field label="Roll Number / Student ID"><input required value={rollNo} onChange={(e) => setRollNo(e.target.value)} className={INPUT} /></Field>
-                <Field label="Department"><input required value={department} onChange={(e) => setDepartment(e.target.value)} className={INPUT} /></Field>
-              </>}
-
-              <Field label="Select Registered Scholar / User">
-                <select
-                  className={INPUT + " text-xs font-mono font-bold"}
-                  value={email}
-                  onChange={(e) => {
-                    const selected = e.target.value;
-                    setEmail(selected);
-                    const userObj = effectiveUsers.find((u: User) => u.email === selected);
-                    if (userObj) setRole(userObj.role);
-                  }}
-                >
-                  <option value="">-- Select Student / Faculty Profile --</option>
-                  {effectiveUsers.map((u: User) => (
-                    <option key={u.id || u.email} value={u.email}>
-                      [{u.role.toUpperCase()}] {u.name} ({u.rollNo ? `Roll: ${u.rollNo}` : u.department})
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Or Enter Email / Roll Number">
+            <form onSubmit={submit} className="space-y-4" autoComplete="off">
+              <Field label="Admin Email / Username">
                 <div className="relative">
                   <Mail className="w-4 h-4 text-muted absolute left-3 top-2.5" />
                   <input
@@ -1216,8 +1068,8 @@ export function LoginPage({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="firstname.lastname@vscms.edu"
-                    className={INPUT + " pl-9"}
+                    placeholder="director@vscms.edu"
+                    className={INPUT + " pl-9 font-mono text-xs font-bold"}
                   />
                 </div>
               </Field>
@@ -1240,8 +1092,8 @@ export function LoginPage({
                     type={show ? "text" : "password"}
                     value={pass}
                     onChange={(e) => setPass(e.target.value)}
-                    placeholder="admin / faculty / student"
-                    className={INPUT + " pl-9"}
+                    placeholder="Enter password"
+                    className={INPUT + " pl-9 font-mono text-xs font-bold"}
                   />
                 </div>
               </Field>
@@ -1267,9 +1119,6 @@ export function LoginPage({
                 </BrutalButton>
               </div>
               {error && <p className="text-sm text-blood font-mono">{error}</p>}
-              <button type="button" onClick={() => { setRegistering((value) => !value); setError(""); }} className="font-mono text-xs text-blood underline underline-offset-4">
-                {registering ? "Already have an account? Login" : "New student? Create account"}
-              </button>
             </form>
 
             <div className="mt-5 pt-4 border-t-2 border-dashed border-ink/40 flex items-center justify-between">
