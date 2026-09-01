@@ -512,5 +512,16 @@ public static class Schema
           `issued_at` VARCHAR(100) NOT NULL DEFAULT (DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'))
         );
         """,
+        """
+        CREATE TABLE IF NOT EXISTS `feedback_ratings` (
+          `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+          `user_id` BIGINT NOT NULL,
+          `user_name` VARCHAR(255) NOT NULL,
+          `user_role` VARCHAR(50) NOT NULL DEFAULT 'guest',
+          `rating` INT NOT NULL,
+          `comment` TEXT,
+          `created_at` VARCHAR(100) NOT NULL DEFAULT (DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'))
+        );
+        """,
     ];
 }

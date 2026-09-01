@@ -162,10 +162,10 @@ app.MapGroup("/api/exam-master").MapExamMasterEndpoints();
 app.MapGroup("/api/permissions").MapPermissionEndpoints();
 app.MapGroup("/api/profile").MapProfileEndpoints();
 app.MapGroup("/api/users").MapUserEndpoints();
+app.MapGroup("/api/feedback").MapFeedbackEndpoints();
 app.MapGroup("/api/seed").MapSeedEndpoints();
 app.MapGroup("/api/chat").MapChatEndpoints();
 app.MapGroup("/api/course-materials").MapCourseMaterialEndpoints();
-app.MapGroup("/api/competitions").MapCompetitionEndpoints();
 
 app.Run();
 

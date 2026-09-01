@@ -335,38 +335,58 @@ GUIDELINES:
 
     private static async Task<string?> CallGroqApi(string apiKey, string systemPrompt, string userMessage)
     {
-        var payload = new
+        string[] candidateModels = new[]
         {
-            model = "llama-3.3-70b-versatile",
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = userMessage }
-            },
-            temperature = 0.2,
-            max_tokens = 600
+            "groq/compound",
+            "openai/gpt-oss-120b",
+            "qwen/qwen3.8-27b",
+            "groq/compound-mini"
         };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
-        request.Headers.Add("Authorization", $"Bearer {apiKey}");
-        request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
-        var response = await HttpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
+        foreach (var modelName in candidateModels)
         {
-            var err = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"[cmsbot] Groq API non-success {response.StatusCode}: {err}");
-            return null;
+            try
+            {
+                var payload = new
+                {
+                    model = modelName,
+                    messages = new[]
+                    {
+                        new { role = "system", content = systemPrompt },
+                        new { role = "user", content = userMessage }
+                    },
+                    temperature = 0.2,
+                    max_tokens = 600
+                };
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
+                request.Headers.Add("Authorization", $"Bearer {apiKey}");
+                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                var response = await HttpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var choices = doc.RootElement.GetProperty("choices");
+                    if (choices.GetArrayLength() > 0)
+                    {
+                        var message = choices[0].GetProperty("message").GetProperty("content").GetString();
+                        if (!string.IsNullOrWhiteSpace(message)) return message;
+                    }
+                }
+                else
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[cmsbot] Groq model '{modelName}' non-success ({response.StatusCode}): {err}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[cmsbot] Groq model '{modelName}' error: {ex.Message}");
+            }
         }
 
-        var json = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(json);
-        var choices = doc.RootElement.GetProperty("choices");
-        if (choices.GetArrayLength() > 0)
-        {
-            var message = choices[0].GetProperty("message").GetProperty("content").GetString();
-            return message;
-        }
         return null;
     }
 

@@ -105,6 +105,7 @@ public static class SeedLogic
 
             SeedFeeModule(conn);
             SeedCompetitions(conn);
+            SeedFeedback(conn);
 
             var passwordHash = HashPassword("demo12345", 12);
             Database.Exec(conn, "UPDATE admins SET password_hash = @hash WHERE password_hash = ''", ("@hash", passwordHash));
@@ -803,11 +804,15 @@ public static class SeedLogic
         cmd.Parameters.AddWithValue("@maxMarks", maxMarks);
         cmd.Parameters.AddWithValue("@faculty", facultyName);
         return (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
-        return (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
     }
 
     private static void SeedCompetitions(MySqlConnection conn)
     {
         // No dummy competitions or teams seeded.
+    }
+
+    private static void SeedFeedback(MySqlConnection conn)
+    {
+        // No dummy ratings seeded - starts empty at 0.
     }
 }

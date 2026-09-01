@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   LogOut,
   Bell,
+  Star,
   RefreshCw,
   Check,
   X,
@@ -26,6 +27,7 @@ import {
 import type { UserRole, SubRole, User, Notice, Course, FeeRecord, FeeStructure, FeePayment } from "@/types/erp";
 import { feeRemaining } from "@/types/erp";
 import { initialUsers } from "@/lib/seed-data";
+import { FeedbackModal, type FeedbackSummary } from "@/components/FeedbackModal";
 
 /* ============================================================
    USER PROFILES
@@ -440,9 +442,24 @@ export function Navbar({
   const [bell, setBell] = useState(false);
   const [menu, setMenu] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackSummary, setFeedbackSummary] = useState<FeedbackSummary>({
+    averageRating: 0.0,
+    totalRatings: 0,
+    ratings: [],
+  });
 
   const bellRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/feedback")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setFeedbackSummary(d);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -493,6 +510,25 @@ export function Navbar({
 
           {/* Right cluster */}
           <div className="flex items-center gap-2">
+
+            {/* Rating & Feedback Button */}
+            <button
+              onClick={() => {
+                setFeedbackOpen(true);
+                setBell(false);
+                setMenu(false);
+              }}
+              title="System Feedback & Ratings"
+              className="flex items-center gap-1.5 border-2 border-ink bg-gradient-to-r from-amber-400/20 via-paper to-amber-400/10 px-2.5 py-1.5 hard-sm press font-mono text-xs font-bold text-ink hover:border-amber-500 hover:bg-amber-400/30 transition-all"
+            >
+              <Star className="w-4 h-4 fill-amber-400 text-amber-500 shrink-0 drop-shadow-[0_1px_2px_rgba(245,158,11,0.5)]" />
+              <span className="font-extrabold text-ink">
+                {feedbackSummary.averageRating > 0 ? feedbackSummary.averageRating.toFixed(1) : "0.0"}
+              </span>
+              <span className="text-[10px] text-muted font-normal hidden sm:inline border-l border-ink/20 pl-1.5">
+                {feedbackSummary.totalRatings} Vote{feedbackSummary.totalRatings === 1 ? "" : "s"}
+              </span>
+            </button>
 
             {/* Bell */}
             <div className="relative" ref={bellRef}>
@@ -595,6 +631,13 @@ export function Navbar({
         isOpen={pwOpen}
         onClose={() => setPwOpen(false)}
         onSuccess={(msg) => onToast?.("success", "Password updated", msg)}
+      />
+
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        currentUser={currentUser}
+        onSummaryUpdate={(newSummary) => setFeedbackSummary(newSummary)}
       />
     </header>
   );
