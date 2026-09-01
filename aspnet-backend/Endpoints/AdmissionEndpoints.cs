@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -130,7 +130,7 @@ public static class AdmissionEndpoints
         return Results.Json(GetByStudent(conn, studentId)!);
     }
 
-    private static AdmissionDto? GetByStudent(NpgsqlConnection conn, long studentId)
+    private static AdmissionDto? GetByStudent(MySqlConnection conn, long studentId)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM admissions WHERE student_id = @sid LIMIT 1";

@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -73,7 +73,7 @@ public static class CourseMaterialEndpoints
         return Results.Json(new { success = true });
     }
 
-    private static CourseMaterialDto? LoadMaterial(NpgsqlConnection conn, long id)
+    private static CourseMaterialDto? LoadMaterial(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM course_materials WHERE id = @id";
@@ -115,7 +115,7 @@ public record CourseMaterialDto(
     string CreatedAt
 )
 {
-    public static CourseMaterialDto Map(NpgsqlDataReader r) => new(
+    public static CourseMaterialDto Map(MySqlDataReader r) => new(
         r.GetInt64(r.GetOrdinal("id")),
         r.GetInt64(r.GetOrdinal("course_id")),
         r.GetString(r.GetOrdinal("course_code")),

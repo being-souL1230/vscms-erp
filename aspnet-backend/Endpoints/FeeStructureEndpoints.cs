@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -110,7 +110,7 @@ public static class FeeStructureEndpoints
         return Results.Json(new { success = true });
     }
 
-    private static FeeStructureDto? LoadStructure(NpgsqlConnection conn, long id)
+    private static FeeStructureDto? LoadStructure(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM fee_structures WHERE id = @id";

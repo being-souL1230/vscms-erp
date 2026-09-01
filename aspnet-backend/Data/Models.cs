@@ -26,23 +26,80 @@ public class UserDto
     public string Status { get; set; } = "active";
     public string CreatedAt { get; set; } = "";
 
+    public static UserDto MapStudent(DbDataReader r) => new()
+    {
+        Id = Convert.ToInt64(r["id"]),
+        Name = r["name"]?.ToString() ?? "",
+        Email = r["email"]?.ToString() ?? "",
+        Role = "student",
+        SubRole = null,
+        RollNo = HasColumn(r, "roll_no") ? r["roll_no"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : ""),
+        RollNoOrEmpId = HasColumn(r, "roll_no") ? r["roll_no"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : ""),
+        Department = r["department"]?.ToString() ?? "",
+        Semester = HasColumn(r, "semester") && !(r["semester"] is DBNull) ? Convert.ToInt64(r["semester"]) : null,
+        Designation = null,
+        Phone = HasColumn(r, "phone") && !(r["phone"] is DBNull) ? r["phone"]?.ToString() : null,
+        AvatarUrl = HasColumn(r, "avatar_url") && !(r["avatar_url"] is DBNull) ? r["avatar_url"]?.ToString() : null,
+        Gpa = HasColumn(r, "gpa") && !(r["gpa"] is DBNull) ? r["gpa"]?.ToString() : null,
+        Status = HasColumn(r, "status") && !(r["status"] is DBNull) ? r["status"]?.ToString() ?? "active" : "active",
+        CreatedAt = HasColumn(r, "created_at") && !(r["created_at"] is DBNull) ? r["created_at"]?.ToString() ?? "" : "",
+    };
+
+    public static UserDto MapFaculty(DbDataReader r) => new()
+    {
+        Id = Convert.ToInt64(r["id"]),
+        Name = r["name"]?.ToString() ?? "",
+        Email = r["email"]?.ToString() ?? "",
+        Role = "faculty",
+        SubRole = HasColumn(r, "sub_role") && !(r["sub_role"] is DBNull) ? r["sub_role"]?.ToString() : "teacher",
+        RollNo = HasColumn(r, "emp_id") ? r["emp_id"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : ""),
+        RollNoOrEmpId = HasColumn(r, "emp_id") ? r["emp_id"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : ""),
+        Department = r["department"]?.ToString() ?? "",
+        Semester = null,
+        Designation = HasColumn(r, "designation") && !(r["designation"] is DBNull) ? r["designation"]?.ToString() : null,
+        Phone = HasColumn(r, "phone") && !(r["phone"] is DBNull) ? r["phone"]?.ToString() : null,
+        AvatarUrl = HasColumn(r, "avatar_url") && !(r["avatar_url"] is DBNull) ? r["avatar_url"]?.ToString() : null,
+        Gpa = null,
+        Status = HasColumn(r, "status") && !(r["status"] is DBNull) ? r["status"]?.ToString() ?? "active" : "active",
+        CreatedAt = HasColumn(r, "created_at") && !(r["created_at"] is DBNull) ? r["created_at"]?.ToString() ?? "" : "",
+    };
+
+    public static UserDto MapAdmin(DbDataReader r) => new()
+    {
+        Id = Convert.ToInt64(r["id"]),
+        Name = r["name"]?.ToString() ?? "",
+        Email = r["email"]?.ToString() ?? "",
+        Role = "admin",
+        SubRole = HasColumn(r, "sub_role") && !(r["sub_role"] is DBNull) ? r["sub_role"]?.ToString() : "dean",
+        RollNo = HasColumn(r, "emp_id") ? r["emp_id"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : ""),
+        RollNoOrEmpId = HasColumn(r, "emp_id") ? r["emp_id"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : ""),
+        Department = r["department"]?.ToString() ?? "",
+        Semester = null,
+        Designation = HasColumn(r, "designation") && !(r["designation"] is DBNull) ? r["designation"]?.ToString() : null,
+        Phone = HasColumn(r, "phone") && !(r["phone"] is DBNull) ? r["phone"]?.ToString() : null,
+        AvatarUrl = HasColumn(r, "avatar_url") && !(r["avatar_url"] is DBNull) ? r["avatar_url"]?.ToString() : null,
+        Gpa = null,
+        Status = HasColumn(r, "status") && !(r["status"] is DBNull) ? r["status"]?.ToString() ?? "active" : "active",
+        CreatedAt = HasColumn(r, "created_at") && !(r["created_at"] is DBNull) ? r["created_at"]?.ToString() ?? "" : "",
+    };
+
     public static UserDto MapUser(DbDataReader r) => new()
     {
         Id = Convert.ToInt64(r["id"]),
         Name = r["name"]?.ToString() ?? "",
         Email = r["email"]?.ToString() ?? "",
-        Role = r["role"]?.ToString() ?? "student",
+        Role = HasColumn(r, "role") ? r["role"]?.ToString() ?? "student" : "student",
         SubRole = HasColumn(r, "sub_role") && !(r["sub_role"] is DBNull) ? r["sub_role"]?.ToString() : null,
-        RollNo = r["roll_no_or_emp_id"]?.ToString() ?? "",
-        RollNoOrEmpId = r["roll_no_or_emp_id"]?.ToString() ?? "",
+        RollNo = HasColumn(r, "roll_no") ? r["roll_no"]?.ToString() ?? "" : (HasColumn(r, "emp_id") ? r["emp_id"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : "")),
+        RollNoOrEmpId = HasColumn(r, "roll_no") ? r["roll_no"]?.ToString() ?? "" : (HasColumn(r, "emp_id") ? r["emp_id"]?.ToString() ?? "" : (HasColumn(r, "roll_no_or_emp_id") ? r["roll_no_or_emp_id"]?.ToString() ?? "" : "")),
         Department = r["department"]?.ToString() ?? "",
-        Semester = r["semester"] is DBNull || r["semester"] == null ? null : Convert.ToInt64(r["semester"]),
-        Designation = r["designation"] is DBNull || r["designation"] == null ? null : r["designation"]?.ToString(),
-        Phone = r["phone"] is DBNull || r["phone"] == null ? null : r["phone"]?.ToString(),
-        AvatarUrl = r["avatar_url"] is DBNull || r["avatar_url"] == null ? null : r["avatar_url"]?.ToString(),
-        Gpa = r["gpa"] is DBNull || r["gpa"] == null ? null : r["gpa"]?.ToString(),
-        Status = r["status"]?.ToString() ?? "active",
-        CreatedAt = r["created_at"] is DBNull || r["created_at"] == null ? "" : r["created_at"]?.ToString() ?? "",
+        Semester = HasColumn(r, "semester") && !(r["semester"] is DBNull) ? Convert.ToInt64(r["semester"]) : null,
+        Designation = HasColumn(r, "designation") && !(r["designation"] is DBNull) ? r["designation"]?.ToString() : null,
+        Phone = HasColumn(r, "phone") && !(r["phone"] is DBNull) ? r["phone"]?.ToString() : null,
+        AvatarUrl = HasColumn(r, "avatar_url") && !(r["avatar_url"] is DBNull) ? r["avatar_url"]?.ToString() : null,
+        Gpa = HasColumn(r, "gpa") && !(r["gpa"] is DBNull) ? r["gpa"]?.ToString() : null,
+        Status = HasColumn(r, "status") && !(r["status"] is DBNull) ? r["status"]?.ToString() ?? "active" : "active",
+        CreatedAt = HasColumn(r, "created_at") && !(r["created_at"] is DBNull) ? r["created_at"]?.ToString() ?? "" : "",
     };
 
     private static bool HasColumn(DbDataReader r, string columnName)

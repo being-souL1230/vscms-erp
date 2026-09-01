@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 using VscmsErp.Api.Lib;
@@ -63,7 +63,7 @@ public static class SeedEndpoints
         }
     }
 
-    private static long ScalarCount(NpgsqlConnection conn)
+    private static long ScalarCount(MySqlConnection conn)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM users";

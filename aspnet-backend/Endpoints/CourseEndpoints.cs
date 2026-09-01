@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -117,7 +117,7 @@ public static class CourseEndpoints
         return Results.Json(new { success = true, message = "Course deleted successfully" });
     }
 
-    private static CourseDto? LoadCourse(NpgsqlConnection conn, long id)
+    private static CourseDto? LoadCourse(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM courses WHERE id = @id";

@@ -119,7 +119,7 @@ app.Use(async (ctx, next) =>
 // Self-healing startup, mirroring src/db/init.ts: create any missing tables
 // so a fresh database works again.
 Database.EnsureDatabase();
-Console.WriteLine($"[db] connected to Postgres (DATABASE_URL set)");
+Console.WriteLine($"[db] connected to TiDB Cloud MySQL (test database)");
 
 // Bootstrap demo data on a fresh/empty database (non-destructive backfill;
 // never wipes existing data). This keeps demo login working even before any

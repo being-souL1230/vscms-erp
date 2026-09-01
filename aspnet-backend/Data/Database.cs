@@ -1,11 +1,10 @@
-using Npgsql;
+using MySqlConnector;
 
 namespace VscmsErp.Api.Data;
 
 /// <summary>
-/// Postgres connection management (hosted on Neon in production).
-/// The DATABASE_URL env var carries the full connection string; Npgsql
-/// accepts both postgresql:// URIs and key=value connection strings.
+/// MySQL / TiDB Cloud connection management.
+/// Accepts both mysql:// URIs and standard key=value MySQL connection strings.
 /// </summary>
 public static class Database
 {
@@ -14,52 +13,94 @@ public static class Database
     private static string ResolveConnectionString()
     {
         var url = Environment.GetEnvironmentVariable("DATABASE_URL");
-        if (!string.IsNullOrWhiteSpace(url)) return NormalizeConnectionString(url);
-        throw new InvalidOperationException(
-            "DATABASE_URL environment variable is required (e.g. a Neon Postgres connection string).");
+        if (string.IsNullOrWhiteSpace(url) || url.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
+        {
+            url = LoadUrlFromEnvFile() ?? url;
+        }
+
+        if (string.IsNullOrWhiteSpace(url) || url.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "DATABASE_URL is required in environment variables or .env file (e.g. mysql://user:pass@host:port/dbname).");
+        }
+
+        return NormalizeConnectionString(url);
+    }
+
+    private static string? LoadUrlFromEnvFile()
+    {
+        try
+        {
+            var paths = new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, ".env"),
+                Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", ".env")
+            };
+
+            foreach (var path in paths)
+            {
+                if (File.Exists(path))
+                {
+                    foreach (var line in File.ReadAllLines(path))
+                    {
+                        var trimmed = line.Trim();
+                        if (trimmed.StartsWith("DATABASE_URL=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var val = trimmed["DATABASE_URL=".Length..].Trim().Trim('"', '\'');
+                            if (!string.IsNullOrWhiteSpace(val)) return val;
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+        return null;
     }
 
     /// <summary>
-    /// Npgsql's connection-string builder only accepts key=value pairs, not
-    /// postgresql:// URIs. Convert a Neon-style URL into a key=value string
-    /// so DATABASE_URL can be pasted as-is from the provider dashboard.
+    /// Converts a mysql:// URI into a MySqlConnectionStringBuilder connection string.
     /// </summary>
     private static string NormalizeConnectionString(string url)
     {
-        if (!url.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
-            && !url.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
-            return url; // already key=value form
+        if (!url.StartsWith("mysql://", StringComparison.OrdinalIgnoreCase)
+            && !url.StartsWith("mariadb://", StringComparison.OrdinalIgnoreCase))
+            return url;
 
         var uri = new Uri(url);
-        var builder = new NpgsqlConnectionStringBuilder
+        var dbName = uri.AbsolutePath.TrimStart('/');
+        if (string.IsNullOrWhiteSpace(dbName) || string.Equals(dbName, "sys", StringComparison.OrdinalIgnoreCase))
         {
-            Host = uri.Host,
-            Port = uri.Port == -1 ? 5432 : uri.Port,
-            Database = uri.AbsolutePath.TrimStart('/'),
+            dbName = "test";
+        }
+
+        var builder = new MySqlConnectionStringBuilder
+        {
+            Server = uri.Host,
+            Port = uri.Port == -1 ? (uint)3306 : (uint)uri.Port,
+            Database = dbName,
+            SslMode = MySqlSslMode.Required,
+            AllowPublicKeyRetrieval = true,
         };
         var userInfo = uri.UserInfo;
         if (userInfo.Length > 0)
         {
             var colon = userInfo.IndexOf(':');
-            builder.Username = Uri.UnescapeDataString(colon < 0 ? userInfo : userInfo[..colon]);
+            builder.UserID = Uri.UnescapeDataString(colon < 0 ? userInfo : userInfo[..colon]);
             if (colon >= 0)
                 builder.Password = Uri.UnescapeDataString(userInfo[(colon + 1)..]);
         }
-        if (uri.Query.Contains("sslmode=require", StringComparison.OrdinalIgnoreCase))
-            builder.SslMode = SslMode.Require;
-        else if (uri.Query.Contains("sslmode=disable", StringComparison.OrdinalIgnoreCase))
-            builder.SslMode = SslMode.Disable;
         return builder.ConnectionString;
     }
 
-    public static NpgsqlConnection Open()
+    public static MySqlConnection Open()
     {
-        var conn = new NpgsqlConnection(ConnectionString);
+        var conn = new MySqlConnection(ConnectionString);
         conn.Open();
         return conn;
     }
 
-    public static void Exec(NpgsqlConnection conn, string sql, params (string Name, object? Value)[] parameters)
+    public static void Exec(MySqlConnection conn, string sql, params (string Name, object? Value)[] parameters)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
@@ -69,7 +110,7 @@ public static class Database
     }
 
     /// <summary>Executes a statement and returns the number of affected rows.</summary>
-    public static int ExecWithCount(NpgsqlConnection conn, string sql, params (string Name, object? Value)[] parameters)
+    public static int ExecWithCount(MySqlConnection conn, string sql, params (string Name, object? Value)[] parameters)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;

@@ -1,5 +1,5 @@
 using static BCrypt.Net.BCrypt;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -27,10 +27,10 @@ public static class FacultyEndpoints
             return Results.Json(new { error = "Access denied" }, statusCode: 403);
 
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users WHERE role = 'faculty'";
+        cmd.CommandText = "SELECT * FROM faculty";
         using var reader = cmd.ExecuteReader();
         var list = new List<UserDto>();
-        while (reader.Read()) list.Add(UserDto.MapUser(reader));
+        while (reader.Read()) list.Add(UserDto.MapFaculty(reader));
         return Results.Json(list);
     }
 
@@ -53,13 +53,14 @@ public static class FacultyEndpoints
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            INSERT INTO users (name, email, role, roll_no_or_emp_id, department, designation, phone, status, password_hash, avatar_url)
-            VALUES (@name, @email, 'faculty', @rollNo, @department, @designation, @phone, 'active', @passwordHash, @avatar) RETURNING id;
+            INSERT INTO faculty (name, email, emp_id, department, sub_role, designation, phone, status, password_hash, avatar_url)
+            VALUES (@name, @email, @rollNo, @department, @subRole, @designation, @phone, 'active', @passwordHash, @avatar) RETURNING id;
             """;
         cmd.Parameters.AddWithValue("@name", body.Name);
         cmd.Parameters.AddWithValue("@email", body.Email);
         cmd.Parameters.AddWithValue("@rollNo", rollNo);
         cmd.Parameters.AddWithValue("@department", body.Department);
+        cmd.Parameters.AddWithValue("@subRole", string.IsNullOrEmpty(body.SubRole) ? "teacher" : body.SubRole);
         cmd.Parameters.AddWithValue("@designation", string.IsNullOrEmpty(body.Designation) ? "Assistant Professor" : body.Designation);
         cmd.Parameters.AddWithValue("@phone", string.IsNullOrEmpty(body.Phone) ? "+1 (555) 000-1122" : body.Phone);
         cmd.Parameters.AddWithValue("@passwordHash", passwordHash);
@@ -84,12 +85,13 @@ public static class FacultyEndpoints
         if (current is null) return Results.Json((object?)null);
 
         Database.Exec(conn, """
-            UPDATE users SET name = @name, email = @email, department = @department, designation = @designation, phone = @phone
-            WHERE id = @id AND role = 'faculty'
+            UPDATE faculty SET name = @name, email = @email, department = @department, sub_role = @subRole, designation = @designation, phone = @phone
+            WHERE id = @id
             """,
             ("@name", body.Name ?? current.Name),
             ("@email", body.Email ?? current.Email),
             ("@department", body.Department ?? current.Department),
+            ("@subRole", (object?)(body.SubRole ?? current.SubRole) ?? "teacher"),
             ("@designation", (object?)(body.Designation ?? current.Designation) ?? DBNull.Value),
             ("@phone", (object?)(body.Phone ?? current.Phone) ?? DBNull.Value),
             ("@id", body.Id.Value));
@@ -110,22 +112,22 @@ public static class FacultyEndpoints
         if (!Permissions.Can(conn, user, "faculty", "delete"))
             return Results.Json(new { error = "Access denied" }, statusCode: 403);
 
-        Database.Exec(conn, "DELETE FROM users WHERE id = @id AND role = 'faculty'", ("@id", id));
+        Database.Exec(conn, "DELETE FROM faculty WHERE id = @id", ("@id", id));
         return Results.Json(new { success = true, message = "Faculty member deleted successfully" });
     }
 
-    private static UserDto? LoadFaculty(NpgsqlConnection conn, long id)
+    private static UserDto? LoadFaculty(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users WHERE id = @id AND role = 'faculty'";
+        cmd.CommandText = "SELECT * FROM faculty WHERE id = @id LIMIT 1";
         cmd.Parameters.AddWithValue("@id", id);
         using var reader = cmd.ExecuteReader();
-        return reader.Read() ? UserDto.MapUser(reader) : null;
+        return reader.Read() ? UserDto.MapFaculty(reader) : null;
     }
 
     public sealed record FacultyRequest(
         string? Name, string? Email, string? RollNoOrEmpId, string? Department,
-        string? Designation, string? Phone, string? Password);
+        string? Designation, string? Phone, string? Password, string? SubRole);
 
-    public sealed record FacultyUpdateRequest(long? Id, string? Name, string? Email, string? Department, string? Designation, string? Phone);
+    public sealed record FacultyUpdateRequest(long? Id, string? Name, string? Email, string? Department, string? Designation, string? Phone, string? SubRole);
 }

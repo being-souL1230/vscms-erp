@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 using static BCrypt.Net.BCrypt;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Data;
 using VscmsErp.Api.Endpoints;
 
@@ -45,24 +45,24 @@ public static class SeedLogic
         return SeedDatabase(conn, force);
     }
 
-    public static SeedResult SeedDatabase(NpgsqlConnection conn, bool force)
+    public static SeedResult SeedDatabase(MySqlConnection conn, bool force)
     {
-        var existingCount = ScalarLong(conn, "SELECT COUNT(*) FROM users");
+        var existingCount = ScalarLong(conn, "SELECT COUNT(*) FROM admins")
+                          + ScalarLong(conn, "SELECT COUNT(*) FROM faculty")
+                          + ScalarLong(conn, "SELECT COUNT(*) FROM students");
 
         if (existingCount > 0 && !force)
         {
-            // Backfill sub_role for existing users
+            // Backfill sub_role for existing faculty
             foreach (var u in SeedData.InitialUsers)
             {
-                if (!string.IsNullOrEmpty(u.SubRole))
+                if (!string.IsNullOrEmpty(u.SubRole) && u.Role == "faculty")
                 {
-                    Database.Exec(conn, "UPDATE users SET sub_role = @subRole WHERE email = @email AND (sub_role IS NULL OR sub_role = '')",
+                    Database.Exec(conn, "UPDATE faculty SET sub_role = @subRole WHERE email = @email AND (sub_role IS NULL OR sub_role = '')",
                         ("@subRole", u.SubRole), ("@email", u.Email));
                 }
             }
 
-            // Database already has users backfill the newer modules
-            // (documents, exams, permissions, …) that may postdate the DB.
             var permCount = ScalarLong(conn, "SELECT COUNT(*) FROM permissions");
             var examDefCount = ScalarLong(conn, "SELECT COUNT(*) FROM exams");
             var marksCount = ScalarLong(conn, "SELECT COUNT(*) FROM internal_marks");
@@ -70,9 +70,8 @@ public static class SeedLogic
 
             if (faCount == 0)
             {
-                // Faculty self-attendance register (added after this DB was first created).
                 var facultyList = QueryRows(conn,
-                    "SELECT id, name FROM users WHERE role = 'faculty'",
+                    "SELECT id, name FROM faculty",
                     r => (id: Row.L(r, "id"), name: Row.S(r, "name")));
                 foreach (var f in facultyList)
                     foreach (var d in FacultyDates)
@@ -85,7 +84,7 @@ public static class SeedLogic
             }
 
             var studentRows = QueryRows(conn,
-                "SELECT id, name, roll_no_or_emp_id, department, semester FROM users WHERE role = 'student'",
+                "SELECT id, name, roll_no AS roll_no_or_emp_id, department, semester FROM students",
                 r => new StudentRow(
                     Row.L(r, "id"), Row.S(r, "name"), Row.S(r, "roll_no_or_emp_id"),
                     Row.S(r, "department"), Row.NL(r, "semester")));
@@ -99,8 +98,6 @@ public static class SeedLogic
             }
             else
             {
-                // Permissions already exist from an older seed backfill the
-                // safer defaults so server-side enforcement behaves the same.
                 SyncPermissionDefaults(conn);
                 if (examDefCount == 0 && marksCount == 0)
                     SeedExamModule(conn, studentRows, courseRows);
@@ -110,8 +107,9 @@ public static class SeedLogic
             SeedCompetitions(conn);
 
             var passwordHash = HashPassword("demo12345", 12);
-            Database.Exec(conn,
-                "UPDATE users SET password_hash = @hash WHERE password_hash = ''", ("@hash", passwordHash));
+            Database.Exec(conn, "UPDATE admins SET password_hash = @hash WHERE password_hash = ''", ("@hash", passwordHash));
+            Database.Exec(conn, "UPDATE faculty SET password_hash = @hash WHERE password_hash = ''", ("@hash", passwordHash));
+            Database.Exec(conn, "UPDATE students SET password_hash = @hash WHERE password_hash = ''", ("@hash", passwordHash));
 
             return new SeedResult(true, "Database already seeded", existingCount);
         }
@@ -122,7 +120,7 @@ public static class SeedLogic
             {
                 "attendance", "faculty_attendance", "grades", "fee_records", "fee_payments",
                 "fee_structures", "leave_requests", "assignment_submissions", "assignments",
-                "timetable", "notices", "courses", "departments", "users", "admissions",
+                "timetable", "notices", "courses", "departments", "admins", "faculty", "students", "admissions",
                 "documents", "enrollments", "sections", "semesters", "academic_sessions",
                 "exam_schedules", "exams", "internal_marks", "permissions",
             })
@@ -131,19 +129,42 @@ public static class SeedLogic
 
         var password = HashPassword("demo12345", 12);
 
-        // ---- users ----
+        // ---- seed users into respective tables ----
         foreach (var u in SeedData.InitialUsers)
-            Database.Exec(conn, """
-                INSERT INTO users (name, email, role, sub_role, roll_no_or_emp_id, department, semester,
-                                   designation, phone, avatar_url, gpa, status, password_hash)
-                VALUES (@name, @email, @role, @subRole, @rollNo, @department, @semester,
-                        @designation, @phone, @avatarUrl, @gpa, @status, @hash)
-                """,
-                ("@name", u.Name), ("@email", u.Email), ("@role", u.Role), ("@subRole", (object?)u.SubRole ?? DBNull.Value),
-                ("@rollNo", u.RollNo), ("@department", u.Department), ("@semester", (object?)u.Semester ?? DBNull.Value),
-                ("@designation", (object?)u.Designation ?? DBNull.Value), ("@phone", u.Phone),
-                ("@avatarUrl", u.AvatarUrl), ("@gpa", (object?)u.Gpa ?? DBNull.Value),
-                ("@status", u.Status), ("@hash", password));
+        {
+            if (u.Role == "admin")
+            {
+                Database.Exec(conn, """
+                    INSERT INTO admins (name, email, emp_id, department, designation, phone, avatar_url, status, password_hash)
+                    VALUES (@name, @email, @rollNo, @department, @designation, @phone, @avatarUrl, @status, @hash)
+                    """,
+                    ("@name", u.Name), ("@email", u.Email), ("@rollNo", u.RollNo),
+                    ("@department", u.Department), ("@designation", (object?)u.Designation ?? "Director & Dean, VSCMS"),
+                    ("@phone", u.Phone), ("@avatarUrl", u.AvatarUrl), ("@status", u.Status), ("@hash", password));
+            }
+            else if (u.Role == "faculty")
+            {
+                Database.Exec(conn, """
+                    INSERT INTO faculty (name, email, emp_id, department, sub_role, designation, phone, avatar_url, status, password_hash)
+                    VALUES (@name, @email, @rollNo, @department, @subRole, @designation, @phone, @avatarUrl, @status, @hash)
+                    """,
+                    ("@name", u.Name), ("@email", u.Email), ("@rollNo", u.RollNo),
+                    ("@department", u.Department), ("@subRole", u.SubRole ?? "teacher"),
+                    ("@designation", (object?)u.Designation ?? "Assistant Professor"),
+                    ("@phone", u.Phone), ("@avatarUrl", u.AvatarUrl), ("@status", u.Status), ("@hash", password));
+            }
+            else
+            {
+                Database.Exec(conn, """
+                    INSERT INTO students (name, email, roll_no, department, semester, phone, avatar_url, gpa, status, password_hash)
+                    VALUES (@name, @email, @rollNo, @department, @semester, @phone, @avatarUrl, @gpa, @status, @hash)
+                    """,
+                    ("@name", u.Name), ("@email", u.Email), ("@rollNo", u.RollNo),
+                    ("@department", u.Department), ("@semester", (object?)u.Semester ?? 1),
+                    ("@phone", u.Phone), ("@avatarUrl", u.AvatarUrl), ("@gpa", (object?)u.Gpa ?? "3.50"),
+                    ("@status", u.Status), ("@hash", password));
+            }
+        }
 
         // ---- departments ----
         foreach (var d in SeedData.InitialDepartments)
@@ -158,7 +179,7 @@ public static class SeedLogic
         var facultyByName = new Dictionary<string, long>();
         using (var cmd = conn.CreateCommand())
         {
-            cmd.CommandText = "SELECT id, name FROM users WHERE role = 'faculty'";
+            cmd.CommandText = "SELECT id, name FROM faculty";
             using var reader = cmd.ExecuteReader();
             while (reader.Read()) facultyByName[(string)reader["name"]] = (long)reader["id"];
         }
@@ -386,7 +407,7 @@ public static class SeedLogic
 
     // ---------- exam module demo data (idempotent only fills empty tables) ----------
 
-    private static void SeedExamModule(NpgsqlConnection conn, List<StudentRow> students, List<(long id, string code, string name)> insertedCourses)
+    private static void SeedExamModule(MySqlConnection conn, List<StudentRow> students, List<(long id, string code, string name)> insertedCourses)
     {
         if (students.Count == 0 || insertedCourses.Count == 0) return;
         var examDefCount = ScalarLong(conn, "SELECT COUNT(*) FROM exams");
@@ -425,7 +446,7 @@ public static class SeedLogic
         }
     }
 
-    private static void InsertMark(NpgsqlConnection conn, StudentRow s, (long id, string code, string name) c,
+    private static void InsertMark(MySqlConnection conn, StudentRow s, (long id, string code, string name) c,
         string examType, int theory, int practical, int maxTheory = 30, int maxPractical = 20, string status = "approved")
     {
         var r = Grading.ComputeInternal(
@@ -452,7 +473,7 @@ public static class SeedLogic
     // ---------- new-module demo data: admissions, documents, enrollments,
     //    sections, semesters, academic sessions, exam schedule, permissions ----------
 
-    private static void SeedExtras(NpgsqlConnection conn, List<StudentRow> students, List<(long id, string code, string name)> insertedCourses)
+    private static void SeedExtras(MySqlConnection conn, List<StudentRow> students, List<(long id, string code, string name)> insertedCourses)
     {
         // ---- admissions ----
         if (students.Count > 0)
@@ -629,7 +650,7 @@ public static class SeedLogic
 
     // ---------- course-wise fee structure + invoice generation ----------
 
-    private static void SeedFeeModule(NpgsqlConnection conn)
+    private static void SeedFeeModule(MySqlConnection conn)
     {
         var existingStructures = ScalarLong(conn, "SELECT COUNT(*) FROM fee_structures");
         if (existingStructures == 0)
@@ -664,7 +685,7 @@ public static class SeedLogic
 
     // ---------- permission-default backfill for existing DBs ----------
 
-    private static void SyncPermissionDefaults(NpgsqlConnection conn)
+    private static void SyncPermissionDefaults(MySqlConnection conn)
     {
         var rows = QueryRows(conn, "SELECT id, role, module, can_view, can_create, can_edit, can_delete FROM permissions",
             r => new PermRow(Row.L(r, "id"), Row.S(r, "role"), Row.S(r, "module"),
@@ -716,7 +737,7 @@ public static class SeedLogic
     private sealed record StudentRow(long Id, string Name, string RollNo, string Department, long? Semester);
     private sealed record PermRow(long Id, string Role, string Module, long CanView, long CanCreate, long CanEdit, long CanDelete);
 
-    private static long ScalarLong(NpgsqlConnection conn, string sql)
+    private static long ScalarLong(MySqlConnection conn, string sql)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
@@ -724,7 +745,7 @@ public static class SeedLogic
         return v is null or DBNull ? 0 : Convert.ToInt64(v, CultureInfo.InvariantCulture);
     }
 
-    private static List<T> QueryRows<T>(NpgsqlConnection conn, string sql, Func<NpgsqlDataReader, T> map)
+    private static List<T> QueryRows<T>(MySqlConnection conn, string sql, Func<MySqlDataReader, T> map)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
@@ -737,7 +758,7 @@ public static class SeedLogic
     private sealed record FeeSeedRow(long Id, long StudentId, string StudentName, string Amount,
         string? PaymentMethod, string? ReceiptNumber, string? PaidDate);
 
-    private static FeeSeedRow InsertFeeRecord(NpgsqlConnection conn, StudentRow s, (long id, string code, string name) c,
+    private static FeeSeedRow InsertFeeRecord(MySqlConnection conn, StudentRow s, (long id, string code, string name) c,
         string feeType, string amount, string dueDate, string? paidDate, string status,
         string? receiptNumber, string? paymentMethod, string paidAmount)
     {
@@ -766,7 +787,7 @@ public static class SeedLogic
         return new FeeSeedRow(id, s.Id, s.Name, amount, paymentMethod, receiptNumber, paidDate);
     }
 
-    private static long InsertAssignment(NpgsqlConnection conn, long courseId, string courseName, string title,
+    private static long InsertAssignment(MySqlConnection conn, long courseId, string courseName, string title,
         string description, string dueDate, long maxMarks, string facultyName)
     {
         using var cmd = conn.CreateCommand();
@@ -785,7 +806,7 @@ public static class SeedLogic
         return (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
     }
 
-    private static void SeedCompetitions(NpgsqlConnection conn)
+    private static void SeedCompetitions(MySqlConnection conn)
     {
         // No dummy competitions or teams seeded.
     }

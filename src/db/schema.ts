@@ -4,10 +4,16 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 const id = () => integer("id").primaryKey({ autoIncrement: true });
 const createdAt = (name = "created_at") => text(name).default(sql`CURRENT_TIMESTAMP`).notNull();
 
-export const users = sqliteTable("users", {
-  id: id(), name: text("name").notNull(), email: text("email").notNull().unique(), role: text("role").notNull().default("student"), subRole: text("sub_role"), rollNo: text("roll_no_or_emp_id").notNull(), department: text("department").notNull(), semester: integer("semester"), designation: text("designation"), phone: text("phone"), avatarUrl: text("avatar_url"), gpa: text("gpa"), status: text("status").notNull().default("active"), passwordHash: text("password_hash").notNull().default(""), createdAt: createdAt(),
+export const students = sqliteTable("students", {
+  id: id(), name: text("name").notNull(), email: text("email").notNull().unique(), rollNo: text("roll_no").notNull().unique(), department: text("department").notNull(), semester: integer("semester").default(1), phone: text("phone"), avatarUrl: text("avatar_url"), gpa: text("gpa").default("0.00"), status: text("status").notNull().default("active"), passwordHash: text("password_hash").notNull().default(""), createdAt: createdAt(),
 });
-export const sessions = sqliteTable("sessions", { id: id(), token: text("token").notNull().unique(), userId: integer("user_id").notNull(), expiresAt: integer("expires_at").notNull(), createdAt: createdAt() });
+export const faculty = sqliteTable("faculty", {
+  id: id(), name: text("name").notNull(), email: text("email").notNull().unique(), empId: text("emp_id").notNull().unique(), department: text("department").notNull(), subRole: text("sub_role").notNull().default("teacher"), designation: text("designation").notNull().default("Assistant Professor"), phone: text("phone"), avatarUrl: text("avatar_url"), status: text("status").notNull().default("active"), passwordHash: text("password_hash").notNull().default(""), createdAt: createdAt(),
+});
+export const admins = sqliteTable("admins", {
+  id: id(), name: text("name").notNull(), email: text("email").notNull().unique(), empId: text("emp_id").notNull().unique(), department: text("department").notNull().default("Administration"), designation: text("designation").notNull().default("System Administrator"), phone: text("phone"), avatarUrl: text("avatar_url"), status: text("status").notNull().default("active"), passwordHash: text("password_hash").notNull().default(""), createdAt: createdAt(),
+});
+export const sessions = sqliteTable("sessions", { id: id(), token: text("token").notNull().unique(), userId: integer("user_id").notNull(), userRole: text("user_role").notNull().default("student"), expiresAt: integer("expires_at").notNull(), createdAt: createdAt() });
 export const departments = sqliteTable("departments", { id: id(), code: text("code").notNull().unique(), name: text("name").notNull(), headOfDepartment: text("head_of_department").notNull(), location: text("location"), studentCount: integer("student_count").default(0), facultyCount: integer("faculty_count").default(0) });
 export const courses = sqliteTable("courses", { id: id(), code: text("code").notNull().unique(), name: text("name").notNull(), department: text("department").notNull(), credits: integer("credits").notNull().default(3), semester: integer("semester").notNull().default(1), facultyId: integer("faculty_id"), facultyName: text("faculty_name"), room: text("room"), schedule: text("schedule"), description: text("description") });
 export const attendance = sqliteTable("attendance", { id: id(), studentId: integer("student_id").notNull(), studentName: text("student_name").notNull(), courseId: integer("course_id").notNull(), courseCode: text("course_code").notNull(), date: text("date").notNull(), status: text("status").notNull(), period: text("period").default("Lecture 1"), markedBy: text("marked_by"), createdAt: createdAt() });

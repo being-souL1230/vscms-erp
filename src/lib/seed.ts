@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import {
-  users,
+  students,
+  faculty,
+  admins,
   departments,
   courses,
   attendance,
@@ -47,20 +49,17 @@ export interface SeedResult {
  * (which runs automatically on server start).
  */
 export async function seedDatabase(force: boolean): Promise<SeedResult> {
-  const userCountResult = await db.select({ value: count() }).from(users);
-  const existingCount = userCountResult[0]?.value || 0;
+  const existingCount = ((await db.select({ value: count() }).from(students))[0]?.value || 0)
+                      + ((await db.select({ value: count() }).from(faculty))[0]?.value || 0)
+                      + ((await db.select({ value: count() }).from(admins))[0]?.value || 0);
 
   if (existingCount > 0 && !force) {
-    // Database already has users but make sure the newer modules
-    // (documents, exams, permissions, …) still get their demo data if
-    // they were added after this database was first created.
     const permCount = (await db.select({ value: count() }).from(permissions))[0]?.value || 0;
     const examDefCount = (await db.select({ value: count() }).from(exams))[0]?.value || 0;
     const marksCount = (await db.select({ value: count() }).from(internalMarks))[0]?.value || 0;
     const faCount = (await db.select({ value: count() }).from(facultyAttendance))[0]?.value || 0;
     if (faCount === 0) {
-      // Faculty self-attendance register (added after this DB was first created).
-      const existingFaculty = await db.select().from(users).where(eq(users.role, "faculty"));
+      const existingFaculty = await db.select().from(faculty);
       const fDates = ["2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13"];
       for (const f of existingFaculty) {
         for (const d of fDates) {
@@ -74,13 +73,11 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
         }
       }
     }
-    const existingStudents = await db.select().from(users).where(eq(users.role, "student"));
+    const existingStudents = await db.select().from(students);
     const existingCourses = await db.select().from(courses);
     if (permCount === 0) {
       await seedExtras(existingStudents, existingCourses);
     } else {
-      // Permissions already exist from an older seed backfill the safer
-      // defaults so server-side enforcement behaves the same on old DBs.
       await syncPermissionDefaults();
       if (examDefCount === 0 && marksCount === 0) {
         await seedExamModule(existingStudents, existingCourses);
@@ -88,7 +85,9 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     }
     await seedFeeModule();
     const passwordHash = await bcrypt.hash("demo12345", 12);
-    await db.update(users).set({ passwordHash }).where(eq(users.passwordHash, ""));
+    await db.update(admins).set({ passwordHash }).where(eq(admins.passwordHash, ""));
+    await db.update(faculty).set({ passwordHash }).where(eq(faculty.passwordHash, ""));
+    await db.update(students).set({ passwordHash }).where(eq(students.passwordHash, ""));
     return {
       success: true,
       message: "Database already seeded",
@@ -110,7 +109,9 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     await db.delete(notices);
     await db.delete(courses);
     await db.delete(departments);
-    await db.delete(users);
+    await db.delete(admins);
+    await db.delete(faculty);
+    await db.delete(students);
     await db.delete(admissions);
     await db.delete(documents);
     await db.delete(enrollments);
@@ -124,10 +125,61 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
   }
 
   const passwordHash = await bcrypt.hash("demo12345", 12);
-  const insertedUsers = await db
-    .insert(users)
-    .values(initialUsers.map((user) => ({ ...user, passwordHash })))
-    .returning();
+  const adminUsers = initialUsers.filter((u) => u.role === "admin");
+  const facultyUsers = initialUsers.filter((u) => u.role === "faculty");
+  const studentUsers = initialUsers.filter((u) => u.role === "student");
+
+  if (adminUsers.length > 0) {
+    await db.insert(admins).values(
+      adminUsers.map((u) => ({
+        name: u.name,
+        email: u.email,
+        empId: u.rollNo || "1",
+        department: u.department,
+        designation: u.designation || "Director",
+        phone: u.phone,
+        avatarUrl: u.avatarUrl,
+        status: u.status,
+        passwordHash,
+      })),
+    );
+  }
+
+  let insertedFaculty: (typeof faculty.$inferSelect)[] = [];
+  if (facultyUsers.length > 0) {
+    insertedFaculty = await db.insert(faculty).values(
+      facultyUsers.map((u) => ({
+        name: u.name,
+        email: u.email,
+        empId: u.rollNo,
+        department: u.department,
+        subRole: u.subRole || "teacher",
+        designation: u.designation || "Assistant Professor",
+        phone: u.phone,
+        avatarUrl: u.avatarUrl,
+        status: u.status,
+        passwordHash,
+      })),
+    ).returning();
+  }
+
+  let insertedStudents: (typeof students.$inferSelect)[] = [];
+  if (studentUsers.length > 0) {
+    insertedStudents = await db.insert(students).values(
+      studentUsers.map((u) => ({
+        name: u.name,
+        email: u.email,
+        rollNo: u.rollNo,
+        department: u.department,
+        semester: u.semester || 1,
+        phone: u.phone,
+        avatarUrl: u.avatarUrl,
+        gpa: u.gpa || "3.50",
+        status: u.status,
+        passwordHash,
+      })),
+    ).returning();
+  }
 
   if (initialDepartments.length > 0) {
     await db.insert(departments).values(initialDepartments);
@@ -135,9 +187,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
 
   let insertedCourses: (typeof courses.$inferSelect)[] = [];
   const facultyByName = new Map(
-    insertedUsers
-      .filter((u) => u.role === "faculty")
-      .map((u) => [u.name, u.id] as const),
+    insertedFaculty.map((u) => [u.name, u.id] as const),
   );
   if (initialCourses.length > 0) {
     insertedCourses = await db
@@ -171,7 +221,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
     ]);
   }
 
-  const studentsList = insertedUsers.filter((u) => u.role === "student");
+  const studentsList = insertedStudents;
   const dates = [
     "2026-03-09",
     "2026-03-10",
@@ -205,7 +255,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
   }
 
   // Faculty self-attendance register (marked by the admin office).
-  const facultyList = insertedUsers.filter((u) => u.role === "faculty");
+  const facultyList = insertedFaculty;
   const fDates = ["2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13"];
   for (const f of facultyList) {
     for (const d of fDates) {
@@ -406,7 +456,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
 
   /* ---------- exam module demo data (idempotent only fills empty tables) ---------- */
   async function seedExamModule(
-    studentsList: (typeof users.$inferSelect)[],
+    studentsList: (typeof students.$inferSelect)[],
     insertedCourses: (typeof courses.$inferSelect)[],
   ) {
     if (studentsList.length === 0 || insertedCourses.length === 0) return;
@@ -505,7 +555,7 @@ export async function seedDatabase(force: boolean): Promise<SeedResult> {
   /* ---------- new-module demo data: admissions, documents, enrollments,
      sections, semesters, academic sessions, exam schedule, permissions --- */
   async function seedExtras(
-    studentsList: (typeof users.$inferSelect)[],
+    studentsList: (typeof students.$inferSelect)[],
     insertedCourses: (typeof courses.$inferSelect)[],
   ) {
   if (studentsList.length > 0) {    await db.insert(admissions).values([

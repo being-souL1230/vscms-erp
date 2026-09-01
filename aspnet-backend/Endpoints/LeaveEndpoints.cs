@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -119,7 +119,7 @@ public static class LeaveEndpoints
         return Results.Json(new { success = true, message = "Leave request deleted" });
     }
 
-    private static LeaveRequestDto? LoadLeave(NpgsqlConnection conn, long id)
+    private static LeaveRequestDto? LoadLeave(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM leave_requests WHERE id = @id";

@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Data;
 
 namespace VscmsErp.Api.Auth;
@@ -10,7 +10,7 @@ namespace VscmsErp.Api.Auth;
 /// </summary>
 public static class Permissions
 {
-    public static bool Can(NpgsqlConnection conn, UserDto user, string module, string action)
+    public static bool Can(MySqlConnection conn, UserDto user, string module, string action)
     {
         if (user.Role == "admin") return true;
 
@@ -35,7 +35,7 @@ public static class Permissions
     /// Mirrors ownsCourse() in the Next.js routes: true when the course exists
     /// and is assigned to this user (by faculty id or faculty name).
     /// </summary>
-    public static bool OwnsCourse(NpgsqlConnection conn, UserDto user, long courseId)
+    public static bool OwnsCourse(MySqlConnection conn, UserDto user, long courseId)
     {
         if (courseId == 0) return false;
         using var cmd = conn.CreateCommand();

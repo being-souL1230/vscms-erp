@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -70,7 +70,7 @@ public static class EnrollmentEndpoints
         return Results.Json(new { success = true });
     }
 
-    private static EnrollmentDto? LoadEnrollment(NpgsqlConnection conn, long id)
+    private static EnrollmentDto? LoadEnrollment(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM enrollments WHERE id = @id";

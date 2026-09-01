@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -209,7 +209,7 @@ public static class FeeEndpoints
     /// (port of src/lib/fees.ts). Idempotent: never duplicates an invoice for
     /// the same student + course + semester + fee type.
     /// </summary>
-    public static int GenerateFeeInvoices(NpgsqlConnection conn)
+    public static int GenerateFeeInvoices(MySqlConnection conn)
     {
         var structures = QueryRows(conn, "SELECT * FROM fee_structures", r => (code: Row.S(r, "course_code"), name: Row.S(r, "course_name"), semester: Row.L(r, "semester"), feeType: Row.S(r, "fee_type"), amount: Row.S(r, "amount"), dueDate: Row.S(r, "due_date")));
         if (structures.Count == 0) return 0;
@@ -228,9 +228,19 @@ public static class FeeEndpoints
         var rollNos = new Dictionary<long, string>();
         using (var u = conn.CreateCommand())
         {
-            u.CommandText = "SELECT id, roll_no_or_emp_id FROM users";
-            using var reader = u.ExecuteReader();
-            while (reader.Read()) rollNos[(long)reader["id"]] = (string)reader["roll_no_or_emp_id"];
+            u.CommandText = "SELECT id, roll_no FROM students";
+            try
+            {
+                using var reader = u.ExecuteReader();
+                while (reader.Read()) rollNos[(long)reader["id"]] = (string)reader["roll_no"];
+            }
+            catch
+            {
+                using var u2 = conn.CreateCommand();
+                u2.CommandText = "SELECT id, roll_no_or_emp_id FROM users";
+                using var reader2 = u2.ExecuteReader();
+                while (reader2.Read()) rollNos[(long)reader2["id"]] = (string)reader2["roll_no_or_emp_id"];
+            }
         }
 
         var created = 0;
@@ -262,7 +272,7 @@ public static class FeeEndpoints
 
     // ---- helpers ----
 
-    private static List<T> QueryRows<T>(NpgsqlConnection conn, string sql, Func<NpgsqlDataReader, T> map)
+    private static List<T> QueryRows<T>(MySqlConnection conn, string sql, Func<MySqlDataReader, T> map)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
@@ -275,7 +285,7 @@ public static class FeeEndpoints
     private static double ParseMoney(string v) =>
         double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : 0;
 
-    private static FeeRecordDto? LoadFeeRecord(NpgsqlConnection conn, long id, UserDto? user = null)
+    private static FeeRecordDto? LoadFeeRecord(MySqlConnection conn, long id, UserDto? user = null)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = user?.Role == "student"

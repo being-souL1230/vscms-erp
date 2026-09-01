@@ -1,5 +1,5 @@
 using static BCrypt.Net.BCrypt;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -33,16 +33,16 @@ public static class StudentEndpoints
         using var cmd = conn.CreateCommand();
         if (user.Role == "student")
         {
-            cmd.CommandText = "SELECT * FROM users WHERE id = @id";
+            cmd.CommandText = "SELECT * FROM students WHERE id = @id";
             cmd.Parameters.AddWithValue("@id", user.Id);
         }
         else
         {
-            cmd.CommandText = "SELECT * FROM users WHERE role = 'student'";
+            cmd.CommandText = "SELECT * FROM students";
         }
         using var reader = cmd.ExecuteReader();
         var list = new List<UserDto>();
-        while (reader.Read()) list.Add(UserDto.MapUser(reader));
+        while (reader.Read()) list.Add(UserDto.MapStudent(reader));
         return Results.Json(list);
     }
 
@@ -65,8 +65,8 @@ public static class StudentEndpoints
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            INSERT INTO users (name, email, role, roll_no_or_emp_id, department, semester, phone, gpa, status, password_hash, avatar_url)
-            VALUES (@name, @email, 'student', @rollNo, @department, @semester, @phone, @gpa, @status, @passwordHash, @avatarUrl) RETURNING id;
+            INSERT INTO students (name, email, roll_no, department, semester, phone, gpa, status, password_hash, avatar_url)
+            VALUES (@name, @email, @rollNo, @department, @semester, @phone, @gpa, @status, @passwordHash, @avatarUrl) RETURNING id;
             """;
         cmd.Parameters.AddWithValue("@name", body.Name);
         cmd.Parameters.AddWithValue("@email", body.Email);
@@ -80,7 +80,7 @@ public static class StudentEndpoints
         cmd.Parameters.AddWithValue("@avatarUrl", avatarUrl);
         var id = (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
 
-        return Results.Json(LoadUser(conn, id));
+        return Results.Json(LoadStudent(conn, id));
     }
 
     private static IResult UpdateStudent(HttpContext ctx, StudentUpdateRequest body)
@@ -97,18 +97,15 @@ public static class StudentEndpoints
         var current = LoadStudent(conn, body.Id.Value);
         if (current is null) return Results.Json((object?)null);
 
-        // Faithful to the original: rollNo is always clobbered (String(undefined)
-        // yields "undefined") and semester resets to 1 when omitted; the other
-        // fields keep their current value when not provided.
         var rollNo = body.RollNoOrEmpId is null ? "undefined" : body.RollNoOrEmpId.Trim();
         var semester = body.Semester is > 0 ? body.Semester.Value : 1;
 
         Database.Exec(conn, """
-            UPDATE users SET
-              name = @name, email = @email, roll_no_or_emp_id = @rollNo,
+            UPDATE students SET
+              name = @name, email = @email, roll_no = @rollNo,
               department = @department, semester = @semester, phone = @phone,
               gpa = @gpa, status = @status
-            WHERE id = @id AND role = 'student'
+            WHERE id = @id
             """,
             ("@name", body.Name ?? current.Name),
             ("@email", body.Email ?? current.Email),
@@ -120,7 +117,7 @@ public static class StudentEndpoints
             ("@status", body.Status ?? current.Status),
             ("@id", body.Id.Value));
 
-        return Results.Json(LoadUser(conn, body.Id.Value));
+        return Results.Json(LoadStudent(conn, body.Id.Value));
     }
 
     private static IResult DeleteStudent(HttpContext ctx)
@@ -136,28 +133,21 @@ public static class StudentEndpoints
         if (!Permissions.Can(conn, user, "students", "delete"))
             return Results.Json(new { error = "Access denied" }, statusCode: 403);
 
-        Database.Exec(conn, "DELETE FROM users WHERE id = @id AND role = 'student'", ("@id", id));
+        Database.Exec(conn, "DELETE FROM students WHERE id = @id", ("@id", id));
         return Results.Json(new { success = true, message = "Student deleted successfully" });
     }
 
     // ---- helpers ----
 
-    private static UserDto? LoadUser(NpgsqlConnection conn, long id)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users WHERE id = @id LIMIT 1";
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = cmd.ExecuteReader();
-        return reader.Read() ? UserDto.MapUser(reader) : null;
-    }
+    private static UserDto? LoadUser(MySqlConnection conn, long id) => LoadStudent(conn, id);
 
-    private static UserDto? LoadStudent(NpgsqlConnection conn, long id)
+    private static UserDto? LoadStudent(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users WHERE id = @id AND role = 'student' LIMIT 1";
+        cmd.CommandText = "SELECT * FROM students WHERE id = @id LIMIT 1";
         cmd.Parameters.AddWithValue("@id", id);
         using var reader = cmd.ExecuteReader();
-        return reader.Read() ? UserDto.MapUser(reader) : null;
+        return reader.Read() ? UserDto.MapStudent(reader) : null;
     }
 
     // ---- request bodies ----

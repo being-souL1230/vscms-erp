@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -239,7 +239,7 @@ public static class SetupEndpoints
         return long.TryParse(text, out id);
     }
 
-    private static List<T> QueryAll<T>(string label, string sql, Func<NpgsqlDataReader, T> map)
+    private static List<T> QueryAll<T>(string label, string sql, Func<MySqlDataReader, T> map)
     {
         using var conn = Database.Open();
         using var cmd = conn.CreateCommand();
@@ -250,7 +250,7 @@ public static class SetupEndpoints
         return list;
     }
 
-    private static T? LoadOne<T>(string label, string sql, long id, Func<NpgsqlDataReader, T> map) where T : class
+    private static T? LoadOne<T>(string label, string sql, long id, Func<MySqlDataReader, T> map) where T : class
     {
         using var conn = Database.Open();
         using var cmd = conn.CreateCommand();

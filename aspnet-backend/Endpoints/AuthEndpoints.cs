@@ -1,5 +1,5 @@
 using static BCrypt.Net.BCrypt;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 using VscmsErp.Api.Lib;
@@ -47,18 +47,13 @@ public static class AuthEndpoints
         if (user.Status != "active")
             return Results.Json(new { error = "This account is not active" }, statusCode: 403);
 
-        var (token, expiresAt) = AuthService.CreateSession(conn, user.Id);
+        var (token, expiresAt) = AuthService.CreateSession(conn, user.Id, user.Role);
         AuthService.SetSessionCookie(ctx.Response, token, expiresAt);
-        return Results.Json(new { user = LoadUserDto(conn, user.Id) });
+        return Results.Json(new { user = LoadUserDto(conn, user.Id, user.Role) });
     }
 
     private static IResult DemoLogin(HttpContext ctx, DemoRequest body)
     {
-        // Demo login is a convenience for showcasing the system: it hands out a
-        // session for the first user of a role with no credentials. Because that
-        // is a privilege-escalation hole, production disables it by default.
-        // Opt in for a demo/showcase deployment with DEMO_LOGIN_ENABLED=1;
-        // DEMO_LOGIN_DISABLED=1 always wins as an emergency kill switch.
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         var isProduction = string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase);
         var explicitlyEnabled = Environment.GetEnvironmentVariable("DEMO_LOGIN_ENABLED") == "1";
@@ -68,35 +63,43 @@ public static class AuthEndpoints
 
         Database.EnsureDatabase();
         using var conn = Database.Open();
-        using var cmd = conn.CreateCommand();
-        if (!string.IsNullOrWhiteSpace(body.Email))
+
+        long? userId = null;
+        string userRole = "student";
+
+        string targetRole = body.Role ?? (body.SubRole != null ? "faculty" : "admin");
+
+        if (targetRole == "admin")
         {
-            cmd.CommandText = "SELECT id FROM users WHERE LOWER(email) = LOWER(@email) LIMIT 1";
-            cmd.Parameters.AddWithValue("@email", body.Email.Trim());
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT id FROM admins ORDER BY id LIMIT 1";
+            var res = cmd.ExecuteScalar();
+            if (res != null && res != DBNull.Value) { userId = Convert.ToInt64(res); userRole = "admin"; }
         }
-        else if (!string.IsNullOrWhiteSpace(body.SubRole))
+        else if (targetRole == "faculty" || body.SubRole != null)
         {
-            cmd.CommandText = "SELECT id FROM users WHERE sub_role = @subRole LIMIT 1";
-            cmd.Parameters.AddWithValue("@subRole", body.SubRole);
-        }
-        else if (!string.IsNullOrWhiteSpace(body.Role))
-        {
-            cmd.CommandText = "SELECT id FROM users WHERE role = @role OR sub_role = @role ORDER BY id LIMIT 1";
-            cmd.Parameters.AddWithValue("@role", body.Role);
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = !string.IsNullOrEmpty(body.SubRole)
+                ? "SELECT id FROM faculty WHERE sub_role = @subRole ORDER BY id LIMIT 1"
+                : "SELECT id FROM faculty ORDER BY id LIMIT 1";
+            if (!string.IsNullOrEmpty(body.SubRole)) cmd.Parameters.AddWithValue("@subRole", body.SubRole);
+            var res = cmd.ExecuteScalar();
+            if (res != null && res != DBNull.Value) { userId = Convert.ToInt64(res); userRole = "faculty"; }
         }
         else
         {
-            cmd.CommandText = "SELECT id FROM users ORDER BY id LIMIT 1";
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT id FROM students ORDER BY id LIMIT 1";
+            var res = cmd.ExecuteScalar();
+            if (res != null && res != DBNull.Value) { userId = Convert.ToInt64(res); userRole = "student"; }
         }
 
-        var id = cmd.ExecuteScalar();
-        if (id is null || id is DBNull)
+        if (userId is null)
             return Results.Json(new { error = "Demo user not found" }, statusCode: 404);
 
-        var userId = (long)id;
-        var (token, expiresAt) = AuthService.CreateSession(conn, userId);
+        var (token, expiresAt) = AuthService.CreateSession(conn, userId.Value, userRole);
         AuthService.SetSessionCookie(ctx.Response, token, expiresAt);
-        return Results.Json(new { user = LoadUserDto(conn, userId) });
+        return Results.Json(new { user = LoadUserDto(conn, userId.Value, userRole) });
     }
 
     private static IResult Register(HttpContext ctx, RegisterRequest body)
@@ -116,8 +119,8 @@ public static class AuthEndpoints
             using var conn = Database.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO users (name, email, password_hash, role, roll_no_or_emp_id, department, semester, status)
-                VALUES (@name, @email, @passwordHash, 'student', @rollNo, @department, @semester, 'active') RETURNING id;
+                INSERT INTO students (name, email, password_hash, roll_no, department, semester, status)
+                VALUES (@name, @email, @passwordHash, @rollNo, @department, @semester, 'active') RETURNING id;
                 """;
             cmd.Parameters.AddWithValue("@name", body.Name.Trim());
             cmd.Parameters.AddWithValue("@email", body.Email.Trim().ToLowerInvariant());
@@ -127,11 +130,11 @@ public static class AuthEndpoints
             cmd.Parameters.AddWithValue("@semester", semester);
             var userId = (long)(cmd.ExecuteScalar() ?? throw new InvalidOperationException("Insert failed"));
 
-            var (token, expiresAt) = AuthService.CreateSession(conn, userId);
+            var (token, expiresAt) = AuthService.CreateSession(conn, userId, "student");
             AuthService.SetSessionCookie(ctx.Response, token, expiresAt);
-            return Results.Json(new { user = LoadUserDto(conn, userId) }, statusCode: 201);
+            return Results.Json(new { user = LoadUserDto(conn, userId, "student") }, statusCode: 201);
         }
-        catch (PostgresException)
+        catch (MySqlException)
         {
             return Results.Json(new { error = "An account with this email or roll number may already exist" }, statusCode: 409);
         }
@@ -163,43 +166,76 @@ public static class AuthEndpoints
             return Results.Json(new { error = "New password must be at least 8 characters" }, statusCode: 400);
 
         using var conn = Database.Open();
-        var record = AuthService.GetUserRow(conn, user.Id);
+        var record = AuthService.GetUserRow(conn, user.Id, user.Role);
         if (record is null || string.IsNullOrEmpty(record.PasswordHash) || !Verify(body.CurrentPassword, record.PasswordHash))
             return Results.Json(new { error = "Current password is incorrect" }, statusCode: 401);
 
         var passwordHash = HashPassword(body.NewPassword, 12);
-        Database.Exec(conn, "UPDATE users SET password_hash = @hash WHERE id = @id",
+        string table = user.Role switch { "admin" => "admins", "faculty" => "faculty", _ => "students" };
+        Database.Exec(conn, $"UPDATE {table} SET password_hash = @hash WHERE id = @id",
             ("@hash", passwordHash), ("@id", user.Id));
         return Results.Json(new { success = true, message = "Password updated successfully" });
     }
 
     // ---- helpers ----
 
-    private static UserRow? FindUserByEmail(NpgsqlConnection conn, string email)
+    private static UserRow? FindUserByEmail(MySqlConnection conn, string email)
     {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT id, name, email, role, password_hash, status FROM users WHERE email = @email LIMIT 1";
-        cmd.Parameters.AddWithValue("@email", email);
-        using var reader = cmd.ExecuteReader();
-        if (!reader.Read()) return null;
-        return new UserRow
+        // 1. Check admins
+        using (var cmd = conn.CreateCommand())
         {
-            Id = (long)reader["id"],
-            Name = (string)reader["name"],
-            Email = (string)reader["email"],
-            Role = (string)reader["role"],
-            PasswordHash = (string)reader["password_hash"],
-            Status = (string)reader["status"],
-        };
+            cmd.CommandText = "SELECT id, name, email, 'admin' AS role, password_hash, status FROM admins WHERE LOWER(email) = LOWER(@email) LIMIT 1";
+            cmd.Parameters.AddWithValue("@email", email);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return new UserRow { Id = (long)r["id"], Name = (string)r["name"], Email = (string)r["email"], Role = "admin", PasswordHash = (string)r["password_hash"], Status = (string)r["status"] };
+        }
+        // 2. Check faculty
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT id, name, email, 'faculty' AS role, password_hash, status FROM faculty WHERE LOWER(email) = LOWER(@email) LIMIT 1";
+            cmd.Parameters.AddWithValue("@email", email);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return new UserRow { Id = (long)r["id"], Name = (string)r["name"], Email = (string)r["email"], Role = "faculty", PasswordHash = (string)r["password_hash"], Status = (string)r["status"] };
+        }
+        // 3. Check students
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT id, name, email, 'student' AS role, password_hash, status FROM students WHERE LOWER(email) = LOWER(@email) LIMIT 1";
+            cmd.Parameters.AddWithValue("@email", email);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return new UserRow { Id = (long)r["id"], Name = (string)r["name"], Email = (string)r["email"], Role = "student", PasswordHash = (string)r["password_hash"], Status = (string)r["status"] };
+        }
+        return null;
     }
 
-    private static UserDto LoadUserDto(NpgsqlConnection conn, long id)
+    private static UserDto LoadUserDto(MySqlConnection conn, long id, string role = "student")
     {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users WHERE id = @id LIMIT 1";
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = cmd.ExecuteReader();
-        return reader.Read() ? UserDto.MapUser(reader) : throw new InvalidOperationException($"User {id} not found");
+        if (role == "admin")
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM admins WHERE id = @id LIMIT 1";
+            cmd.Parameters.AddWithValue("@id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return UserDto.MapAdmin(r);
+        }
+        else if (role == "faculty")
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM faculty WHERE id = @id LIMIT 1";
+            cmd.Parameters.AddWithValue("@id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return UserDto.MapFaculty(r);
+        }
+        else if (role == "student")
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM students WHERE id = @id LIMIT 1";
+            cmd.Parameters.AddWithValue("@id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return UserDto.MapStudent(r);
+        }
+
+        throw new InvalidOperationException($"User {id} ({role}) not found");
     }
 
     // ---- request bodies ----

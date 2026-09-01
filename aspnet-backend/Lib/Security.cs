@@ -27,6 +27,9 @@ public static class Security
         "http://localhost:3000",
         "http://localhost:5199",
         "http://192.168.29.254:3000",
+        // React Native mobile app (Expo dev server)
+        "http://localhost:19006",
+        "http://localhost:8081",
     ];
 
     /// <summary>Origins allowed for CORS and cross-origin state-changing requests.</summary>
@@ -114,6 +117,9 @@ public static class Security
     /// CSRF defense in depth: for state-changing methods, reject requests that
     /// carry an Origin header which is not on the allow-list. Same-origin proxy
     /// calls (the Vercel/Next.js rewrite) carry no Origin header, so they pass.
+    ///
+    /// NOTE: React Native (non-browser) requests do NOT send an Origin header,
+    /// so they pass through this check naturally - same as server-to-server calls.
     /// </summary>
     public static async Task OriginCheck(HttpContext ctx, Func<Task> next)
     {

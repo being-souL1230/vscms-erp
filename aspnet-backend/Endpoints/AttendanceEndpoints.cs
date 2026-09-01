@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -83,7 +83,7 @@ public static class AttendanceEndpoints
         return body.ValueKind == JsonValueKind.Object ? [body] : [];
     }
 
-    private static AttendanceDto Upsert(NpgsqlConnection conn, JsonElement item, string? itemMarkedBy, string userName)
+    private static AttendanceDto Upsert(MySqlConnection conn, JsonElement item, string? itemMarkedBy, string userName)
     {
         var studentId = J.GetLong(item, "studentId") ?? 0;
         var courseId = J.GetLong(item, "courseId") ?? 1;

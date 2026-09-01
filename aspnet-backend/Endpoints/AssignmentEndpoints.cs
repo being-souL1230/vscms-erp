@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -118,7 +118,7 @@ public static class AssignmentEndpoints
         return Results.Json(updated);
     }
 
-    private static List<T> QueryAll<T>(NpgsqlConnection conn, string sql, Func<NpgsqlDataReader, T> map, (string Name, object? Value)? parameter = null)
+    private static List<T> QueryAll<T>(MySqlConnection conn, string sql, Func<MySqlDataReader, T> map, (string Name, object? Value)? parameter = null)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
@@ -129,7 +129,7 @@ public static class AssignmentEndpoints
         return list;
     }
 
-    private static AssignmentDto? LoadAssignment(NpgsqlConnection conn, long id)
+    private static AssignmentDto? LoadAssignment(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM assignments WHERE id = @id";
@@ -138,7 +138,7 @@ public static class AssignmentEndpoints
         return reader.Read() ? AssignmentDto.Map(reader) : null;
     }
 
-    private static AssignmentSubmissionDto? LoadSubmission(NpgsqlConnection conn, long id)
+    private static AssignmentSubmissionDto? LoadSubmission(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM assignment_submissions WHERE id = @id";

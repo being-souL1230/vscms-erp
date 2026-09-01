@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { enrollments, feeRecords, feeStructures, users } from "@/db/schema";
+import { enrollments, feeRecords, feeStructures, students } from "@/db/schema";
 
 /**
  * Auto-generate pending fee invoices from the course-wise fee structure.
@@ -22,7 +22,7 @@ export async function generateFeeInvoices(): Promise<number> {
 
   const existing = await db.select().from(feeRecords);
   const rollNos = new Map(
-    (await db.select().from(users)).map((u) => [u.id, u.rollNo] as const),
+    (await db.select().from(students)).map((u) => [u.id, u.rollNo] as const),
   );
 
   let created = 0;

@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -117,7 +117,7 @@ public static class TimetableEndpoints
         return Results.Json(new { success = true, message = "Timetable slot deleted" });
     }
 
-    private static TimetableSlotDto? LoadSlot(NpgsqlConnection conn, long id)
+    private static TimetableSlotDto? LoadSlot(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM timetable WHERE id = @id";

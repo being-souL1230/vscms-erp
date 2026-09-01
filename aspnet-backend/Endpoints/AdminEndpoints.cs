@@ -1,5 +1,5 @@
 using static BCrypt.Net.BCrypt;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -102,11 +102,12 @@ public static class AdminEndpoints
         if (sets.Count == 0)
             return Results.Json(new { error = "Nothing to update" }, statusCode: 400);
 
-        var sql = "UPDATE users SET " + string.Join(", ", sets.Select(s => $"{s.Column} = {s.Param}")) + " WHERE id = @id";
+        string table = user.Role switch { "admin" => "admins", "faculty" => "faculty", _ => "students" };
+        var sql = $"UPDATE {table} SET " + string.Join(", ", sets.Select(s => $"{s.Column} = {s.Param}")) + " WHERE id = @id";
         var parameters = sets.Select(s => (s.Param, s.Value)).Append(("@id", (object?)user.Id)).ToArray();
         Database.Exec(conn, sql, parameters);
 
-        return Results.Json(LoadUser(conn, user.Id));
+        return Results.Json(LoadUser(conn, user.Id, user.Role));
     }
 
     // ---- users ----
@@ -120,11 +121,38 @@ public static class AdminEndpoints
         if (!Permissions.Can(conn, user, "users", "view"))
             return Results.Json(new { error = "Access denied" }, statusCode: 403);
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users";
-        using var reader = cmd.ExecuteReader();
         var list = new List<UserDto>();
-        while (reader.Read()) list.Add(UserDto.MapUser(reader));
+
+        // 1. Admins
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM admins";
+            using var r = cmd.ExecuteReader();
+            while (r.Read()) list.Add(UserDto.MapAdmin(r));
+        }
+        catch { }
+
+        // 2. Faculty
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM faculty";
+            using var r = cmd.ExecuteReader();
+            while (r.Read()) list.Add(UserDto.MapFaculty(r));
+        }
+        catch { }
+
+        // 3. Students
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM students";
+            using var r = cmd.ExecuteReader();
+            while (r.Read()) list.Add(UserDto.MapStudent(r));
+        }
+        catch { }
+
         return Results.Json(list);
     }
 
@@ -140,31 +168,58 @@ public static class AdminEndpoints
             return Results.Json(new { error = "Access denied" }, statusCode: 403);
 
         var sets = new List<(string Column, string Param, object? Value)>();
-        if (body.Role is "admin" or "faculty" or "student") sets.Add(("role", "@role", (object?)body.Role));
         if (body.Status is "active" or "inactive") sets.Add(("status", "@status", (object?)body.Status));
         if (!string.IsNullOrEmpty(body.Password) && body.Password.Length >= 6)
             sets.Add(("password_hash", "@passwordHash", (object?)HashPassword(body.Password, 12)));
         if (sets.Count == 0)
             return Results.Json(new { error = "Nothing to update" }, statusCode: 400);
 
-        var sql = "UPDATE users SET " + string.Join(", ", sets.Select(s => $"{s.Column} = {s.Param}")) + " WHERE id = @id";
+        string targetTable = (body.Role ?? "student") switch
+        {
+            "admin" => "admins",
+            "faculty" => "faculty",
+            _ => "students"
+        };
+
+        var sql = $"UPDATE {targetTable} SET " + string.Join(", ", sets.Select(s => $"{s.Column} = {s.Param}")) + " WHERE id = @id";
         var parameters = sets.Select(s => (s.Param, s.Value)).Append(("@id", (object?)body.Id.Value)).ToArray();
         Database.Exec(conn, sql, parameters);
 
-        var updated = LoadUser(conn, body.Id.Value);
+        var updated = LoadUser(conn, body.Id.Value, body.Role ?? "student");
         if (updated is null) return Results.Json(new { error = "User not found" }, statusCode: 404);
         return Results.Json(updated);
     }
 
     // ---- helpers ----
 
-    private static UserDto? LoadUser(NpgsqlConnection conn, long id)
+    private static UserDto? LoadUser(MySqlConnection conn, long id, string role = "student")
     {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT * FROM users WHERE id = @id";
-        cmd.Parameters.AddWithValue("@id", id);
-        using var reader = cmd.ExecuteReader();
-        return reader.Read() ? UserDto.MapUser(reader) : null;
+        if (role == "admin")
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM admins WHERE id = @id LIMIT 1";
+            cmd.Parameters.AddWithValue("@id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return UserDto.MapAdmin(r);
+        }
+        else if (role == "faculty")
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM faculty WHERE id = @id LIMIT 1";
+            cmd.Parameters.AddWithValue("@id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return UserDto.MapFaculty(r);
+        }
+        else if (role == "student")
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM students WHERE id = @id LIMIT 1";
+            cmd.Parameters.AddWithValue("@id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read()) return UserDto.MapStudent(r);
+        }
+
+        return null;
     }
 
     // ---- request bodies ----

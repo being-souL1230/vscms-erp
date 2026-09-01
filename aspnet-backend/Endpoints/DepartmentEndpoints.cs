@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -104,7 +104,7 @@ public static class DepartmentEndpoints
         return Results.Json(new { success = true, message = "Department deleted" });
     }
 
-    private static DepartmentDto? LoadDepartment(NpgsqlConnection conn, long id)
+    private static DepartmentDto? LoadDepartment(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM departments WHERE id = @id";

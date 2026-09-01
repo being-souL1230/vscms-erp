@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -42,7 +42,8 @@ public static class ChatEndpoints
 
     private static async Task<IResult> Chat(HttpContext ctx, ChatRequest body)
     {
-        if (string.IsNullOrWhiteSpace(body.Message))
+        var msg = !string.IsNullOrWhiteSpace(body.Message) ? body.Message : body.Query;
+        if (string.IsNullOrWhiteSpace(msg))
             return Results.Json(new { error = "Message is required" }, statusCode: 400);
 
         var user = AuthService.GetCurrentUser(ctx.Request);
@@ -62,7 +63,7 @@ public static class ChatEndpoints
             : Environment.GetEnvironmentVariable("GROQ_API_KEY");
 
         // 1. FETCH TOKEN-OPTIMIZED DATABASE CONTEXT
-        var dbContextSummary = FetchLiveDatabaseContext(user, role, body.Message);
+        var dbContextSummary = FetchLiveDatabaseContext(user, role, msg);
 
         // 2. Build Role-based System Prompt with Strict VSCMS Domain Scope Rules
         var systemPrompt = BuildSystemPrompt(role, userName, dbContextSummary);
@@ -71,7 +72,7 @@ public static class ChatEndpoints
         {
             try
             {
-                var groqResponse = await CallGroqApi(apiKey, systemPrompt, body.Message);
+                var groqResponse = await CallGroqApi(apiKey, systemPrompt, msg);
                 if (!string.IsNullOrEmpty(groqResponse))
                 {
                     return Results.Json(new { reply = groqResponse, mode = "groq" });
@@ -84,7 +85,7 @@ public static class ChatEndpoints
         }
 
         // 3. Smart Offline Mode using Full Database Facts & Domain Scope Guardrails
-        var fallbackReply = BuildOfflineFallback(body.Message, role, userName, dbContextSummary);
+        var fallbackReply = BuildOfflineFallback(msg, role, userName, dbContextSummary);
         return Results.Json(new { reply = fallbackReply, mode = "offline" });
     }
 
@@ -137,7 +138,7 @@ public static class ChatEndpoints
                 try
                 {
                     using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT name, roll_no_or_emp_id, department, semester, gpa FROM users WHERE role = 'student' ORDER BY roll_no_or_emp_id ASC LIMIT 20";
+                    cmd.CommandText = "SELECT name, roll_no, department, semester, gpa FROM students ORDER BY roll_no ASC LIMIT 20";
                     using var reader = cmd.ExecuteReader();
                     var students = new List<string>();
                     while (reader.Read())
@@ -161,7 +162,7 @@ public static class ChatEndpoints
                 try
                 {
                     using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT name, department, designation FROM users WHERE role = 'faculty' ORDER BY name LIMIT 10";
+                    cmd.CommandText = "SELECT name, department, designation FROM faculty ORDER BY name LIMIT 10";
                     using var reader = cmd.ExecuteReader();
                     var faculty = new List<string>();
                     while (reader.Read())
@@ -457,6 +458,9 @@ public class ChatRequest
 {
     [JsonPropertyName("message")]
     public string Message { get; set; } = "";
+
+    [JsonPropertyName("query")]
+    public string? Query { get; set; }
 
     [JsonPropertyName("role")]
     public string? Role { get; set; }

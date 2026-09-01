@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -71,7 +71,7 @@ public static class GradeEndpoints
         return Results.Json(LoadGrade(conn, id));
     }
 
-    private static GradeDto? LoadGrade(NpgsqlConnection conn, long id)
+    private static GradeDto? LoadGrade(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM grades WHERE id = @id";

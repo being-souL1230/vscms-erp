@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 using VscmsErp.Api.Lib;
@@ -162,7 +162,7 @@ public static class InternalMarkEndpoints
         return body.ValueKind == JsonValueKind.Object ? [body] : [];
     }
 
-    private static List<long> OwnedCourseIds(NpgsqlConnection conn, UserDto user)
+    private static List<long> OwnedCourseIds(MySqlConnection conn, UserDto user)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT id FROM courses WHERE faculty_id = @fid OR faculty_name = @fname";
@@ -188,7 +188,7 @@ public static class InternalMarkEndpoints
         return (string.Format(template, string.Join(", ", placeholders)), parameters);
     }
 
-    private static List<InternalMarkDto> Query(NpgsqlConnection conn, string sql, params (string Name, object? Value)[] parameters)
+    private static List<InternalMarkDto> Query(MySqlConnection conn, string sql, params (string Name, object? Value)[] parameters)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
@@ -200,7 +200,7 @@ public static class InternalMarkEndpoints
         return list;
     }
 
-    private static InternalMarkDto SaveRow(NpgsqlConnection conn, JsonElement body, string? fallbackStatus)
+    private static InternalMarkDto SaveRow(MySqlConnection conn, JsonElement body, string? fallbackStatus)
     {
         var examType = J.GetString(body, "examType") ?? "Mid-Term";
         var semester = J.GetLong(body, "semester") ?? 1;
@@ -317,7 +317,7 @@ public static class InternalMarkEndpoints
         return LoadById(conn, id);
     }
 
-    private static InternalMarkDto LoadById(NpgsqlConnection conn, long id)
+    private static InternalMarkDto LoadById(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM internal_marks WHERE id = @id";

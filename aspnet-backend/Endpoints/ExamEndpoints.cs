@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -112,7 +112,7 @@ public static class ExamEndpoints
         return Results.Json(new { success = true });
     }
 
-    private static ExamScheduleDto? LoadExam(NpgsqlConnection conn, long id)
+    private static ExamScheduleDto? LoadExam(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM exam_schedules WHERE id = @id";

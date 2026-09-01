@@ -1,4 +1,4 @@
-using Npgsql;
+using MySqlConnector;
 using VscmsErp.Api.Auth;
 using VscmsErp.Api.Data;
 
@@ -119,7 +119,7 @@ public static class DocumentEndpoints
         return Results.Json(new { success = true });
     }
 
-    private static DocumentDto? LoadDocument(NpgsqlConnection conn, long id)
+    private static DocumentDto? LoadDocument(MySqlConnection conn, long id)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT * FROM documents WHERE id = @id";
