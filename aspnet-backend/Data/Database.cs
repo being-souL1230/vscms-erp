@@ -119,11 +119,20 @@ public static class Database
         return cmd.ExecuteNonQuery();
     }
 
-    /// <summary>Runs the idempotent schema statements so a fresh database works immediately.</summary>
+    private static bool _ensured = false;
+    private static readonly object _ensuredLock = new();
+
+    /// <summary>Runs the idempotent schema statements once so a fresh database works immediately.</summary>
     public static void EnsureDatabase()
     {
-        using var conn = Open();
-        foreach (var ddl in Schema.DDL)
-            Exec(conn, ddl);
+        if (_ensured) return;
+        lock (_ensuredLock)
+        {
+            if (_ensured) return;
+            using var conn = Open();
+            foreach (var ddl in Schema.DDL)
+                Exec(conn, ddl);
+            _ensured = true;
+        }
     }
 }
