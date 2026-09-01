@@ -18,9 +18,18 @@ public static class AuthService
     {
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
         var expiresAt = DateTimeOffset.UtcNow.Add(SessionDuration).ToUnixTimeMilliseconds();
-        Database.Exec(conn,
-            "INSERT INTO sessions (token, user_id, user_role, expires_at) VALUES (@token, @userId, @role, @expiresAt)",
-            ("@token", token), ("@userId", userId), ("@role", role), ("@expiresAt", expiresAt));
+        try
+        {
+            Database.Exec(conn,
+                "INSERT INTO sessions (token, user_id, user_role, expires_at) VALUES (@token, @userId, @role, @expiresAt)",
+                ("@token", token), ("@userId", userId), ("@role", role), ("@expiresAt", expiresAt));
+        }
+        catch
+        {
+            Database.Exec(conn,
+                "INSERT INTO sessions (token, user_id, expires_at) VALUES (@token, @userId, @expiresAt)",
+                ("@token", token), ("@userId", userId), ("@expiresAt", expiresAt));
+        }
         return (token, expiresAt);
     }
 

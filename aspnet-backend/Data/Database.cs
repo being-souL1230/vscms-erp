@@ -132,6 +132,7 @@ public static class Database
             using var conn = Open();
             foreach (var ddl in Schema.DDL)
                 Exec(conn, ddl);
+            try { Exec(conn, "ALTER TABLE `sessions` ADD COLUMN `user_role` VARCHAR(50) NOT NULL DEFAULT 'student'"); } catch { }
             _ensured = true;
         }
     }
