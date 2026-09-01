@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Star, X, MessageSquare, CheckCircle2, Clock, ThumbsUp, Sparkles, Award, ShieldCheck } from "lucide-react";
+import { Star, X, MessageSquare, CheckCircle2, Clock, ThumbsUp, Sparkles } from "lucide-react";
 import type { User } from "@/types/erp";
 
 export interface FeedbackRating {
@@ -189,15 +189,7 @@ export function FeedbackModal({
               <Sparkles className="w-5 h-5 fill-ink" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[9px] uppercase tracking-[0.2em] px-1.5 py-0.5 bg-paper/20 text-paper font-bold border border-paper/30">
-                  SYSTEM EVALUATION
-                </span>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> VERIFIED
-                </span>
-              </div>
-              <h3 className="font-display uppercase text-xl text-paper leading-none mt-1">
+              <h3 className="font-display uppercase text-xl text-paper leading-none">
                 Ratings & Presentation Feedback
               </h3>
             </div>
@@ -245,11 +237,6 @@ export function FeedbackModal({
                   <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-ink bg-ink text-paper">
                     {summary.totalRatings} Vote{summary.totalRatings === 1 ? "" : "s"} Total
                   </span>
-                  {summary.totalRatings > 0 && (
-                    <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-amber-500 bg-amber-400/20 text-ink flex items-center gap-1">
-                      <Award className="w-3 h-3 text-amber-600" /> Verified Score
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -407,11 +394,8 @@ export function FeedbackModal({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-mono text-xs uppercase tracking-wider text-muted font-bold">
-                Live Community Reviews ({summary.ratings.length})
+                Community Reviews ({summary.ratings.length})
               </h4>
-              <span className="font-mono text-[10px] text-muted font-bold">
-                Real-time Database Sync
-              </span>
             </div>
 
             <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1">
